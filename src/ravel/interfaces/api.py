@@ -15,7 +15,8 @@ from sqlalchemy import create_engine
 from ravel.application.benchmark_service import BenchmarkService
 from ravel.application.workflow import AgentWorkflow
 from ravel.config import settings
-from ravel.infrastructure.graph.mock import MockGraphAdapter
+from ravel.infrastructure.graph import create_graph_adapter
+from ravel.infrastructure.llm import build_llm
 from ravel.infrastructure.persistence import InvestigationRepository
 
 app = FastAPI(title="RAVEL Forensic Workstation API", version="0.1.0")
@@ -29,11 +30,11 @@ app.add_middleware(
 )
 
 # Services
-level0_dir = settings.data_dir.parent / "data" / "level0"
-graph_adapter = MockGraphAdapter(level0_dir)
+graph_adapter = create_graph_adapter(settings)
 engine = create_engine(settings.state_db_url)
 repo = InvestigationRepository(engine)
-workflow = AgentWorkflow(graph=graph_adapter, repo=repo)
+llm = build_llm(settings)
+workflow = AgentWorkflow(graph=graph_adapter, repo=repo, llm=llm)
 benchmark_service = BenchmarkService(settings, graph=graph_adapter)
 
 STATIC_DIR = Path(__file__).parent / "static"

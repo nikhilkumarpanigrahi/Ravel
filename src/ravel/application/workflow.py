@@ -58,7 +58,7 @@ class AgentWorkflow:
         # 1. State: TRIGGERED
         case_id = trigger_dict.get("case_id") or f"CASE-{uuid.uuid4().hex[:6].upper()}"
         opened_at_str = trigger_dict.get("opened_at")
-        opened_at = dt.datetime.fromisoformat(opened_at_str) if opened_at_str else dt.datetime.utcnow()
+        opened_at = dt.datetime.fromisoformat(opened_at_str) if opened_at_str else dt.datetime.now(dt.UTC)
 
         trigger = Trigger(
             case_id=case_id,

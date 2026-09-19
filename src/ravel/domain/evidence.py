@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,7 @@ class EvidenceRecord(BaseModel):
     entity_ids: list[str] = Field(default_factory=list)
     evidence_type: EvidenceType = EvidenceType.TRANSACTION
     observed_at: datetime | None = None
-    collected_at: datetime = Field(default_factory=datetime.utcnow)
+    collected_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     supports: str = ""
     contradicts: str = ""
     strength: float = 0.0  # 0..1 weight of this evidence
@@ -41,7 +41,7 @@ class EvidenceRequest(BaseModel):
     assumed_response: str = ""
     reason: str = ""
     expected_value: str = ""
-    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    requested_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     fulfilled: bool = False
     fulfilled_at: datetime | None = None
 

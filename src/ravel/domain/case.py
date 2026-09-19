@@ -37,8 +37,8 @@ class Case(BaseModel):
     summary: str = ""
     written_to_graph: bool = False
     graph_case_id: str = ""
-    opened_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
-    updated_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
+    opened_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.UTC))
+    updated_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.UTC))
 
     @classmethod
     def evidence_from(cls, ev: EvidenceRecord) -> CaseEvidence:
@@ -89,4 +89,4 @@ class CaseMemoryEntry(BaseModel):
     entities: list[str] = Field(default_factory=list)
     device_profiles: list[str] = Field(default_factory=list)
     actions_taken: list[str] = Field(default_factory=list)
-    created_at: dt.datetime = Field(default_factory=dt.datetime.utcnow)
+    created_at: dt.datetime = Field(default_factory=lambda: dt.datetime.now(dt.UTC))

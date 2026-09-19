@@ -5,15 +5,18 @@ SQLite-backed via SQLAlchemy. Enables replay, idempotency, resumable benchmarks,
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Float, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy import Float, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship
+from sqlalchemy.types import JSON as DB_JSON
 
-from ravel.domain.investigation import Investigation
+from ravel.domain.investigation import AgentEvent, Investigation, Trigger
 
-DB_JSON = JSON().with_variant(JSON(), "sqlite")
+
+def utc_now_iso() -> str:
+    return datetime.now(UTC).isoformat()
 
 
 class Base(DeclarativeBase):
@@ -32,8 +35,8 @@ class InvestigationModel(Base):
     latency_s: Mapped[float] = mapped_column(Float, default=0.0)
     stop_reason: Mapped[str] = mapped_column(Text, default="")
     state_history: Mapped[list] = mapped_column(DB_JSON, default=list)
-    created_at: Mapped[str] = mapped_column(String, default=datetime.utcnow().isoformat())
-    updated_at: Mapped[str] = mapped_column(String, default=datetime.utcnow().isoformat())
+    created_at: Mapped[str] = mapped_column(String, default=utc_now_iso)
+    updated_at: Mapped[str] = mapped_column(String, default=utc_now_iso)
 
     events: Mapped[list[AgentEventModel]] = relationship(
         back_populates="investigation", cascade="all, delete-orphan", lazy="selectin"
@@ -81,7 +84,7 @@ class EvidenceModel(Base):
     contradicts: Mapped[str] = mapped_column(Text, default="")
     strength: Mapped[float] = mapped_column(Float, default=0.0)
     confidence: Mapped[float] = mapped_column(Float, default=0.0)
-    collected_at: Mapped[str] = mapped_column(String, default=datetime.utcnow().isoformat())
+    collected_at: Mapped[str] = mapped_column(String, default=utc_now_iso)
     tool_used: Mapped[str] = mapped_column(String, default="")
 
     investigation: Mapped[InvestigationModel] = relationship(back_populates="evidence")
@@ -108,7 +111,7 @@ class EvidenceRequestModel(Base):
     asked_after_step: Mapped[int] = mapped_column(Integer, default=0)
     assumed_response: Mapped[str] = mapped_column(Text, default="")
     reason: Mapped[str] = mapped_column(Text, default="")
-    requested_at: Mapped[str] = mapped_column(String, default=datetime.utcnow().isoformat())
+    requested_at: Mapped[str] = mapped_column(String, default=utc_now_iso)
     fulfilled: Mapped[bool] = mapped_column(Integer, default=0)
 
     investigation: Mapped[InvestigationModel] = relationship(back_populates="requests")
@@ -147,7 +150,7 @@ class CaseRecordModel(Base):
     case_id: Mapped[str] = mapped_column(String, primary_key=True)
     investigation_id: Mapped[str] = mapped_column(String, index=True)
     case_json: Mapped[dict] = mapped_column(DB_JSON, default=dict)
-    updated_at: Mapped[str] = mapped_column(String, default=datetime.utcnow().isoformat())
+    updated_at: Mapped[str] = mapped_column(String, default=utc_now_iso)
 
 
 class MemoryEntryModel(Base):
@@ -162,7 +165,7 @@ class MemoryEntryModel(Base):
     entities_json: Mapped[list] = mapped_column(DB_JSON, default=list)
     device_profiles_json: Mapped[list] = mapped_column(DB_JSON, default=list)
     affected_txn_ids_json: Mapped[list] = mapped_column(DB_JSON, default=list)
-    created_at: Mapped[str] = mapped_column(String, default=datetime.utcnow().isoformat())
+    created_at: Mapped[str] = mapped_column(String, default=utc_now_iso)
 
 
 class Repository:
@@ -201,7 +204,7 @@ class Repository:
             latency_s=inv.latency_s,
             stop_reason=inv.stop_reason,
             state_history=[[s, r] for s, r in inv.state_history],
-            updated_at=datetime.utcnow().isoformat(),
+            updated_at=utc_now_iso(),
             events=[
                 AgentEventModel(step=e.step, ts=e.ts, tool=e.tool, summary=e.summary, detail_json=e.detail)
                 for e in inv.steps
@@ -210,7 +213,7 @@ class Repository:
 
     def _from_inv_model(self, m: InvestigationModel) -> Investigation:
         from ravel.domain.enums import InvestigationState
-        from ravel.domain.investigation import AgentEvent, Investigation, Trigger
+        from ravel.domain.investigation import Investigation
 
         inv = Investigation(
             investigation_id=m.investigation_id,
@@ -400,7 +403,7 @@ class Repository:
             if m is None:
                 m = CaseRecordModel(case_id=case_id, investigation_id=inv_id)
             m.case_json = case_json
-            m.updated_at = datetime.utcnow().isoformat()
+            m.updated_at = utc_now_iso()
             s.merge(m)
             s.commit()
 

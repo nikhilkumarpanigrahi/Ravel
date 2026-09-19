@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -44,8 +44,8 @@ class Investigation(BaseModel):
     tool_calls: int = 0
     tokens: int = 0
     latency_s: float = 0.0
-    started_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     state_history: list[tuple[str, str]] = Field(default_factory=list)
     stop_reason: str = ""
 
@@ -53,11 +53,11 @@ class Investigation(BaseModel):
         self.state_history.append((self.state.value, reason))
         self.state = new_state
         self.version += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
 
     def record(self, step: int, tool: str, summary: str, detail: dict[str, Any] | None = None) -> AgentEvent:
         ev = AgentEvent(step=step, tool=tool, summary=summary, detail=detail or {})
         self.steps.append(ev)
         self.tool_calls += 1
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC)
         return ev
