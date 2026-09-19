@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     tg_query_timeout: int = 30
     tg_mock_rebuild: bool = True
 
-    # --- LLM (OpenAI-compatible chat endpoint) ------------------------------------
-    llm_provider: Literal["none", "openai_compatible"] = "none"
+    # --- LLM (OpenAI-compatible / Ollama / Local chat endpoint) ------------------
+    llm_provider: Literal["none", "openai_compatible", "ollama"] = "none"
     llm_base_url: str = "https://api.openai.com/v1"
     llm_api_key: str = ""
     llm_model: str = "gpt-4o-mini"

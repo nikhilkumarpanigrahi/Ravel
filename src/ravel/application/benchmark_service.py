@@ -46,11 +46,15 @@ class BenchmarkService:
         engine = create_engine(settings.state_db_url)
         self.repo = InvestigationRepository(engine)
         self.policy_engine = PolicyEngine()
+        from ravel.infrastructure.llm import build_llm
+
+        self.llm = build_llm(settings)
         self.workflow = AgentWorkflow(
             graph=self.graph,
             repo=self.repo,
             policy_engine=self.policy_engine,
             simulate_customer=settings.simulate_customer_response,
+            llm=self.llm,
         )
 
     def run_all(

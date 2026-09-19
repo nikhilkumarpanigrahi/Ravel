@@ -28,6 +28,7 @@ from ravel.domain.investigation import Investigation, Trigger
 from ravel.domain.pattern import InvestigationContext, PatternResult
 from ravel.domain.policy import ApprovalRecord, RecommendedAction
 from ravel.infrastructure.graph.base import GraphAdapter
+from ravel.infrastructure.llm import DeterministicSynthesizer, LLMProvider, timed_complete
 from ravel.infrastructure.persistence import InvestigationRepository
 
 
@@ -40,12 +41,14 @@ class AgentWorkflow:
         repo: InvestigationRepository,
         policy_engine: PolicyEngine | None = None,
         simulate_customer: bool = True,
+        llm: LLMProvider | None = None,
     ):
         self.graph = graph
         self.repo = repo
         self.policy = policy_engine or PolicyEngine()
         self.rag = GraphRAGService(graph)
         self.simulate_customer = simulate_customer
+        self.llm = llm or DeterministicSynthesizer()
 
     def run_investigation(self, trigger_dict: dict[str, Any]) -> AnswerFile:
         """Run complete investigation lifecycle for a trigger, producing the answer file."""
@@ -302,6 +305,24 @@ class AgentWorkflow:
         else:
             what_changed = "Uncertainty persisted after inquiry; case escalated to analyst for manual review."
 
+        if self.llm and getattr(self.llm, "name", "") != "deterministic" and customer_response:
+            try:
+                change_sys = (
+                    "You are a senior bank fraud risk officer. Explain policy recommendation adjustments."
+                )
+                change_user = (
+                    f"Initial Proposed Actions: {[a.action.value for a in initial_actions]}\n"
+                    f"Customer Evidence Received: {customer_response}\n"
+                    f"Final Verdict: {final_verdict.value}\n"
+                    f"Final Actions: {[a.action.value for a in final_actions]}\n"
+                    "Explain in 1-2 concise sentences what changed in the risk posture and why actions updated."
+                )
+                txt, tok = timed_complete(self.llm, change_sys, change_user, max_tokens=120)
+                what_changed = txt.strip()
+                inv.tokens += tok
+            except Exception:
+                pass
+
         nba = self.policy.assemble_nba(initial_actions, final_actions, what_changed)
 
         # 11. State: ACTION_PROPOSED & APPROVAL_PENDING
@@ -353,6 +374,27 @@ class AgentWorkflow:
             + f"Recommended {len(final_actions)} action(s) adhering to bank policy."
         )
 
+        if self.llm and getattr(self.llm, "name", "") != "deterministic":
+            try:
+                sum_sys = (
+                    "You are RAVEL, an autonomous fraud investigation AI agent at a major bank. "
+                    "Write a concise, professional case investigation summary summarizing the flagged transaction, "
+                    "graph evidence, customer verification, exposure, and final verdict."
+                )
+                sum_user = (
+                    f"{rag_ctx.to_summary_prompt()}\n"
+                    f"Customer Response: {customer_response or 'None'}\n"
+                    f"Exposure USD: ${exposure:.2f}\n"
+                    f"Pattern Detected: {top_pattern.value}\n"
+                    f"Final Verdict: {final_verdict.value} (probability: {final_fraud_prob:.2f})\n"
+                    f"Recommended Actions: {[a.action.value for a in final_actions]}"
+                )
+                txt, tok = timed_complete(self.llm, sum_sys, sum_user, max_tokens=250)
+                summary_text = txt.strip()
+                inv.tokens += tok
+            except Exception:
+                pass
+
         sar = self.policy.generate_sar(
             final_actions=final_actions,
             case_id=case_id,
@@ -367,6 +409,28 @@ class AgentWorkflow:
             customer_response=customer_response,
             summary=summary_text,
         )
+
+        if sar.file and self.llm and getattr(self.llm, "name", "") != "deterministic":
+            try:
+                sar_sys = (
+                    "You are a BSA/AML regulatory compliance officer. Draft a formal Suspicious Activity Report (SAR) narrative "
+                    "under FinCEN 31 CFR 1020.320. State the suspicious activity chronology, entities involved, "
+                    "typology identified, and legal rationale for filing."
+                )
+                sar_user = (
+                    f"Case ID: {case_id}\n"
+                    f"Subject Customer ID: {trigger.customer_id}, Card: {trigger.card_id}\n"
+                    f"Pattern: {top_pattern.value}\n"
+                    f"Total Suspicious Amount: ${exposure:.2f} USD\n"
+                    f"Connected Cards: {', '.join(rag_ctx.connected_cards[:15])}\n"
+                    f"Connected Devices: {', '.join(rag_ctx.device_profiles[:5])}\n"
+                    f"Evidence Summary:\n{summary_text}"
+                )
+                txt, tok = timed_complete(self.llm, sar_sys, sar_user, max_tokens=400)
+                sar.narrative = txt.strip()
+                inv.tokens += tok
+            except Exception:
+                pass
 
         # 14. State: MEMORY_UPDATED (Write back to graph and memory store)
         inv.transition(
@@ -433,7 +497,7 @@ class AgentWorkflow:
         latency_s = round(time.time() - t0, 2)
         inv.tool_calls = tool_calls
         inv.latency_s = latency_s
-        inv.tokens = 0  # Deterministic / graph-based
+        inv.tokens = inv.tokens
         self.repo.save_investigation(inv)
         self.repo.save_case_record(case_id, inv.investigation_id, case_deliverable.model_dump(mode="json"))
 

@@ -79,6 +79,19 @@ class DeterministicSynthesizer(LLMProvider):
 
 
 def build_llm(settings: Settings) -> LLMProvider:
+    if settings.llm_provider == "ollama":
+        base_url = (
+            settings.llm_base_url
+            if settings.llm_base_url != "https://api.openai.com/v1"
+            else "http://localhost:11434/v1"
+        )
+        model = settings.llm_model if settings.llm_model != "gpt-4o-mini" else "llama3.2"
+        return OpenAICompatibleClient(
+            base_url=base_url,
+            api_key=settings.llm_api_key or "ollama",
+            model=model,
+            timeout_s=settings.llm_timeout_s,
+        )
     if settings.llm_provider == "openai_compatible" and settings.llm_api_key:
         return OpenAICompatibleClient(
             base_url=settings.llm_base_url,
@@ -86,7 +99,7 @@ def build_llm(settings: Settings) -> LLMProvider:
             model=settings.llm_model,
             timeout_s=settings.llm_timeout_s,
         )
-    return DeterministicSynthesizer(timeout_s=1.0)
+    return DeterministicSynthesizer()
 
 
 def timed_complete(provider: LLMProvider, system: str, user: str, **kw: Any) -> tuple[str, int]:
