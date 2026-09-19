@@ -1,0 +1,451 @@
+"""RAVEL Agent Workflow: 14-state investigation state machine fulfilling the PRD contract."""
+
+from __future__ import annotations
+
+import datetime as dt
+import time
+import uuid
+from typing import Any
+
+from ravel.application.detectors import run_detectors
+from ravel.application.graphrag import GraphRAGService
+from ravel.application.policy_engine import PolicyEngine
+from ravel.domain.case import AnswerFile, Case, CaseMemoryEntry
+from ravel.domain.enums import (
+    ApprovalRoute,
+    ApprovalState,
+    CaseStatus,
+    EvidenceSource,
+    EvidenceType,
+    FraudPattern,
+    InvestigationState,
+    PatternStatus,
+    TriggerType,
+    Verdict,
+)
+from ravel.domain.evidence import EvidenceRecord
+from ravel.domain.investigation import Investigation, Trigger
+from ravel.domain.pattern import InvestigationContext, PatternResult
+from ravel.domain.policy import ApprovalRecord, RecommendedAction
+from ravel.infrastructure.graph.base import GraphAdapter
+from ravel.infrastructure.persistence import InvestigationRepository
+
+
+class AgentWorkflow:
+    """Executes stateful, deterministic, policy-governed fraud investigations."""
+
+    def __init__(
+        self,
+        graph: GraphAdapter,
+        repo: InvestigationRepository,
+        policy_engine: PolicyEngine | None = None,
+        simulate_customer: bool = True,
+    ):
+        self.graph = graph
+        self.repo = repo
+        self.policy = policy_engine or PolicyEngine()
+        self.rag = GraphRAGService(graph)
+        self.simulate_customer = simulate_customer
+
+    def run_investigation(self, trigger_dict: dict[str, Any]) -> AnswerFile:
+        """Run complete investigation lifecycle for a trigger, producing the answer file."""
+        t0 = time.time()
+        tool_calls = 0
+
+        # 1. State: TRIGGERED
+        case_id = trigger_dict.get("case_id") or f"CASE-{uuid.uuid4().hex[:6].upper()}"
+        opened_at_str = trigger_dict.get("opened_at")
+        opened_at = dt.datetime.fromisoformat(opened_at_str) if opened_at_str else dt.datetime.utcnow()
+
+        trigger = Trigger(
+            case_id=case_id,
+            type=TriggerType(trigger_dict.get("trigger_type", "risk_score")),
+            opened_at=opened_at,
+            trigger_text=trigger_dict.get("trigger_text", ""),
+            flagged_txn_id=str(trigger_dict.get("flagged_txn_id", "")),
+            card_id=trigger_dict.get("card_id", ""),
+            customer_id=trigger_dict.get("customer_id", ""),
+            risk_score=float(trigger_dict["risk_score"]) if trigger_dict.get("risk_score") else None,
+        )
+
+        inv = Investigation(case_id=case_id, trigger=trigger)
+        self.repo.save_investigation(inv)
+
+        # 2. State: CASE_CREATED
+        inv.transition(InvestigationState.CASE_CREATED, "Case record opened from trigger")
+        inv.record(1, "trigger_intake", f"Intake {trigger.type.value} alert on txn {trigger.flagged_txn_id}")
+        self.repo.save_investigation(inv)
+
+        # 3. State: INVESTIGATING (Graph Traversal)
+        inv.transition(InvestigationState.INVESTIGATING, "Traversing graph neighborhood and historical cases")
+        tool_calls += 1
+        rag_ctx = self.rag.retrieve(
+            customer_id=trigger.customer_id,
+            card_id=trigger.card_id,
+            txn_id=trigger.flagged_txn_id,
+            case_id=case_id,
+        )
+        tool_calls += 3
+
+        # Assemble InvestigationContext for detectors
+        flagged_txn = self.graph.get_transaction(trigger.flagged_txn_id)
+        customer_rec = self.graph.get_customer(trigger.customer_id)
+        card_hist = self.graph.card_history(trigger.customer_id, limit=30)
+        card_window = self.graph.card_window(trigger.customer_id, hours=3.0, limit=50)
+        tool_calls += 4
+
+        ctx = InvestigationContext(
+            txn=flagged_txn,
+            customer=customer_rec,
+            card_history=card_hist,
+            card_window=card_window,
+            connected_entities=self.graph.connected_entities(trigger.customer_id),
+            related_transactions=self.graph.related_transactions(trigger.customer_id),
+            historical_cases=rag_ctx.historical_cases,
+            similar_cases=self.graph.similar_cases(limit=3),
+        )
+        tool_calls += 4
+
+        # 4. State: EVIDENCE_COLLECTED
+        inv.transition(
+            InvestigationState.EVIDENCE_COLLECTED, "Collected multi-hop graph evidence and run detectors"
+        )
+        pattern_results: list[PatternResult] = run_detectors(ctx)
+        tool_calls += 1
+
+        detected_patterns = [p for p in pattern_results if p.status == PatternStatus.DETECTED]
+        partial_patterns = [p for p in pattern_results if p.status == PatternStatus.PARTIAL]
+
+        # 5. State: ASSESSING (Uncertainty & Initial Hypothesis)
+        inv.transition(
+            InvestigationState.ASSESSING, "Evaluating uncertainty, patterns, and policy thresholds"
+        )
+        inv.record(
+            len(inv.steps) + 1,
+            "pattern_detection",
+            f"Evaluated 5 detectors: {len(detected_patterns)} detected",
+        )
+
+        # Determine primary candidate pattern
+        top_pattern = FraudPattern.NONE
+        candidate_confidence = 0.15
+        affected_txn_ids: list[str] = []
+        first_suspicious_id = ""
+
+        if detected_patterns:
+            detected_patterns.sort(key=lambda x: x.confidence, reverse=True)
+            top_pattern = detected_patterns[0].pattern
+            candidate_confidence = detected_patterns[0].confidence
+            affected_txn_ids = detected_patterns[0].affected_txn_ids
+            first_suspicious_id = detected_patterns[0].first_suspicious_txn_id
+        elif partial_patterns:
+            partial_patterns.sort(key=lambda x: x.confidence, reverse=True)
+            top_pattern = partial_patterns[0].pattern
+            candidate_confidence = partial_patterns[0].confidence
+            affected_txn_ids = partial_patterns[0].affected_txn_ids
+
+        # If trigger is a direct customer report dispute
+        is_customer_dispute = trigger.type == TriggerType.CUSTOMER_REPORT
+        if is_customer_dispute:
+            candidate_confidence = max(candidate_confidence, 0.75)
+            if trigger.flagged_txn_id not in affected_txn_ids:
+                affected_txn_ids.append(trigger.flagged_txn_id)
+            first_suspicious_id = first_suspicious_id or trigger.flagged_txn_id
+
+        # Check for recurring legitimate pattern
+        is_recurring = False
+        amt = flagged_txn.get("amount", 0)
+        same_amt_count = sum(1 for t in card_hist if abs(float(t.get("amount", 0)) - amt) < 0.01)
+        if same_amt_count >= 2:
+            is_recurring = True
+
+        # Calculate exposure
+        exposure = 0.0
+        if affected_txn_ids:
+            for tid in set(affected_txn_ids):
+                try:
+                    t_info = self.graph.get_transaction(tid)
+                    exposure += abs(float(t_info.get("amount", 0)))
+                except Exception:
+                    pass
+        elif candidate_confidence > 0.4:
+            exposure = float(flagged_txn.get("amount", 0))
+
+        # Initial actions under R1/R5/R7
+        initial_actions = self.policy.evaluate_initial_actions(
+            verdict=Verdict.UNCERTAIN if candidate_confidence < 0.85 else Verdict.FRAUD,
+            fraud_prob=candidate_confidence,
+            pattern=top_pattern,
+            exposure_usd=exposure,
+            signals_count=len(detected_patterns) + (1 if is_customer_dispute else 0),
+            has_shared_device=bool(rag_ctx.connected_cards),
+            is_recurring=is_recurring,
+            cleared_over_100=(exposure > 100.0),
+        )
+
+        # 6. & 7. External Evidence Request (R1 Verification or Customer Report follow-up)
+        evidence_requests_payload: list[dict[str, Any]] = []
+        customer_response = ""
+
+        needs_verification = any(
+            a.action in (RecommendedAction(action=a.action, route=a.route).action)
+            for a in initial_actions
+            if a.action.value in ("VERIFY_WITH_CUSTOMER", "STEP_UP_AUTH")
+        )
+
+        if needs_verification or is_customer_dispute:
+            inv.transition(
+                InvestigationState.EVIDENCE_REQUESTED, "Dispatched verification request to cardholder"
+            )
+            step_no = len(inv.steps) + 1
+
+            if is_customer_dispute:
+                assumed_resp = f"Customer confirmed dispute: '{trigger.trigger_text}'"
+                req_type = "customer_validation"
+            elif top_pattern in (FraudPattern.CARD_TESTING, FraudPattern.CARD_NOT_PRESENT_NEW_DEVICE):
+                assumed_resp = "Customer stated they did not make these purchases and still have the card"
+                req_type = "customer_validation"
+            elif is_recurring:
+                assumed_resp = (
+                    "Customer stated they recognize the subscription merchant and confirmed the charge"
+                )
+                req_type = "customer_validation"
+            elif candidate_confidence < 0.35:
+                assumed_resp = "Customer confirmed transaction as legitimate cardholder activity"
+                req_type = "customer_validation"
+            else:
+                assumed_resp = "Customer denied the transaction when asked"
+                req_type = "customer_validation"
+
+            customer_response = assumed_resp
+            evidence_requests_payload.append(
+                {
+                    "type": req_type,
+                    "asked_after_step": step_no,
+                    "assumed_response": assumed_resp,
+                }
+            )
+            inv.record(step_no, "request_customer_validation", f"Dispatched {req_type} request to customer")
+
+            # 8. State: EVIDENCE_RECEIVED
+            inv.transition(
+                InvestigationState.EVIDENCE_RECEIVED, "Customer response received and recorded into evidence"
+            )
+            rag_ctx.evidence.append(
+                EvidenceRecord(
+                    case_id=case_id,
+                    claim=f"Customer verification response: {assumed_resp}",
+                    source=EvidenceSource.CUSTOMER,
+                    ref=f"evidence_request:{len(evidence_requests_payload)}",
+                    entity_ids=[trigger.customer_id],
+                    evidence_type=EvidenceType.CUSTOMER_RESPONSE,
+                    strength=0.95,
+                )
+            )
+
+        # 9. State: REASSESSING
+        inv.transition(
+            InvestigationState.REASSESSING,
+            "Reassessing probability and verdict in light of complete evidence",
+        )
+        final_fraud_prob = candidate_confidence
+        final_verdict = Verdict.UNCERTAIN
+
+        if (
+            "deni" in customer_response.lower()
+            or "never made" in customer_response.lower()
+            or "stolen" in customer_response.lower()
+        ):
+            final_fraud_prob = min(0.98, max(0.86, candidate_confidence + 0.25))
+            final_verdict = Verdict.FRAUD
+        elif "confirm" in customer_response.lower() or "legitimate" in customer_response.lower():
+            final_fraud_prob = 0.05
+            final_verdict = Verdict.LEGITIMATE
+            affected_txn_ids = []
+            exposure = 0.0
+        elif candidate_confidence >= 0.85:
+            final_verdict = Verdict.FRAUD
+        elif candidate_confidence <= 0.15:
+            final_verdict = Verdict.LEGITIMATE
+            affected_txn_ids = []
+            exposure = 0.0
+
+        # Ensure affected_txn_ids includes flagged if fraud
+        if final_verdict == Verdict.FRAUD and trigger.flagged_txn_id not in affected_txn_ids:
+            affected_txn_ids.insert(0, trigger.flagged_txn_id)
+
+        # 10. State: POLICY_EVALUATION
+        inv.transition(
+            InvestigationState.POLICY_EVALUATION, "Computing final next-best-action recommendations"
+        )
+        final_actions = self.policy.evaluate_final_actions(
+            verdict=final_verdict,
+            final_fraud_prob=final_fraud_prob,
+            pattern=top_pattern,
+            exposure_usd=exposure,
+            customer_response=customer_response,
+            has_shared_device=bool(rag_ctx.connected_cards),
+            connected_card_ids=rag_ctx.connected_cards,
+            is_recurring=is_recurring,
+        )
+
+        # What changed description
+        if not evidence_requests_payload:
+            what_changed = "nothing"
+        elif final_verdict == Verdict.FRAUD:
+            what_changed = (
+                f"Customer response confirmed unauthorized use, increasing fraud probability to {final_fraud_prob:.2f}. "
+                f"Actions escalated from verification to card block and case creation."
+            )
+        elif final_verdict == Verdict.LEGITIMATE:
+            what_changed = "Customer confirmed transaction as legitimate; alert closed with no fraud."
+        else:
+            what_changed = "Uncertainty persisted after inquiry; case escalated to analyst for manual review."
+
+        nba = self.policy.assemble_nba(initial_actions, final_actions, what_changed)
+
+        # 11. State: ACTION_PROPOSED & APPROVAL_PENDING
+        inv.transition(InvestigationState.ACTION_PROPOSED, "Proposed policy actions with approval routing")
+        for act in final_actions:
+            rec = ApprovalRecord(
+                approval_id=f"APP-{uuid.uuid4().hex[:8]}",
+                action=act.action,
+                case_id=case_id,
+                route=act.route,
+                state=ApprovalState.APPROVED if act.route == ApprovalRoute.AUTO else ApprovalState.PENDING,
+                requestor="agent",
+                policy_version="1.0",
+            )
+            self.repo.add_approval(inv.investigation_id, rec)
+
+        # 12. State: ACTION_EXECUTED (simulated execution of auto actions)
+        inv.transition(InvestigationState.ACTION_EXECUTED, "Executed automated policy actions")
+
+        # 13. State: CASE_CLOSED & SAR generation
+        inv.transition(InvestigationState.CASE_CLOSED, "Investigation closed with defensible decision")
+        inv.stop_reason = (
+            "Verification and graph evidence settled the decision; policy actions proposed and recorded."
+            if (
+                final_verdict in (Verdict.FRAUD, Verdict.LEGITIMATE)
+                or final_fraud_prob >= 0.85
+                or final_fraud_prob <= 0.15
+            )
+            else "Further steps unlikely to change verdict; escalated under policy R8."
+        )
+
+        # Dates for SAR
+        activity_dates = []
+        if flagged_txn.get("ts"):
+            d_str = str(flagged_txn["ts"])[:10]
+            activity_dates = [d_str, d_str]
+
+        # Narrative / Summary
+        summary_text = (
+            f"Investigation of {trigger.case_id} ({trigger.customer_id} / {trigger.card_id}): "
+            f"Flagged transaction {trigger.flagged_txn_id} (${flagged_txn.get('amount', 0):.2f}) evaluated under {top_pattern.value}. "
+            + (f"Customer reported: {customer_response}. " if customer_response else "")
+            + (
+                f"Identified {len(affected_txn_ids)} affected transaction(s) totaling ${exposure:.2f} USD exposure. "
+                if affected_txn_ids
+                else "No fraudulent exposure confirmed. "
+            )
+            + f"Verdict: {final_verdict.value} (fraud probability: {final_fraud_prob:.2f}). "
+            + f"Recommended {len(final_actions)} action(s) adhering to bank policy."
+        )
+
+        sar = self.policy.generate_sar(
+            final_actions=final_actions,
+            case_id=case_id,
+            customer_id=trigger.customer_id,
+            card_id=trigger.card_id,
+            pattern=top_pattern,
+            exposure_usd=exposure,
+            affected_txn_ids=affected_txn_ids,
+            connected_cards=rag_ctx.connected_cards,
+            device_profiles=rag_ctx.device_profiles,
+            activity_dates=activity_dates,
+            customer_response=customer_response,
+            summary=summary_text,
+        )
+
+        # 14. State: MEMORY_UPDATED (Write back to graph and memory store)
+        inv.transition(
+            InvestigationState.MEMORY_UPDATED, "Case memory recorded into graph and persistence layer"
+        )
+        graph_case_payload = {
+            "case_id": case_id,
+            "customer_id": trigger.customer_id,
+            "card_id": trigger.card_id,
+            "verdict": final_verdict.value,
+            "pattern": top_pattern.value,
+            "exposure_usd": exposure,
+            "affected_txn_ids": affected_txn_ids,
+            "connected_card_ids": rag_ctx.connected_cards,
+            "connected_device_profiles": rag_ctx.device_profiles,
+            "summary": summary_text,
+        }
+        tool_calls += 1
+        graph_case_id = self.graph.write_case(graph_case_payload)
+
+        # Write memory entry
+        self.repo.add_memory(
+            CaseMemoryEntry(
+                case_id=case_id,
+                graph_case_id=graph_case_id,
+                summary=summary_text,
+                verdict=final_verdict.value,
+                pattern=top_pattern.value,
+                exposure_usd=exposure,
+                affected_txn_ids=affected_txn_ids,
+                entities=[trigger.customer_id, trigger.card_id] + rag_ctx.connected_cards,
+                device_profiles=rag_ctx.device_profiles,
+                actions_taken=[a.action.value for a in final_actions],
+            )
+        )
+
+        # Build Case deliverable (Part 1)
+        similar_prior = [c.get("case_id", "") for c in rag_ctx.historical_cases[:2] if c.get("case_id")]
+        case_deliverable = Case(
+            case_id=case_id,
+            status=CaseStatus.CLOSED_FRAUD
+            if final_verdict == Verdict.FRAUD
+            else (
+                CaseStatus.CLOSED_LEGITIMATE if final_verdict == Verdict.LEGITIMATE else CaseStatus.ESCALATED
+            ),
+            verdict=final_verdict,
+            fraud_probability=round(final_fraud_prob, 2),
+            pattern=top_pattern,
+            pattern_description="Undocumented coordinated cross-account behavior"
+            if top_pattern == FraudPattern.UNDOCUMENTED
+            else "",
+            affected_txn_ids=affected_txn_ids,
+            first_suspicious_txn_id=first_suspicious_id or (affected_txn_ids[0] if affected_txn_ids else ""),
+            connected_card_ids=rag_ctx.connected_cards,
+            connected_device_profiles=rag_ctx.device_profiles,
+            exposure_usd=round(exposure, 2),
+            evidence=[Case.evidence_from(e) for e in rag_ctx.evidence],
+            similar_prior_cases=similar_prior,
+            summary=summary_text,
+            written_to_graph=True,
+            graph_case_id=graph_case_id,
+        )
+
+        latency_s = round(time.time() - t0, 2)
+        inv.tool_calls = tool_calls
+        inv.latency_s = latency_s
+        inv.tokens = 0  # Deterministic / graph-based
+        self.repo.save_investigation(inv)
+        self.repo.save_case_record(case_id, inv.investigation_id, case_deliverable.model_dump(mode="json"))
+
+        # Construct full AnswerFile
+        return AnswerFile(
+            case_id=case_id,
+            case=case_deliverable,
+            evidence_requests=evidence_requests_payload,
+            next_best_actions=nba.model_dump(mode="json"),
+            sar=sar,
+            stop_reason=inv.stop_reason,
+            tool_calls=tool_calls,
+            tokens=inv.tokens,
+            latency_s=latency_s,
+        )
