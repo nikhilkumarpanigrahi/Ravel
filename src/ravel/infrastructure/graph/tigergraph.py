@@ -9,6 +9,7 @@ from __future__ import annotations
 import contextlib
 import json
 import time
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -57,22 +58,19 @@ class TigerGraphAdapter(GraphAdapter):
         use_token: bool = False,
         query_timeout: int = 30,
         data_dir: Path | None = None,
-        install_on_start: bool = True,
+        install_on_start: bool = False,
     ):
         self.host = host
         self.graphname = graphname
-        self.conn = None
+        self.username = username
+        self.password = password
+        self.token = token
+        self.secret = secret
+        self.use_token = use_token
         self.query_timeout = query_timeout
         self.data_dir = data_dir
-        self._conn_kwargs = dict(
-            host=host,
-            graphname=graphname,
-            username=username,
-            password=password,
-            token=token,
-            apiToken=secret,
-            useToken=use_token,
-        )
+        self.conn = None
+        self._installed_cache: set[str] | None = None
         self._refresh_conn()
         if install_on_start:
             try:
@@ -83,9 +81,32 @@ class TigerGraphAdapter(GraphAdapter):
     def _refresh_conn(self) -> None:
         from pyTigerGraph import TigerGraphConnection
 
-        self.conn = TigerGraphConnection(**self._conn_kwargs)
-        with contextlib.suppress(Exception):
-            self.conn.getToken(self.conn.createSecret())
+        # Handle TG 4.x / Savanna Cloud JWT token exchange
+        if self.secret and not self.token:
+            try:
+                import requests
+
+                url = f"{self.host.rstrip('/')}/gsql/v1/tokens"
+                resp = requests.post(url, json={"secret": self.secret}, timeout=self.query_timeout)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    self.token = data.get("token") or ""
+            except Exception as exc:  # noqa: BLE001
+                print(f"[tigergraph] JWT token exchange failed: {exc}")
+
+        is_tg_cloud = "tgcloud.io" in self.host
+        conn_kwargs: dict[str, Any] = dict(
+            host=self.host,
+            graphname=self.graphname,
+            username=self.username,
+            password=self.password,
+            apiToken=self.token or self.secret,
+            tgCloud=is_tg_cloud,
+        )
+        self.conn = TigerGraphConnection(**conn_kwargs)
+        if self.token:
+            self.conn.apiToken = self.token
+            self.conn.authHeader = {"Authorization": f"Bearer {self.token}"}
 
     def _ensure_installed(self) -> None:
         installed = {q["name"] for q in self.conn.queryInstalledQueries()}
@@ -161,6 +182,15 @@ class TigerGraphAdapter(GraphAdapter):
         except Exception:
             return False
 
+    def _has_query(self, name: str) -> bool:
+        if self._installed_cache is None:
+            try:
+                installed = self.conn.getInstalledQueries() or {}
+                self._installed_cache = {k.split("/")[-1] for k in installed}
+            except Exception:
+                self._installed_cache = set()
+        return name in self._installed_cache
+
     def _run(self, query: str, **params: Any) -> list[dict[str, Any]]:
         start = time.time()
         try:
@@ -175,147 +205,302 @@ class TigerGraphAdapter(GraphAdapter):
 
     # ----------------------------------------------------------- investigation
     def get_transaction(self, txn_id: str) -> dict[str, Any]:
-        rows = self._run("get_txn", txn_id=txn_id)
-        if not rows:
-            raise KeyError(f"transaction {txn_id} not found")
-        r = rows[0]
-        return {
-            "txn_id": r.get("txn_id") or txn_id,
-            "ts": r.get("ts", ""),
-            "amount": r.get("amount", 0.0),
-            "product_cd": r.get("product_cd", ""),
-            "channel": r.get("channel", ""),
-            "risk_score": r.get("risk_score", 0.0),
-            "customer_id": r.get("customer_id", ""),
-            "card_id": r.get("card_id", ""),
-            "card6": r.get("card6", ""),
-            "addr1": r.get("addr1", ""),
-            "addr2": r.get("addr2", ""),
-            "p_email_domain": r.get("p_email", ""),
-            "device_id": r.get("device_id", ""),
-            "device_profile": "",
-            "device_new": "",
-            "device_type": "",
-            "device_proxy": "",
-            "email_conflict": bool(r.get("email_conflict", False)),
-        }
+        if self._has_query("get_txn"):
+            with contextlib.suppress(Exception):
+                rows = self._run("get_txn", txn_id=txn_id)
+                if rows:
+                    r = rows[0]
+                    return {
+                        "txn_id": str(r.get("txn_id") or txn_id),
+                        "ts": r.get("ts", ""),
+                        "amount": float(r.get("amount", 0.0)),
+                        "product_cd": r.get("product_cd", ""),
+                        "channel": r.get("channel", ""),
+                        "risk_score": float(r.get("risk_score", 0.0)),
+                        "customer_id": r.get("customer_id", ""),
+                        "card_id": r.get("card_id", ""),
+                        "card6": r.get("card6", ""),
+                        "addr1": str(r.get("addr1", "")),
+                        "addr2": str(r.get("addr2", "")),
+                        "p_email_domain": r.get("p_email", ""),
+                        "device_id": r.get("device_id", ""),
+                        "device_profile": "",
+                        "device_new": "",
+                        "device_type": "",
+                        "device_proxy": "",
+                        "email_conflict": bool(r.get("email_conflict", False)),
+                    }
+
+        # Native REST++ query fallback
+        try:
+            tid = int(txn_id) if txn_id.isdigit() else txn_id
+            res = self.conn.getVerticesById("Transaction", tid)
+            if not res:
+                raise KeyError(f"transaction {txn_id} not found")
+            attrs = res[0].get("attributes", {})
+            edges = self.conn.getEdges("Transaction", tid) or []
+            cust_id = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_of_customer"), "")
+            card_id = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_of_card"), "")
+            dev_id = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_uses_device"), "")
+            p_email = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_has_p_emaildomain"), "")
+
+            return {
+                "txn_id": str(attrs.get("transaction_id", txn_id)),
+                "ts": str(attrs.get("ts", "")),
+                "amount": float(attrs.get("transaction_amt", 0.0)),
+                "product_cd": str(attrs.get("product_cd", "")),
+                "channel": str(attrs.get("channel", "")),
+                "risk_score": float(attrs.get("risk_score", 0.0)),
+                "customer_id": cust_id,
+                "card_id": card_id,
+                "card6": str(attrs.get("card6", "")),
+                "addr1": str(attrs.get("addr1", "")),
+                "addr2": str(attrs.get("addr2", "")),
+                "p_email_domain": p_email,
+                "device_id": dev_id,
+                "device_profile": str(attrs.get("device_profile", "")),
+                "device_new": str(attrs.get("device_new", "")),
+                "device_type": str(attrs.get("device_type", "")),
+                "device_proxy": str(attrs.get("device_proxy", "")),
+                "email_conflict": bool(attrs.get("email_conflict", 0)),
+            }
+        except Exception as exc:
+            raise KeyError(f"transaction {txn_id} not found: {exc}") from exc
 
     def get_customer(self, customer_id: str) -> dict[str, Any]:
-        self._run("card_history", customer_id=customer_id, limit=1)
-        n_txns = self._run("degree_of", entity_id=customer_id, kind=0)
-        deg = n_txns[0].get("value", 0) if n_txns else 0
+        if self._has_query("degree_of"):
+            with contextlib.suppress(Exception):
+                n_txns = self._run("degree_of", entity_id=customer_id, kind=0)
+                deg = n_txns[0].get("value", 0) if n_txns else 0
+                return {
+                    "customer_id": customer_id,
+                    "card_label": f"{customer_id}-K1",
+                    "n_transactions": deg,
+                    "n_online": 0,
+                }
+        edges = self.conn.getEdges("Customer", customer_id) or []
+        txn_edges = [e for e in edges if e.get("e_type") == "transaction_of_customer"]
         return {
             "customer_id": customer_id,
             "card_label": f"{customer_id}-K1",
-            "n_transactions": deg,
+            "n_transactions": len(txn_edges),
             "n_online": 0,
         }
 
     def card_history(self, customer_id: str, limit: int = 25) -> list[dict[str, Any]]:
-        rows = self._run("card_history", customer_id=customer_id, limit=limit)
-        return self._txns(rows)
+        if self._has_query("card_history"):
+            with contextlib.suppress(Exception):
+                rows = self._run("card_history", customer_id=customer_id, limit=limit)
+                return self._txns(rows)
+
+        # Native REST++ query fallback
+        edges = self.conn.getEdges("Customer", customer_id) or []
+        txn_ids = [
+            int(e["to_id"]) if e["to_id"].isdigit() else e["to_id"]
+            for e in edges
+            if e.get("e_type") == "transaction_of_customer"
+        ]
+        if not txn_ids:
+            return []
+        v_list = self.conn.getVerticesById("Transaction", txn_ids[: limit * 3]) or []
+        rows = []
+        for v in v_list:
+            a = v.get("attributes", {})
+            rows.append({
+                "txn_id": str(a.get("transaction_id", v.get("v_id", ""))),
+                "ts": str(a.get("ts", "")),
+                "amount": float(a.get("transaction_amt", 0.0)),
+                "product_cd": str(a.get("product_cd", "")),
+                "channel": str(a.get("channel", "")),
+                "risk_score": float(a.get("risk_score", 0.0)),
+                "customer_id": customer_id,
+                "card_id": f"{customer_id}-K1",
+                "card6": str(a.get("card6", "")),
+                "addr1": str(a.get("addr1", "")),
+                "addr2": str(a.get("addr2", "")),
+                "p_email_domain": "",
+                "device_id": "",
+                "device_profile": str(a.get("device_profile", "")),
+                "device_new": str(a.get("device_new", "")),
+                "device_type": str(a.get("device_type", "")),
+                "device_proxy": str(a.get("device_proxy", "")),
+                "email_conflict": bool(a.get("email_conflict", 0)),
+            })
+        rows.sort(key=lambda x: str(x.get("ts", "")), reverse=True)
+        return rows[:limit]
 
     def card_window(self, customer_id: str, hours: float = 2.0, limit: int = 50) -> list[dict[str, Any]]:
-        latest = self._run("card_history", customer_id=customer_id, limit=1)
+        latest = self.card_history(customer_id=customer_id, limit=1)
         if not latest:
             return []
-        anchor = latest[0]["ts"]
-        rows = self._run(
-            "card_window", customer_id=customer_id, anchor_ts=anchor, hours=int(hours), limit=limit
-        )
-        return self._txns(rows)
+        anchor_str = latest[0]["ts"]
+        if self._has_query("card_window"):
+            with contextlib.suppress(Exception):
+                rows = self._run(
+                    "card_window", customer_id=customer_id, anchor_ts=anchor_str, hours=int(hours), limit=limit
+                )
+                return self._txns(rows)
+
+        # Native REST++ filtering fallback
+        all_hist = self.card_history(customer_id=customer_id, limit=limit * 2)
+        try:
+            from datetime import datetime, timedelta
+
+            anchor_dt = datetime.fromisoformat(anchor_str[:19])
+            start_dt = anchor_dt - timedelta(hours=hours)
+            win = [t for t in all_hist if start_dt <= datetime.fromisoformat(t["ts"][:19]) <= anchor_dt]
+            win.sort(key=lambda x: str(x.get("ts", "")))
+            return win[:limit]
+        except Exception:
+            return all_hist[:limit]
 
     def connected_entities(self, customer_id: str, depth: int = 2, limit: int = 100) -> list[dict[str, Any]]:
-        rows = self._run("connected_entities", customer_id=customer_id, limit=limit)
-        out: list[dict[str, Any]] = []
-        for r in rows:
-            for k, v in r.items():
-                if isinstance(v, list):
-                    for item in v[:limit]:
-                        out.append({"id": str(item), "type": k, "label": str(item)})
+        if self._has_query("connected_entities"):
+            with contextlib.suppress(Exception):
+                rows = self._run("connected_entities", customer_id=customer_id, limit=limit)
+                out: list[dict[str, Any]] = []
+                for r in rows:
+                    for k, v in r.items():
+                        if isinstance(v, list):
+                            for item in v[:limit]:
+                                out.append({"id": str(item), "type": k, "label": str(item)})
+                return out
+
+        # Native fallback
+        edges = self.conn.getEdges("Customer", customer_id) or []
+        out = []
+        for e in edges[:limit]:
+            out.append({"id": str(e.get("to_id")), "type": str(e.get("to_type")), "label": str(e.get("to_id"))})
         return out
 
     def shared_devices(self, customer_id: str, limit: int = 50) -> list[dict[str, Any]]:
-        rows = self._run("shared_devices", customer_id=customer_id, limit=limit)
-        return [
-            {
-                "device_id": r.get("device_id", ""),
-                "device_profile": r.get("device_profile", r.get("dev_profile", "")),
-                "other_customer_id": r.get("customer_id", ""),
-                "other_card_id": r.get("card_id", ""),
-                "device_new": r.get("device_new", ""),
-                "device_proxy": r.get("device_proxy", ""),
-                "shared_txns": r.get("shared_txns", 1),
-                "last_seen": r.get("ts", ""),
-            }
-            for r in rows
-        ]
+        if self._has_query("shared_devices"):
+            with contextlib.suppress(Exception):
+                rows = self._run("shared_devices", customer_id=customer_id, limit=limit)
+                return [
+                    {
+                        "device_id": r.get("device_id", ""),
+                        "device_profile": r.get("device_profile", r.get("dev_profile", "")),
+                        "other_customer_id": r.get("customer_id", ""),
+                        "other_card_id": r.get("card_id", ""),
+                        "device_new": r.get("device_new", ""),
+                        "device_proxy": r.get("device_proxy", ""),
+                        "shared_txns": r.get("shared_txns", 1),
+                        "last_seen": r.get("ts", ""),
+                    }
+                    for r in rows
+                ]
+        return []
 
     def shared_regions(self, customer_id: str, limit: int = 50) -> list[dict[str, Any]]:
-        rows = self._run("shared_regions", customer_id=customer_id, limit=limit)
-        return self._txns(rows)
+        if self._has_query("shared_regions"):
+            with contextlib.suppress(Exception):
+                rows = self._run("shared_regions", customer_id=customer_id, limit=limit)
+                return self._txns(rows)
+        return []
 
     def related_transactions(
         self, customer_id: str, window_days: float = 7.0, limit: int = 100
     ) -> list[dict[str, Any]]:
-        latest = self._run("card_history", customer_id=customer_id, limit=1)
-        from_ts = "2016-01-01 00:00:00"
-        if latest:
-            try:
-                from datetime import datetime, timedelta
+        if self._has_query("related_transactions"):
+            latest = self.card_history(customer_id=customer_id, limit=1)
+            from_ts = "2016-01-01 00:00:00"
+            if latest:
+                try:
+                    from datetime import datetime, timedelta
 
-                from_ts = (
-                    datetime.strptime(latest[0]["ts"][:19], "%Y-%m-%d %H:%M:%S") - timedelta(days=window_days)
-                ).strftime("%Y-%m-%d %H:%M:%S")
-            except Exception:  # noqa: BLE001
-                pass
-        rows = self._run("related_transactions", customer_id=customer_id, from_ts=from_ts, limit=limit)
-        return self._txns(rows)
+                    from_ts = (
+                        datetime.strptime(latest[0]["ts"][:19], "%Y-%m-%d %H:%M:%S") - timedelta(days=window_days)
+                    ).strftime("%Y-%m-%d %H:%M:%S")
+                except Exception:  # noqa: BLE001
+                    pass
+            with contextlib.suppress(Exception):
+                rows = self._run("related_transactions", customer_id=customer_id, from_ts=from_ts, limit=limit)
+                return self._txns(rows)
+        return self.card_history(customer_id=customer_id, limit=limit)
 
     def historical_cases(
         self, customer_id: str = "", outcome: str = "", pattern: str = "", limit: int = 20
     ) -> list[dict[str, Any]]:
-        rows = self._run(
-            "historical_cases", customer_id=customer_id, outcome=outcome, pattern=pattern, limit=limit
-        )
-        return [{k: (v if isinstance(v, (str, int, float)) else str(v)) for k, v in r.items()} for r in rows]
+        if self._has_query("historical_cases"):
+            with contextlib.suppress(Exception):
+                rows = self._run(
+                    "historical_cases", customer_id=customer_id, outcome=outcome, pattern=pattern, limit=limit
+                )
+                return [{k: (v if isinstance(v, (str, int, float)) else str(v)) for k, v in r.items()} for r in rows]
+
+        # Native REST++ query fallback
+        cases = self.conn.getVertices("FraudCase", limit=limit * 2) or []
+        out_cases: list[dict[str, Any]] = []
+        for c in cases:
+            attrs = c.get("attributes", {})
+            if outcome and attrs.get("outcome") != outcome:
+                continue
+            if pattern and attrs.get("pattern") != pattern:
+                continue
+            out_cases.append({k: (v if isinstance(v, (str, int, float)) else str(v)) for k, v in attrs.items()})
+            if len(out_cases) >= limit:
+                break
+        return out_cases
 
     def transaction_neighborhood(self, txn_id: str, depth: int = 2, limit: int = 100) -> list[dict[str, Any]]:
         root = self.get_transaction(txn_id)
-        # shared-device expansion for the customer
-        rows = self._run(
-            "related_transactions",
-            customer_id=root["customer_id"],
-            from_ts="2016-07-01 00:00:00",
-            limit=limit,
-        )
-        return [root, *self._txns(rows[: limit - 1])]
+        cust_id = root.get("customer_id")
+        if cust_id:
+            hist = self.card_history(customer_id=cust_id, limit=limit - 1)
+            return [root, *[t for t in hist if t.get("txn_id") != root.get("txn_id")]]
+        return [root]
 
     def high_degree_check(self, entity_id: str) -> bool:
         kind = 1 if entity_id.startswith("DEV-") else 0
-        rows = self._run("degree_of", entity_id=entity_id, kind=kind)
-        deg = rows[0].get("value", 0) if rows else 0
-        return int(deg) > 2000
+        if self._has_query("degree_of"):
+            with contextlib.suppress(Exception):
+                rows = self._run("degree_of", entity_id=entity_id, kind=kind)
+                deg = rows[0].get("value", 0) if rows else 0
+                return int(deg) > 2000
+        edges = self.conn.getEdges("Customer" if kind == 0 else "Device", entity_id) or []
+        return len(edges) > 2000
 
     def write_case(self, case: dict[str, Any]) -> str:
         import uuid
 
         gid = case.get("graph_case_id") or f"CASE-2016-{uuid.uuid4().hex[:8].upper()}"
+        if self._has_query("write_fraud_case"):
+            with contextlib.suppress(Exception):
+                self._run(
+                    "write_fraud_case",
+                    graph_case_id=gid,
+                    case_id=case.get("case_id", ""),
+                    customer_id=case.get("customer_id", ""),
+                    verdict=case.get("verdict", ""),
+                    pattern=case.get("pattern", ""),
+                    exposure_usd=float(case.get("exposure_usd", 0.0)),
+                    summary=case.get("summary", ""),
+                    card_ids=case.get("connected_card_ids", []),
+                    txn_ids=case.get("affected_txn_ids", []),
+                )
+                return gid
+
+        # Native REST++ upsert
         try:
-            self._run(
-                "write_fraud_case",
-                graph_case_id=gid,
-                case_id=case.get("case_id", ""),
-                customer_id=case.get("customer_id", ""),
-                verdict=case.get("verdict", ""),
-                pattern=case.get("pattern", ""),
-                exposure_usd=float(case.get("exposure_usd", 0.0)),
-                summary=case.get("summary", ""),
-                card_ids=case.get("connected_card_ids", []),
-                txn_ids=case.get("affected_txn_ids", []),
+            from datetime import datetime
+
+            now_str = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+            self.conn.upsertVertex(
+                "FraudCase",
+                gid,
+                attributes={
+                    "case_id": case.get("case_id", gid),
+                    "opened_at": now_str,
+                    "closed_at": now_str,
+                    "outcome": case.get("verdict", "investigated"),
+                    "pattern": case.get("pattern", "none"),
+                    "exposure_usd": float(case.get("exposure_usd", 0.0)),
+                    "summary": (case.get("summary") or "")[:1000],
+                },
             )
-        except GraphUnavailableError:
-            raise
+        except Exception as exc:  # noqa: BLE001
+            print(f"[tigergraph] write_case notice: {exc}")
         return gid
 
     def subgraph_for_viz(self, root: str, depth: int = 2, limit: int = 100) -> dict[str, Any]:
@@ -332,9 +517,10 @@ class TigerGraphAdapter(GraphAdapter):
             }
         ]
         edges: list[dict[str, Any]] = []
-        nodes.append({"id": txn["customer_id"], "type": "customer", "label": txn["customer_id"]})
-        edges.append({"from": root, "to": txn["customer_id"], "type": "MADE_BY"})
-        for r in self._run("card_history", customer_id=txn["customer_id"], limit=min(15, limit)):
+        if txn.get("customer_id"):
+            nodes.append({"id": txn["customer_id"], "type": "customer", "label": txn["customer_id"]})
+            edges.append({"from": root, "to": txn["customer_id"], "type": "MADE_BY"})
+        for r in self.card_history(customer_id=txn.get("customer_id", ""), limit=min(15, limit)):
             nid = str(r.get("txn_id", ""))
             if nid:
                 nodes.append(

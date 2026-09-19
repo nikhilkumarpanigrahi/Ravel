@@ -66,13 +66,9 @@ def related_transactions(customer_id: str, limit: int = 50) -> str:
 
 
 @mcp.tool()
-def historical_cases(
-    customer_id: str = "", outcome: str = "", pattern: str = "", limit: int = 10
-) -> str:
+def historical_cases(customer_id: str = "", outcome: str = "", pattern: str = "", limit: int = 10) -> str:
     """Query closed historical fraud investigation cases from graph memory."""
-    cases = adapter.historical_cases(
-        customer_id=customer_id, outcome=outcome, pattern=pattern, limit=limit
-    )
+    cases = adapter.historical_cases(customer_id=customer_id, outcome=outcome, pattern=pattern, limit=limit)
     return json.dumps(cases, default=str)
 
 

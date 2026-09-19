@@ -29,6 +29,7 @@ def create_graph_adapter(settings: Any) -> GraphAdapter:
             return MockGraphAdapter(level0_dir)
     return MockGraphAdapter(level0_dir)
 
+
 __all__ = [
     "GraphAdapter",
     "GraphAdapterError",

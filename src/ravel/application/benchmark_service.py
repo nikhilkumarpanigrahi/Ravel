@@ -15,8 +15,6 @@ from ravel.application.workflow import AgentWorkflow
 from ravel.config import Settings
 from ravel.domain.case import AnswerFile
 from ravel.infrastructure.graph.base import GraphAdapter
-from ravel.infrastructure.graph.mock import MockGraphAdapter
-from ravel.infrastructure.graph.tigergraph import TigerGraphAdapter
 from ravel.infrastructure.persistence import InvestigationRepository
 
 logger = logging.getLogger("ravel.benchmark")
@@ -27,20 +25,9 @@ class BenchmarkService:
 
     def __init__(self, settings: Settings, graph: GraphAdapter | None = None):
         self.settings = settings
-        level0_dir = settings.data_dir.parent / "data" / "level0"
-        if graph:
-            self.graph = graph
-        elif settings.graph_adapter == "tigergraph" and settings.tg_host:
-            try:
-                self.graph = TigerGraphAdapter(
-                    conn_params=settings.tg_conn,
-                    query_timeout=settings.tg_query_timeout,
-                )
-            except Exception as exc:
-                logger.warning("TigerGraph connection failed, falling back to mock adapter: %s", exc)
-                self.graph = MockGraphAdapter(level0_dir)
-        else:
-            self.graph = MockGraphAdapter(level0_dir)
+        from ravel.infrastructure.graph import create_graph_adapter
+
+        self.graph = graph or create_graph_adapter(settings)
 
         # Persistence repo
         engine = create_engine(settings.state_db_url)
