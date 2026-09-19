@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAVEL — Forensic Fraud Workstation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0f1217;
+      --bg-panel: #161b22;
+      --bg-card: #1c222d;
+      --bg-subtle: #242c3a;
+      --border: #2b3545;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-subtle: #64748b;
+      --fraud-red: #ef4444;
+      --fraud-bg: rgba(239, 68, 68, 0.12);
+      --legit-green: #22c55e;
+      --legit-bg: rgba(34, 197, 94, 0.12);
+      --warn-amber: #f59e0b;
+      --warn-bg: rgba(245, 158, 11, 0.12);
+      --accent-blue: #38bdf8;
+      --accent-bg: rgba(56, 189, 248, 0.12);
+      --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-tg {
+      background: #0284c7;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .brand-sub {
+      color: var(--text-subtle);
+      font-size: 12px;
+      border-left: 1px solid var(--border);
+      padding-left: 12px;
+    }
+
+    .top-stats {
+      display: flex;
+      gap: 20px;
+      font-size: 12px;
+    }
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stat-pill span {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar Case Explorer */
+    aside {
+      width: 280px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .aside-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .filter-tabs {
+      display: flex;
+      background: var(--bg-card);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .filter-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .filter-btn.active {
+      background: var(--bg-subtle);
+      color: #fff;
+    }
+
+    .case-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+    }
+    .case-item {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .case-item:hover {
+      background: var(--bg-card);
+    }
+    .case-item.active {
+      background: var(--bg-subtle);
+      border-left: 3px solid var(--accent-blue);
+    }
+    .case-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .case-cid {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #fff;
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+    .badge-fraud { background: var(--fraud-bg); color: var(--fraud-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-legit { background: var(--legit-bg); color: var(--legit-green); border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-uncertain { background: var(--warn-bg); color: var(--warn-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Main Workspace */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-base);
+    }
+
+    .workspace-header {
+      background: var(--bg-panel);
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .active-case-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .case-title {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .case-chips {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 24px;
+      margin-top: 8px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      background: var(--bg-panel);
+    }
+    .nav-tab {
+      padding: 10px 0;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      position: relative;
+    }
+    .nav-tab.active {
+      color: #fff;
+      font-weight: 600;
+    }
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-blue);
+    }
+
+    .content-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* Grid Sections */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 10px;
+    }
+
+    /* Subgraph Canvas */
+    #graph-container {
+      height: 340px;
+      width: 100%;
+      background: #0b0e13;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Evidence Ledger */
+    .evidence-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+    .evidence-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .evidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+    }
+    .source-tag {
+      color: var(--accent-blue);
+      font-weight: 600;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+    .evidence-claim {
+      font-size: 12.5px;
+      color: #e2e8f0;
+    }
+    .evidence-ref {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-subtle);
+    }
+
+    /* Next Best Actions */
+    .nba-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--bg-subtle);
+      border-radius: 5px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .action-name {
+      font-weight: 600;
+      color: #fff;
+    }
+    .route-tag {
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      background: #334155;
+      color: #cbd5e1;
+    }
+
+    /* SAR Narrative Box */
+    .sar-box {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 6px;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    /* Buttons */
+    .btn {
+      background: var(--bg-subtle);
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: #2f3a4d; }
+    .btn-primary { background: #0284c7; border-color: #0284c7; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-approve { background: #15803d; border-color: #15803d; }
+    .btn-approve:hover { background: #166534; }
+
+    /* Timeline Stepper */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      padding-left: 20px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      left: 6px;
+      width: 2px;
+      background: var(--border);
+    }
+    .timeline-item {
+      position: relative;
+    }
+    .timeline-dot {
+      position: absolute;
+      left: -20px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      border: 2px solid var(--bg-panel);
+    }
+    .timeline-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-title">
+        RAVEL
+        <span class="badge-tg">TigerGraph</span>
+      </div>
+      <div class="brand-sub">Agentic Fraud Investigation Workstation</div>
+    </div>
+    <div class="top-stats">
+      <div class="stat-pill">Cases: <span id="stat-cases">20</span></div>
+      <div class="stat-pill">Confirmed Fraud: <span id="stat-fraud" style="color:var(--fraud-red)">13</span></div>
+      <div class="stat-pill">Legitimate: <span id="stat-legit" style="color:var(--legit-green)">6</span></div>
+      <div class="stat-pill">SARs Filed: <span id="stat-sar">5</span></div>
+      <div class="stat-pill">Total Exposure: <span id="stat-exposure">$3,277.56</span></div>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <aside>
+      <div class="aside-header">
+        <div class="filter-tabs">
+          <button class="filter-btn active" onclick="setFilter('all')">All (20)</button>
+          <button class="filter-btn" onclick="setFilter('fraud')">Fraud</button>
+          <button class="filter-btn" onclick="setFilter('legit')">Legit</button>
+          <button class="filter-btn" onclick="setFilter('sar')">SAR</button>
+        </div>
+      </div>
+      <ul class="case-list" id="case-list-ul">
+        <!-- Rendered via JS -->
+      </ul>
+    </aside>
+
+    <main>
+      <div class="workspace-header">
+        <div class="active-case-meta">
+          <div class="case-title" id="current-case-id">HHG-001</div>
+          <div class="case-chips" id="current-chips">
+            <span class="badge badge-legit">LEGITIMATE</span>
+            <span class="badge" style="background:#334155">PATTERN: NONE</span>
+          </div>
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="runSingleCase()">Replay Investigation</button>
+        </div>
+      </div>
+
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('record')">Forensic Case Record</button>
+        <button class="nav-tab" onclick="switchTab('timeline')">State Machine Trace</button>
+        <button class="nav-tab" onclick="switchTab('benchmark')">Benchmark Matrix</button>
+      </div>
+
+      <div class="content-viewport" id="tab-record">
+        <div class="dashboard-grid">
+          
+          <!-- Left Column -->
+          <div style="display:flex; flex-direction:column; gap:20px;">
+            <div class="panel">
+              <div class="panel-title">
+                <span>Relationship Subgraph</span>
+                <span style="font-size:11px; font-weight:normal;">TigerGraph 2-Hop Inspection</span>
+              </div>
+              <div id="graph-container">
+                <canvas id="subgraph-canvas"></canvas>
+              </div>
+              <div style="display:flex; gap:16px; font-size:11px; color:var(--text-muted); justify-content:center;">
+                <span>🟢 Flagged Txn</span>
+                <span>🔵 Customer</span>
+                <span>🟠 Card</span>
+                <span>🟣 Device / Region</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-title">
+                <span>Evidence Ledger</span>
+                <span id="evidence-count" style="font-family:var(--font-mono)">0 Records</span>
+              </div>
+              <div class="evidence-list" id="evidence-container">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div style="display:flex; flex-direction:column; gap:20px;">
+            <div class="panel">
+              <div class="panel-title">
+                <span>Executive Summary & Stop Reason</span>
+              </div>
+              <p id="case-summary" style="font-size:13.5px; line-height:1.6; color:#e2e8f0;"></p>
+              <div style="background:var(--bg-card); padding:10px; border-radius:6px; font-size:12px; border-left:3px solid var(--accent-blue);">
+                <strong style="color:var(--accent-blue)">Stop Reason:</strong> <span id="case-stop-reason"></span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-title">
+                <span>Next Best Actions & Approval Governance</span>
+                <span class="route-tag" id="approval-status-tag">GOVERNED</span>
+              </div>
+              <div class="nba-box">
+                <div style="font-weight:600; font-size:11.5px; color:var(--text-muted);">FINAL RECOMMENDED ACTIONS:</div>
+                <div id="final-actions-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                <div style="margin-top:4px; font-size:11.5px; color:var(--text-subtle);">
+                  <strong>What changed:</strong> <span id="nba-what-changed"></span>
+                </div>
+                <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                  <button class="btn btn-approve" id="approve-btn" onclick="approveAction()">Approve L1/L2 Pending Action</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel" id="sar-panel">
+              <div class="panel-title">
+                <span>Regulatory Filing (SAR Narrative)</span>
+                <span id="sar-filed-tag" class="badge badge-fraud">FILED</span>
+              </div>
+              <div class="sar-box" id="sar-narrative-text"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Timeline Tab -->
+      <div class="content-viewport" id="tab-timeline" style="display:none;">
+        <div class="panel" style="max-width:800px; margin:0 auto;">
+          <div class="panel-title">Investigation Lifecycle State Machine Trace</div>
+          <div class="timeline" id="timeline-container">
+            <!-- Timeline items injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Benchmark Matrix Tab -->
+      <div class="content-viewport" id="tab-benchmark" style="display:none;">
+        <div class="panel">
+          <div class="panel-title">20-Case Benchmark Execution Results</div>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--text-muted);">
+                <th style="padding:8px;">Case ID</th>
+                <th style="padding:8px;">Verdict</th>
+                <th style="padding:8px;">Pattern</th>
+                <th style="padding:8px;">Probability</th>
+                <th style="padding:8px;">Exposure USD</th>
+                <th style="padding:8px;">SAR Filed</th>
+                <th style="padding:8px;">Latency</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    let allCases = [];
+    let currentCaseData = null;
+    let currentFilter = 'all';
+
+    async function init() {
+      try {
+        const res = await fetch('/api/cases');
+        allCases = await res.json();
+        renderCaseList();
+        if (allCases.length > 0) {
+          loadCase(allCases[0].case_id);
+        }
+        loadBenchmarkTable();
+      } catch (err) {
+        console.error("Failed to load cases", err);
+      }
+    }
+
+    function renderCaseList() {
+      const ul = document.getElementById('case-list-ul');
+      ul.innerHTML = '';
+      const filtered = allCases.filter(c => {
+        if (currentFilter === 'fraud') return c.verdict === 'fraud';
+        if (currentFilter === 'legit') return c.verdict === 'legitimate';
+        if (currentFilter === 'sar') return c.sar_file;
+        return true;
+      });
+
+      filtered.forEach(c => {
+        const li = document.createElement('li');
+        li.className = 'case-item' + (currentCaseData && currentCaseData.case_id === c.case_id ? ' active' : '');
+        li.onclick = () => loadCase(c.case_id);
+
+        let badgeClass = 'badge-legit';
+        if (c.verdict === 'fraud') badgeClass = 'badge-fraud';
+        if (c.verdict === 'uncertain') badgeClass = 'badge-uncertain';
+
+        li.innerHTML = `
+          <div class="case-item-row">
+            <span class="case-cid">${c.case_id}</span>
+            <span class="badge ${badgeClass}">${c.verdict}</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span>${c.pattern}</span>
+            <span>$${Number(c.exposure_usd).toFixed(2)}</span>
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      renderCaseList();
+    }
+
+    async function loadCase(caseId) {
+      try {
+        const res = await fetch(`/api/cases/${caseId}`);
+        currentCaseData = await res.json();
+        renderActiveCase();
+        renderCaseList();
+        renderGraph();
+      } catch (err) {
+        console.error("Error loading case", err);
+      }
+    }
+
+    function renderActiveCase() {
+      const d = currentCaseData;
+      if (!d) return;
+      document.getElementById('current-case-id').innerText = d.case_id;
+
+      const c = d.case || {};
+      let verdictBadge = c.verdict === 'fraud' ? 'badge-fraud' : (c.verdict === 'legitimate' ? 'badge-legit' : 'badge-uncertain');
+      document.getElementById('current-chips').innerHTML = `
+        <span class="badge ${verdictBadge}">${c.verdict} (${(c.fraud_probability*100).toFixed(0)}%)</span>
+        <span class="badge" style="background:#334155">${c.pattern.toUpperCase()}</span>
+        <span class="badge" style="background:#1e293b">EXPOSURE: $${Number(c.exposure_usd).toFixed(2)}</span>
+      `;
+
+      document.getElementById('case-summary').innerText = c.summary || 'No summary available.';
+      document.getElementById('case-stop-reason').innerText = d.stop_reason || 'Investigation concluded.';
+
+      // Evidence
+      const evList = document.getElementById('evidence-container');
+      evList.innerHTML = '';
+      const evidence = c.evidence || [];
+      document.getElementById('evidence-count').innerText = `${evidence.length} Records`;
+      evidence.forEach(ev => {
+        const card = document.createElement('div');
+        card.className = 'evidence-card';
+        card.innerHTML = `
+          <div class="evidence-header">
+            <span class="source-tag">${ev.source.toUpperCase()}</span>
+            <span class="evidence-ref">${ev.ref}</span>
+          </div>
+          <div class="evidence-claim">${ev.claim}</div>
+        `;
+        evList.appendChild(card);
+      });
+
+      // Actions
+      const actionsList = document.getElementById('final-actions-list');
+      actionsList.innerHTML = '';
+      const nba = d.next_best_actions || {};
+      const finals = nba.final || [];
+      finals.forEach(act => {
+        const row = document.createElement('div');
+        row.className = 'action-row';
+        row.innerHTML = `
+          <span class="action-name">${act.action}</span>
+          <span class="route-tag">Route: ${act.route}</span>
+        `;
+        actionsList.appendChild(row);
+      });
+      document.getElementById('nba-what-changed').innerText = nba.what_changed || 'nothing';
+
+      // SAR
+      const sar = d.sar || {};
+      const sarPanel = document.getElementById('sar-panel');
+      if (sar.file) {
+        sarPanel.style.display = 'flex';
+        document.getElementById('sar-narrative-text').innerText = sar.narrative;
+      } else {
+        sarPanel.style.display = 'none';
+      }
+
+      // Timeline
+      renderTimeline();
+    }
+
+    function renderTimeline() {
+      const tl = document.getElementById('timeline-container');
+      tl.innerHTML = '';
+      const steps = [
+        { state: 'TRIGGERED', title: 'Case Trigger Received', desc: 'Real-time detection alert recorded' },
+        { state: 'CASE_CREATED', title: 'Internal Case Opened', desc: 'Aggregate state initialized in SQLite' },
+        { state: 'INVESTIGATING', title: 'Graph Traversal & Retrieval', desc: 'Queried transactions, cards, and device neighbors' },
+        { state: 'EVIDENCE_COLLECTED', title: 'Detectors Executed', desc: 'Ran card testing, velocity, and takeover detectors' },
+        { state: 'ASSESSING', title: 'Uncertainty Evaluated', desc: 'Calculated completeness and confidence intervals' },
+        { state: 'POLICY_EVALUATION', title: 'Rules R1-R10 Enforced', desc: 'Mapped actions and approval routes' },
+        { state: 'CASE_CLOSED', title: 'Defensible Decision Finalized', desc: currentCaseData?.stop_reason || 'Closed' },
+        { state: 'MEMORY_UPDATED', title: 'Written to Graph Memory', desc: `Stored vertex: ${currentCaseData?.case?.graph_case_id}` }
+      ];
+
+      steps.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.innerHTML = `
+          <div class="timeline-dot"></div>
+          <div class="timeline-card">
+            <div style="font-weight:600; font-family:var(--font-mono); font-size:11px; color:var(--accent-blue);">${s.state}</div>
+            <div style="font-weight:600; font-size:13px; color:#fff;">${s.title}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${s.desc}</div>
+          </div>
+        `;
+        tl.appendChild(item);
+      });
+    }
+
+    async function loadBenchmarkTable() {
+      try {
+        const res = await fetch('/api/benchmark/results');
+        const bench = await res.json();
+        const tbody = document.getElementById('benchmark-tbody');
+        tbody.innerHTML = '';
+        if (bench.cases) {
+          bench.cases.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.innerHTML = `
+              <td style="padding:8px; font-family:var(--font-mono); font-weight:600;">${c.case_id}</td>
+              <td style="padding:8px;"><span class="badge ${c.verdict === 'fraud' ? 'badge-fraud' : (c.verdict === 'legitimate' ? 'badge-legit' : 'badge-uncertain')}">${c.verdict}</span></td>
+              <td style="padding:8px; color:var(--text-muted);">${c.pattern}</td>
+              <td style="padding:8px; font-family:var(--font-mono);">${(c.fraud_probability*100).toFixed(0)}%</td>
+              <td style="padding:8px; font-family:var(--font-mono);">$${Number(c.exposure_usd).toFixed(2)}</td>
+              <td style="padding:8px;">${c.sar_file ? '<span style="color:var(--fraud-red)">Yes</span>' : 'No'}</td>
+              <td style="padding:8px; font-family:var(--font-mono); color:var(--text-subtle);">${c.latency_s}s</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        console.error("Benchmark load error", err);
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-record').style.display = tab === 'record' ? 'block' : 'none';
+      document.getElementById('tab-timeline').style.display = tab === 'timeline' ? 'block' : 'none';
+      document.getElementById('tab-benchmark').style.display = tab === 'benchmark' ? 'block' : 'none';
+    }
+
+    function approveAction() {
+      const btn = document.getElementById('approve-btn');
+      btn.innerText = '✓ Approved by Fraud Lead (L1/L2)';
+      btn.className = 'btn';
+      btn.style.background = '#065f46';
+      btn.disabled = true;
+      document.getElementById('approval-status-tag').innerText = 'APPROVED';
+      document.getElementById('approval-status-tag').style.background = '#15803d';
+    }
+
+    // Graph Visualizer Canvas
+    function renderGraph() {
+      const canvas = document.getElementById('subgraph-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      canvas.width = w;
+      canvas.height = h;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Node coordinates
+      const nodes = [
+        { x: w * 0.5, y: h * 0.5, label: currentCaseData?.case?.case_id || 'Flagged Txn', color: '#22c55e', type: 'txn' },
+        { x: w * 0.25, y: h * 0.35, label: currentCaseData?.case?.connected_card_ids?.[0] || 'Card K1', color: '#f59e0b', type: 'card' },
+        { x: w * 0.75, y: h * 0.35, label: 'Customer', color: '#38bdf8', type: 'cust' },
+        { x: w * 0.5, y: h * 0.2, label: 'Device DEV-981', color: '#a855f7', type: 'dev' },
+        { x: w * 0.35, y: h * 0.8, label: 'Region 444', color: '#64748b', type: 'reg' },
+        { x: w * 0.65, y: h * 0.8, label: 'Prior CC-0141', color: '#e11d48', type: 'hist' },
+      ];
+
+      const edges = [
+        [0, 1], [0, 2], [0, 3], [0, 4], [2, 1], [3, 5]
+      ];
+
+      // Draw edges
+      ctx.strokeStyle = '#2b3545';
+      ctx.lineWidth = 1.5;
+      edges.forEach(([i, j]) => {
+        ctx.beginPath();
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.stroke();
+      });
+
+      // Draw nodes
+      nodes.forEach(n => {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 14, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '11px JetBrains Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText(n.label, n.x, n.y + 26);
+      });
+    }
+
+    window.onload = init;
+    window.onresize = renderGraph;
+  </script>
+</body>
+</html>
