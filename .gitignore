@@ -1,0 +1,30 @@
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+
+# Large dataset files (>100MB exceeds GitHub push limits)
+HHGOA_IEEE/transactions.csv
+HHGOA_IEEE/identity.csv
+HHGOA_IEEE/closed_cases_history.csv
+data/
+*.db
+*.db-wal
+*.db-shm
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
