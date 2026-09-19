@@ -16,6 +16,9 @@ dependencies = [
     "pandas>=2.2",
 ]
 
+[project.scripts]
+ravel = "ravel.interfaces.cli:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.2",

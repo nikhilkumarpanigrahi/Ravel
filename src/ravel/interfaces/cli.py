@@ -51,6 +51,73 @@ def cmd_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_mcp(args: argparse.Namespace) -> int:
+    from ravel.infrastructure.graph.mcp_server import run_mcp_stdio
+
+    print("Starting RAVEL TigerGraph Model Context Protocol (MCP) server on stdio...", file=sys.stderr)
+    run_mcp_stdio()
+    return 0
+
+
+def cmd_tg_setup(args: argparse.Namespace) -> int:
+    host = args.host or settings.tg_host
+    username = args.username or settings.tg_username or "tigergraph"
+    password = args.password or settings.tg_password
+    graphname = args.graphname or getattr(settings, "tg_graphname", "ravel")
+
+    if not host or not password:
+        print("TigerGraph Savanna / CE Configuration Guide:")
+        print("---------------------------------------------")
+        print("To connect RAVEL to a live TigerGraph instance:")
+        print("1. Create a free blank graph on TigerGraph Savanna (https://savanna.tgcloud.io).")
+        print("2. Set the following in your .env file:")
+        print("   RAVEL_GRAPH_ADAPTER=tigergraph")
+        print("   RAVEL_TG_HOST=https://your-domain.i.tgcloud.io")
+        print("   RAVEL_TG_USERNAME=tigergraph")
+        print("   RAVEL_TG_PASSWORD=your_password")
+        print("   RAVEL_TG_GRAPHNAME=ravel")
+        print("\nOr run directly:")
+        print("   ravel tg-setup --host https://... --password ...")
+        return 1
+
+    print(f"Connecting to TigerGraph at {host} (graph: {graphname})...")
+    from pyTigerGraph import TigerGraphConnection
+
+    from ravel.infrastructure.graph import gsql_scripts as gsql
+
+    try:
+        conn = TigerGraphConnection(
+            host=host,
+            graphname=graphname,
+            username=username,
+            password=password,
+        )
+        print("Authenticating and creating secret...")
+        secret = conn.createSecret()
+        conn.getToken(secret)
+        print("Connection successful! Token acquired.")
+
+        print("Checking/installing GSQL schema and loading jobs...")
+        schema_code = gsql.SCHEMA_GSQL.replace("@@graphname@@", graphname)
+        res_schema = conn.gsql(schema_code)
+        print("Schema output:", res_schema[:200])
+
+        load_code = gsql.LOAD_JOBS_GSQL.replace("@@graphname@@", graphname)
+        res_load = conn.gsql(load_code)
+        print("Loading job output:", res_load[:200])
+
+        print("Installing bounded investigation GSQL queries (this takes 2-3 minutes)...")
+        queries_code = gsql.QUERIES_GSQL.replace("@@graphname@@", graphname)
+        res_queries = conn.gsql(queries_code)
+        print("Queries output:", res_queries[:200])
+
+        print("TigerGraph deployment complete and verified!")
+        return 0
+    except Exception as exc:
+        print(f"TigerGraph setup failed: {exc}", file=sys.stderr)
+        return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="ravel", description="RAVEL — agentic fraud investigation")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -75,6 +142,16 @@ def main() -> int:
     sh = sub.add_parser("show", help="inspect an answer file by case ID")
     sh.add_argument("case_id", help="e.g. HHG-001")
     sh.set_defaults(func=cmd_show)
+
+    m = sub.add_parser("mcp", help="run the TigerGraph Model Context Protocol (MCP) server")
+    m.set_defaults(func=cmd_mcp)
+
+    tg = sub.add_parser("tg-setup", help="deploy schema, loading jobs, and queries to live TigerGraph")
+    tg.add_argument("--host", default="")
+    tg.add_argument("--username", default="")
+    tg.add_argument("--password", default="")
+    tg.add_argument("--graphname", default="ravel")
+    tg.set_defaults(func=cmd_tg_setup)
 
     args = parser.parse_args()
     return args.func(args)
