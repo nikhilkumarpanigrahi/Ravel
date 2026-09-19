@@ -1,0 +1,153 @@
+{
+  "case_id": "HHG-002",
+  "case": {
+    "case_id": "HHG-002",
+    "status": "escalated",
+    "verdict": "uncertain",
+    "fraud_probability": 0.75,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3545271",
+      "3545283",
+      "3545290",
+      "3545367",
+      "3545398"
+    ],
+    "first_suspicious_txn_id": "3545271",
+    "connected_card_ids": [
+      "C11847-K2",
+      "C00294-K2",
+      "C11509-K2",
+      "C09657-K2",
+      "C05381-K2",
+      "C11923-K2",
+      "C06744-K2",
+      "C05031-K2",
+      "C06663-K2",
+      "C11919-K2",
+      "C04597-K1",
+      "C06630-K2",
+      "C04034-K2",
+      "C05307-K2",
+      "C08962-K2",
+      "C02147-K2",
+      "C13171-K2",
+      "C07562-K2"
+    ],
+    "connected_device_profiles": [],
+    "exposure_usd": 131.17,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3478782 for $292.36 via online (ProductCD C) with initial risk score 0.79",
+        "source": "graph",
+        "ref": "query:get_transaction(3478782)",
+        "entity_ids": [
+          "3478782"
+        ]
+      },
+      {
+        "claim": "Customer C11891 holds card C11891-K1 with 44 total transactions on file, billed in home region ",
+        "source": "graph",
+        "ref": "query:get_customer(C11891)",
+        "entity_ids": [
+          "C11891",
+          "C11891-K1"
+        ]
+      },
+      {
+        "claim": "Device shared across 18 other card(s): C11847-K2, C00294-K2, C11509-K2",
+        "source": "graph",
+        "ref": "query:shared_devices(C11891)",
+        "entity_ids": [
+          "C11847-K2",
+          "C00294-K2",
+          "C11509-K2",
+          "C09657-K2",
+          "C05381-K2",
+          "C11923-K2",
+          "C06744-K2",
+          "C05031-K2",
+          "C06663-K2",
+          "C11919-K2",
+          "C04597-K1",
+          "C06630-K2",
+          "C04034-K2",
+          "C05307-K2",
+          "C08962-K2",
+          "C02147-K2",
+          "C13171-K2",
+          "C07562-K2"
+        ]
+      },
+      {
+        "claim": "Retrieved 1 similar closed case(s) from case memory: CC-4160",
+        "source": "graph",
+        "ref": "query:historical_cases",
+        "entity_ids": [
+          "CC-4160"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-4160"
+    ],
+    "summary": "Investigation of HHG-002 (C11891 / C11891-K1): Flagged transaction 3478782 ($292.36) evaluated under card_not_present_fraud. Identified 5 affected transaction(s) totaling $131.17 USD exposure. Verdict: uncertain (fraud probability: 0.75). Recommended 1 action(s) adhering to bank policy.",
+    "written_to_graph": true,
+    "graph_case_id": "CASE-2016-5DAF45C5",
+    "opened_at": "2026-09-19 11:27:33.573381",
+    "updated_at": "2026-09-19 11:27:33.573383"
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "Policy 1: High fraud probability 0.75 on pattern card_not_present_fraud",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Section 3a: Internal fraud case record",
+        "order": 2,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "Section 3a & R6: Exposure $131.17 > $1,000 or shared infrastructure",
+        "order": 3,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "final": [
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "Policy 1: Monitor card pending human review",
+        "order": 2,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy criteria for regulatory filing not met (exposure <= $1,000 and no multi-card link)",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "Further steps unlikely to change verdict; escalated under policy R8.",
+  "tool_calls": 14,
+  "tokens": 0,
+  "latency_s": 1.16
+}

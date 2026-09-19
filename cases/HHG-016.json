@@ -1,0 +1,170 @@
+{
+  "case_id": "HHG-016",
+  "case": {
+    "case_id": "HHG-016",
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.98,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3534820"
+    ],
+    "first_suspicious_txn_id": "3534820",
+    "connected_card_ids": [
+      "C05031-K2",
+      "C04597-K1",
+      "C09657-K2",
+      "C13171-K2",
+      "C05381-K2",
+      "C07562-K2",
+      "C11847-K2",
+      "C06663-K2",
+      "C11509-K2",
+      "C00294-K2",
+      "C02147-K2",
+      "C06224-K2",
+      "C08962-K2",
+      "C04034-K2",
+      "C10308-K1",
+      "C05307-K2",
+      "C06744-K2",
+      "C11919-K2",
+      "C11923-K2",
+      "C06630-K2"
+    ],
+    "connected_device_profiles": [],
+    "exposure_usd": 59.67,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3534820 for $59.67 via online (ProductCD C) with initial risk score 0.37",
+        "source": "graph",
+        "ref": "query:get_transaction(3534820)",
+        "entity_ids": [
+          "3534820"
+        ]
+      },
+      {
+        "claim": "Customer C09988 holds card C09988-K1 with 61 total transactions on file, billed in home region ",
+        "source": "graph",
+        "ref": "query:get_customer(C09988)",
+        "entity_ids": [
+          "C09988",
+          "C09988-K1"
+        ]
+      },
+      {
+        "claim": "Device shared across 20 other card(s): C05031-K2, C04597-K1, C09657-K2",
+        "source": "graph",
+        "ref": "query:shared_devices(C09988)",
+        "entity_ids": [
+          "C05031-K2",
+          "C04597-K1",
+          "C09657-K2",
+          "C13171-K2",
+          "C05381-K2",
+          "C07562-K2",
+          "C11847-K2",
+          "C06663-K2",
+          "C11509-K2",
+          "C00294-K2",
+          "C02147-K2",
+          "C06224-K2",
+          "C08962-K2",
+          "C04034-K2",
+          "C10308-K1",
+          "C05307-K2",
+          "C06744-K2",
+          "C11919-K2",
+          "C11923-K2",
+          "C06630-K2"
+        ]
+      },
+      {
+        "claim": "Retrieved 3 similar closed case(s) from case memory: CC-5559, CC-5558, CC-5556",
+        "source": "graph",
+        "ref": "query:historical_cases",
+        "entity_ids": [
+          "CC-5559",
+          "CC-5558",
+          "CC-5556"
+        ]
+      },
+      {
+        "claim": "Customer verification response: Customer confirmed dispute: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": [
+          "C09988"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5559",
+      "CC-5558"
+    ],
+    "summary": "Investigation of HHG-016 (C09988 / C09988-K1): Flagged transaction 3534820 ($59.67) evaluated under card_not_present_fraud. Customer reported: Customer confirmed dispute: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'. Identified 1 affected transaction(s) totaling $59.67 USD exposure. Verdict: fraud (fraud probability: 0.98). Recommended 1 action(s) adhering to bank policy.",
+    "written_to_graph": true,
+    "graph_case_id": "CASE-2016-4FDD89CA",
+    "opened_at": "2026-09-19 09:07:55.616096",
+    "updated_at": "2026-09-19 09:07:55.616097"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer confirmed dispute: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Section 3a: Open internal fraud case as probability reaches threshold",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: Single signal / probability 0.75 < 0.70; verify before blocking",
+        "order": 2,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
+        "order": 3,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "final": [
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "R3: Customer confirmed transaction as legitimate cardholder activity",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "what_changed": "Customer response confirmed unauthorized use, increasing fraud probability to 0.98. Actions escalated from verification to card block and case creation."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy criteria for regulatory filing not met (exposure <= $1,000 and no multi-card link)",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
+  "tool_calls": 14,
+  "tokens": 0,
+  "latency_s": 0.94
+}

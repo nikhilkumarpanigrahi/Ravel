@@ -1,0 +1,161 @@
+{
+  "case_id": "HHG-012",
+  "case": {
+    "case_id": "HHG-012",
+    "status": "closed_legitimate",
+    "verdict": "legitimate",
+    "fraud_probability": 0.05,
+    "pattern": "none",
+    "pattern_description": "",
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [
+      "C05245-K2",
+      "C07212-K1",
+      "C11309-K1",
+      "C11000-K2",
+      "C02716-K1",
+      "C04108-K2",
+      "C11965-K1",
+      "C09290-K1",
+      "C09241-K2",
+      "C00854-K2",
+      "C03218-K2",
+      "C06224-K2",
+      "C01155-K2",
+      "C05560-K2",
+      "C08962-K2",
+      "C05704-K2",
+      "C12897-K1",
+      "C10308-K1",
+      "C03040-K2",
+      "C00750-K2",
+      "C11923-K2"
+    ],
+    "connected_device_profiles": [],
+    "exposure_usd": 0.0,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3553342 for $30.91 via in_person (ProductCD W) with initial risk score 0.55",
+        "source": "graph",
+        "ref": "query:get_transaction(3553342)",
+        "entity_ids": [
+          "3553342"
+        ]
+      },
+      {
+        "claim": "Customer C05876 holds card C05876-K2 with 991 total transactions on file, billed in home region 204.0",
+        "source": "graph",
+        "ref": "query:get_customer(C05876)",
+        "entity_ids": [
+          "C05876",
+          "C05876-K2"
+        ]
+      },
+      {
+        "claim": "Device shared across 21 other card(s): C05245-K2, C07212-K1, C11309-K1",
+        "source": "graph",
+        "ref": "query:shared_devices(C05876)",
+        "entity_ids": [
+          "C05245-K2",
+          "C07212-K1",
+          "C11309-K1",
+          "C11000-K2",
+          "C02716-K1",
+          "C04108-K2",
+          "C11965-K1",
+          "C09290-K1",
+          "C09241-K2",
+          "C00854-K2",
+          "C03218-K2",
+          "C06224-K2",
+          "C01155-K2",
+          "C05560-K2",
+          "C08962-K2",
+          "C05704-K2",
+          "C12897-K1",
+          "C10308-K1",
+          "C03040-K2",
+          "C00750-K2",
+          "C11923-K2"
+        ]
+      },
+      {
+        "claim": "Retrieved 2 similar closed case(s) from case memory: CC-2370, CC-0003",
+        "source": "graph",
+        "ref": "query:historical_cases",
+        "entity_ids": [
+          "CC-2370",
+          "CC-0003"
+        ]
+      },
+      {
+        "claim": "Customer verification response: Customer confirmed transaction as legitimate cardholder activity",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": [
+          "C05876"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-2370",
+      "CC-0003"
+    ],
+    "summary": "Investigation of HHG-012 (C05876 / C05876-K2): Flagged transaction 3553342 ($30.91) evaluated under none. Customer reported: Customer confirmed transaction as legitimate cardholder activity. No fraudulent exposure confirmed. Verdict: legitimate (fraud probability: 0.05). Recommended 1 action(s) adhering to bank policy.",
+    "written_to_graph": true,
+    "graph_case_id": "CASE-2016-5380CC40",
+    "opened_at": "2026-09-19 09:07:53.330077",
+    "updated_at": "2026-09-19 09:07:53.330078"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer confirmed transaction as legitimate cardholder activity"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: Single signal / probability 0.15 < 0.70; verify before blocking",
+        "order": 2,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
+        "order": 3,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "final": [
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "R3: Customer confirmed transaction as legitimate cardholder activity",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "what_changed": "Customer confirmed transaction as legitimate; alert closed with no fraud."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy criteria for regulatory filing not met (exposure <= $1,000 and no multi-card link)",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
+  "tool_calls": 14,
+  "tokens": 0,
+  "latency_s": 0.26
+}

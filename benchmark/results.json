@@ -1,0 +1,35 @@
+{
+  "cases_run": 2,
+  "verdicts": {
+    "legitimate": 1,
+    "uncertain": 1
+  },
+  "patterns": {
+    "none": 1,
+    "card_not_present_fraud": 1
+  },
+  "sar_filed": 0,
+  "total_exposure_usd": 131.17,
+  "avg_latency_s": 0.59,
+  "avg_tool_calls": 14.0,
+  "cases": [
+    {
+      "case_id": "HHG-001",
+      "verdict": "legitimate",
+      "pattern": "none",
+      "fraud_probability": 0.05,
+      "exposure_usd": 0.0,
+      "sar_file": false,
+      "latency_s": 0.03
+    },
+    {
+      "case_id": "HHG-002",
+      "verdict": "uncertain",
+      "pattern": "card_not_present_fraud",
+      "fraud_probability": 0.75,
+      "exposure_usd": 131.17,
+      "sar_file": false,
+      "latency_s": 1.16
+    }
+  ]
+}

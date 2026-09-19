@@ -1,0 +1,202 @@
+{
+  "case_id": "HHG-006",
+  "case": {
+    "case_id": "HHG-006",
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.98,
+    "pattern": "card_not_present_new_device",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3476682"
+    ],
+    "first_suspicious_txn_id": "3476682",
+    "connected_card_ids": [
+      "C08943-K2",
+      "C05245-K2",
+      "C02354-K2",
+      "C03066-K1",
+      "C12942-K2",
+      "C07648-K2",
+      "C03019-K2",
+      "C11000-K2",
+      "C07212-K1",
+      "C11247-K1",
+      "C03278-K2",
+      "C02716-K1",
+      "C04108-K2",
+      "C08450-K2",
+      "C12961-K2",
+      "C02250-K2",
+      "C01109-K2",
+      "C09800-K1",
+      "C02231-K1",
+      "C09241-K2",
+      "C00854-K2",
+      "C03218-K2",
+      "C12166-K2",
+      "C04125-K1",
+      "C06224-K2",
+      "C01155-K2",
+      "C05560-K2",
+      "C05704-K2",
+      "C02114-K1",
+      "C09301-K2",
+      "C12897-K1",
+      "C03040-K2",
+      "C00750-K2",
+      "C09666-K2",
+      "C00941-K1",
+      "C10349-K1"
+    ],
+    "connected_device_profiles": [],
+    "exposure_usd": 482.12,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3476682 for $482.12 via online (ProductCD C) with initial risk score 0.25",
+        "source": "graph",
+        "ref": "query:get_transaction(3476682)",
+        "entity_ids": [
+          "3476682"
+        ]
+      },
+      {
+        "claim": "Customer C07297 holds card C07297-K1 with 261 total transactions on file, billed in home region 191.0",
+        "source": "graph",
+        "ref": "query:get_customer(C07297)",
+        "entity_ids": [
+          "C07297",
+          "C07297-K1"
+        ]
+      },
+      {
+        "claim": "Device shared across 36 other card(s): C08943-K2, C05245-K2, C02354-K2",
+        "source": "graph",
+        "ref": "query:shared_devices(C07297)",
+        "entity_ids": [
+          "C08943-K2",
+          "C05245-K2",
+          "C02354-K2",
+          "C03066-K1",
+          "C12942-K2",
+          "C07648-K2",
+          "C03019-K2",
+          "C11000-K2",
+          "C07212-K1",
+          "C11247-K1",
+          "C03278-K2",
+          "C02716-K1",
+          "C04108-K2",
+          "C08450-K2",
+          "C12961-K2",
+          "C02250-K2",
+          "C01109-K2",
+          "C09800-K1",
+          "C02231-K1",
+          "C09241-K2",
+          "C00854-K2",
+          "C03218-K2",
+          "C12166-K2",
+          "C04125-K1",
+          "C06224-K2",
+          "C01155-K2",
+          "C05560-K2",
+          "C05704-K2",
+          "C02114-K1",
+          "C09301-K2",
+          "C12897-K1",
+          "C03040-K2",
+          "C00750-K2",
+          "C09666-K2",
+          "C00941-K1",
+          "C10349-K1"
+        ]
+      },
+      {
+        "claim": "Retrieved 3 similar closed case(s) from case memory: CC-5559, CC-5558, CC-5556",
+        "source": "graph",
+        "ref": "query:historical_cases",
+        "entity_ids": [
+          "CC-5559",
+          "CC-5558",
+          "CC-5556"
+        ]
+      },
+      {
+        "claim": "Customer verification response: Customer confirmed dispute: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.'",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": [
+          "C07297"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5559",
+      "CC-5558"
+    ],
+    "summary": "Investigation of HHG-006 (C07297 / C07297-K1): Flagged transaction 3476682 ($482.12) evaluated under card_not_present_new_device. Customer reported: Customer confirmed dispute: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.'. Identified 1 affected transaction(s) totaling $482.12 USD exposure. Verdict: fraud (fraud probability: 0.98). Recommended 1 action(s) adhering to bank policy.",
+    "written_to_graph": true,
+    "graph_case_id": "CASE-2016-015C9D65",
+    "opened_at": "2026-09-19 09:07:50.169400",
+    "updated_at": "2026-09-19 09:07:50.169402"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer confirmed dispute: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.'"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "Policy 1: High fraud probability 0.90 on pattern card_not_present_new_device",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Section 3a: Internal fraud case record",
+        "order": 2,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "Section 3a & R6: Exposure $482.12 > $1,000 or shared infrastructure",
+        "order": 3,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "final": [
+      {
+        "action": "CLOSE_NO_FRAUD",
+        "route": "auto",
+        "reason": "R3: Customer confirmed transaction as legitimate cardholder activity",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "what_changed": "Customer response confirmed unauthorized use, increasing fraud probability to 0.98. Actions escalated from verification to card block and case creation."
+  },
+  "sar": {
+    "file": false,
+    "reason": "Policy criteria for regulatory filing not met (exposure <= $1,000 and no multi-card link)",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
+  "tool_calls": 14,
+  "tokens": 0,
+  "latency_s": 0.19
+}

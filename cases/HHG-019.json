@@ -1,0 +1,242 @@
+{
+  "case_id": "HHG-019",
+  "case": {
+    "case_id": "HHG-019",
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.98,
+    "pattern": "account_takeover",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3503878",
+      "3590562"
+    ],
+    "first_suspicious_txn_id": "3503878",
+    "connected_card_ids": [
+      "C05031-K2",
+      "C11339-K1",
+      "C05245-K2",
+      "C12942-K2",
+      "C11000-K2",
+      "C07212-K1",
+      "C11309-K1",
+      "C02716-K1",
+      "C04108-K2",
+      "C05381-K2",
+      "C07562-K2",
+      "C00854-K2",
+      "C03218-K2",
+      "C11509-K2",
+      "C00294-K2",
+      "C04125-K1",
+      "C06224-K2",
+      "C01155-K2",
+      "C05560-K2",
+      "C08391-K2",
+      "C08962-K2",
+      "C05704-K2",
+      "C12897-K1",
+      "C10308-K1",
+      "C00750-K2",
+      "C06744-K2",
+      "C11923-K2"
+    ],
+    "connected_device_profiles": [],
+    "exposure_usd": 33.92,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3503878 for $99.92 via online (ProductCD R) with initial risk score 0.90",
+        "source": "graph",
+        "ref": "query:get_transaction(3503878)",
+        "entity_ids": [
+          "3503878"
+        ]
+      },
+      {
+        "claim": "Customer C07987 holds card C07987-K2 with 248 total transactions on file, billed in home region 126.0",
+        "source": "graph",
+        "ref": "query:get_customer(C07987)",
+        "entity_ids": [
+          "C07987",
+          "C07987-K2"
+        ]
+      },
+      {
+        "claim": "Device shared across 27 other card(s): C05031-K2, C11339-K1, C05245-K2",
+        "source": "graph",
+        "ref": "query:shared_devices(C07987)",
+        "entity_ids": [
+          "C05031-K2",
+          "C11339-K1",
+          "C05245-K2",
+          "C12942-K2",
+          "C11000-K2",
+          "C07212-K1",
+          "C11309-K1",
+          "C02716-K1",
+          "C04108-K2",
+          "C05381-K2",
+          "C07562-K2",
+          "C00854-K2",
+          "C03218-K2",
+          "C11509-K2",
+          "C00294-K2",
+          "C04125-K1",
+          "C06224-K2",
+          "C01155-K2",
+          "C05560-K2",
+          "C08391-K2",
+          "C08962-K2",
+          "C05704-K2",
+          "C12897-K1",
+          "C10308-K1",
+          "C00750-K2",
+          "C06744-K2",
+          "C11923-K2"
+        ]
+      },
+      {
+        "claim": "Retrieved 4 similar closed case(s) from case memory: CC-5026, CC-2860, CC-2011",
+        "source": "graph",
+        "ref": "query:historical_cases",
+        "entity_ids": [
+          "CC-5026",
+          "CC-2860",
+          "CC-2011"
+        ]
+      },
+      {
+        "claim": "Customer verification response: Customer denied the transaction when asked",
+        "source": "customer",
+        "ref": "evidence_request:1",
+        "entity_ids": [
+          "C07987"
+        ]
+      }
+    ],
+    "similar_prior_cases": [
+      "CC-5026",
+      "CC-2860"
+    ],
+    "summary": "Investigation of HHG-019 (C07987 / C07987-K2): Flagged transaction 3503878 ($99.92) evaluated under account_takeover. Customer reported: Customer denied the transaction when asked. Identified 2 affected transaction(s) totaling $33.92 USD exposure. Verdict: fraud (fraud probability: 0.98). Recommended 4 action(s) adhering to bank policy.",
+    "written_to_graph": true,
+    "graph_case_id": "CASE-2016-868C97A0",
+    "opened_at": "2026-09-19 09:07:57.781613",
+    "updated_at": "2026-09-19 09:07:57.781614"
+  },
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "Customer denied the transaction when asked"
+    }
+  ],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Section 3a: Open internal fraud case as probability reaches threshold",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: Single signal / probability 0.75 < 0.70; verify before blocking",
+        "order": 2,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
+        "order": 3,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: Customer denied activity; card compromised (exposure $33.92)",
+        "order": 1,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2 and Section 3a: Internal fraud case record with graph persistence",
+        "order": 2,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2 & R6: Exposure exceeds $1,000, shared device cluster, or coordinated pattern",
+        "order": 3,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "MONITOR_CONNECTED_CARDS",
+        "route": "auto",
+        "reason": "R6: Monitor 27 connected card(s) linked via shared infrastructure",
+        "order": 4,
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      }
+    ],
+    "what_changed": "Customer response confirmed unauthorized use, increasing fraud probability to 0.98. Actions escalated from verification to card block and case creation."
+  },
+  "sar": {
+    "file": true,
+    "reason": "R2/R6: Confirmed unauthorized activity under account_takeover with exposure of $33.92 USD linking to 27 other card(s)",
+    "narrative": "Between 2016-12-01 and 2016-12-01, account C07987 on card C07987-K2 was subjected to unauthorized fraudulent activity consistent with account takeover. A total of 2 transaction(s) were flagged, representing an aggregate exposure of $33.92 USD. Investigation uncovered common infrastructure links to connected card(s) C05031-K2, C11339-K1, C05245-K2, C12942-K2, C11000-K2, C07212-K1, C11309-K1, C02716-K1, C04108-K2, C05381-K2, C07562-K2, C00854-K2, C03218-K2, C11509-K2, C00294-K2, C04125-K1, C06224-K2, C01155-K2, C05560-K2, C08391-K2, C08962-K2, C05704-K2, C12897-K1, C10308-K1, C00750-K2, C06744-K2, C11923-K2. Customer was contacted and reported: 'Customer denied the transaction when asked'. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Based on regulatory guidelines under FinCEN and bank fraud policy R2/R6, the card has been blocked and reissued, connected entities placed under heightened monitoring, and this report is submitted to document the illicit financial activity.",
+    "subjects": [
+      "C00294-K2",
+      "C00750-K2",
+      "C00854-K2",
+      "C01155-K2",
+      "C02716-K1",
+      "C03218-K2",
+      "C04108-K2",
+      "C04125-K1",
+      "C05031-K2",
+      "C05245-K2",
+      "C05381-K2",
+      "C05560-K2",
+      "C05704-K2",
+      "C06224-K2",
+      "C06744-K2",
+      "C07212-K1",
+      "C07562-K2",
+      "C07987",
+      "C07987-K2",
+      "C08391-K2",
+      "C08962-K2",
+      "C10308-K1",
+      "C11000-K2",
+      "C11309-K1",
+      "C11339-K1",
+      "C11509-K2",
+      "C11923-K2",
+      "C12897-K1",
+      "C12942-K2"
+    ],
+    "total_amount_usd": 33.92,
+    "activity_dates": [
+      "2016-12-01",
+      "2016-12-01"
+    ]
+  },
+  "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
+  "tool_calls": 14,
+  "tokens": 0,
+  "latency_s": 0.43
+}
