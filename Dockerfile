@@ -34,8 +34,8 @@ RUN groupadd -r ravel && useradd -r -g ravel -d /app -s /sbin/nologin raveluser
 # Copy virtual environment from builder
 COPY --from=builder --chown=raveluser:ravel /app/.venv /app/.venv
 COPY --from=builder --chown=raveluser:ravel /app/src /app/src
-COPY --chown=raveluser:ravel data /app/data
 COPY --chown=raveluser:ravel cases /app/cases
+RUN mkdir -p /app/data && chown -R raveluser:ravel /app/data
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \

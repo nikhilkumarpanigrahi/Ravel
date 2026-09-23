@@ -1,6 +1,6 @@
 """LangGraph StateGraph Orchestration for RAVEL Forensic Workstation.
 
-Constructs an explicit graph-based multi-agent execution pipeline with:
+Constructs an explicit graph-based staged execution pipeline with:
 - StateGraph nodes for each forensic stage (Intake, GraphRAG, Detectors, Uncertainty, Counterfactuals, Governance, Finalize)
 - Conditional branching based on uncertainty and evidence verification requirements
 - LangGraph MemorySaver checkpointing for full investigation resumption and auditability.

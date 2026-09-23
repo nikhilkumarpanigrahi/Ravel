@@ -2,7 +2,7 @@
 
 RAVEL is an autonomous forensic payment-fraud investigation platform powered by **TigerGraph**, **LangGraph**, and an information-theoretic **Evidence-Value Optimizer**. It investigates payment-fraud alerts using deep multi-hop graph traversal, semantic case memory, deterministic fraud-pattern detectors, Bayesian belief updating, counterfactual decision theory, and policy-governed human-in-the-loop approvals. Built for the TigerGraph Hacker House Goa Agentic Fraud Investigation Challenge.
 
-Both the high-performance local graph adapter and the **live TigerGraph Cloud deployment** are verified. RAVEL communicates natively with TigerGraph Cloud instances (e.g. Savanna/Enterprise) via pyTigerGraph and installed GSQL queries, executing multi-hop traversals, shared-device syndicate detection, and automated case memory write-back across all 590,742 transactions.
+Both the high-performance local graph adapter and the configured **live TigerGraph Cloud deployment** have been exercised. The live adapter resolves transactions and deployed HHGOA relationships, performs bounded shared-device traversal, and writes case-memory vertices and edges. The committed 20-case artifacts are generated reproducibly with the schema-equivalent local adapter; they are not presented as uninterrupted cloud-benchmark results.
 
 ## What RAVEL does: Autonomous Agentic Investigation Loop
 
@@ -43,22 +43,22 @@ flowchart TD
 | Capability | Status |
 |---|---|
 | Full 590k Transaction Graph Ingestion | Implemented & verified |
-| Live TigerGraph Cloud Integration & GSQL Queries | Implemented & verified |
+| Live TigerGraph Cloud integration | Connectivity, schema mapping, reads, fraud-ring traversal, and case-write contract verified |
 | Autonomous Agentic Evidence-Acquisition Loop | Implemented (`AgenticInvestigationEngine`) |
 | LangGraph StateGraph Orchestration | Implemented with `MemorySaver` checkpointing |
 | Information-Theoretic Evidence-Value Optimizer | Implemented (Shannon Entropy & EIG ranking) |
 | Counterfactual Action Engine | Implemented (Loss vs Friction Pareto frontier) |
 | Multi-Hop Fraud Ring Detection | Implemented (`GET /api/fraud-rings/{customer_id}`) |
-| Semantic Vector Search & GraphRAG Precedent Retrieval | Implemented |
+| Deterministic vector search & GraphRAG precedent retrieval | Implemented with stable hashed text vectors |
 | Interactive Graph UI with Cytoscape.js Spotlight | Implemented in Forensic Workstation |
 | Enterprise RBAC & Asynchronous Task Polling | Implemented (L1/L2/Compliance/Admin) |
 | Production Containerization & CI Matrix | Implemented (`Dockerfile`, `docker-compose.yml`, GitHub Actions) |
-| 20-Case Benchmark Evaluation & Governance Scorecard | 100% Accuracy, 100% Policy Conformity, 100% Graph Lineage |
-| TigerGraph adapter and GSQL assets | Implemented, live deployment verified |
-| Standalone MCP server | Implemented |
+| 20-case execution and consistency report | Implemented; hidden answer-key accuracy is explicitly not claimed |
+| TigerGraph adapter and GSQL assets | Implemented; deployed HHGOA schema uses the adapter's lowercase-edge profile |
+| Standalone MCP server | Implemented for external clients; the in-process workflow uses the same bounded graph-adapter contract directly |
 | Source-grounded policy retrieval | Implemented with lexical and vector retrieval |
 | Hybrid vector search and embeddings | Implemented (Dense semantic retrieval for case memory) |
-| LangGraph StateGraph orchestration | Implemented (Multi-agent state graph with checkpoints) |
+| LangGraph StateGraph orchestration | Implemented as an explicit staged graph with checkpoints |
 | Counterfactual action optimizer | Implemented (Expected loss prevented vs. customer friction Pareto optimizer) |
 | Enterprise RBAC & Security | Implemented (L1/L2 Analyst role enforcement and CORS) |
 | Asynchronous Task Processing | Implemented (Background non-blocking execution with task status polling) |
@@ -355,19 +355,19 @@ An MCP client can launch it with a configuration equivalent to:
 
 ## Live TigerGraph Path & Deployed Schema
 
-The repository contains native TigerGraph assets fully aligned with the deployed challenge schema:
+The repository contains two explicit TigerGraph paths:
 
-- Schema, loading jobs, and 10 installed queries in `src/ravel/infrastructure/graph/gsql_scripts.py`.
-- Complete support for both lowercase deployed HHGOA schema edges (`transaction_of_customer`, `transaction_of_card`, `transaction_uses_device`, `transaction_has_p_emaildomain`, `transaction_has_billingregion`) and canonical aliases.
-- Live pyTigerGraph adapter with connection pooling, automatic GSQL query installation, and multi-hop graph algorithms in `src/ravel/infrastructure/graph/tigergraph.py`.
-- Fast GSQL fraud-ring query and REST inspection endpoint at `GET /api/fraud-rings/{customer_id}`.
+- Portable schema, loading jobs, and bounded query definitions for a fresh RAVEL graph in `src/ravel/infrastructure/graph/gsql_scripts.py`.
+- A deployed-HHGOA compatibility profile in `src/ravel/infrastructure/graph/tigergraph.py` for lowercase edges such as `transaction_of_customer`, `transaction_of_card`, `transaction_uses_device`, and `transaction_has_p_emaildomain`.
+- Native REST++ fallbacks when a matching installed query is unavailable. These are bounded and cached, but slower than installed GSQL on cloud workspaces.
+- Fraud-ring inspection at `GET /api/fraud-rings/{customer_id}` and case-memory persistence through `case_of_customer`, `case_of_card`, and `case_first_fraud_transaction`.
 - Connection setup:
 
 ```bash
 uv run ravel tg-setup --host https://tg-16d78f26-....i.tgcloud.io --graphname FraudDetectionGraph
 ```
 
-Connectivity, GSQL query execution, vertex counts, multi-hop traversals, and case write-back are verified on TigerGraph Cloud. When `RAVEL_GRAPH_ADAPTER=tigergraph`, investigations query the cloud instance; setting `RAVEL_GRAPH_ADAPTER=mock` enables fast offline development and testing.
+Connectivity, vertex counts, transaction relationship mapping, and live shared-device traversal have been verified on TigerGraph Cloud. The case-write contract is covered by integration-style adapter tests; a production deployment should run a disposable write/read/delete smoke test with its own credentials. When `RAVEL_GRAPH_ADAPTER=tigergraph`, investigations query the cloud instance; `RAVEL_GRAPH_ADAPTER=mock` enables fast, deterministic offline evaluation over the same normalized data.
 
 ## Tests and Quality Checks
 
@@ -377,11 +377,11 @@ RAVEL_GRAPH_ADAPTER=mock uv run ruff format --check .
 RAVEL_GRAPH_ADAPTER=mock uv run pytest
 ```
 
-Current validated result: **59 tests passed** with **0 lint errors**. The suite covers the autonomous agentic loop, detectors, policy routing, uncertainty, evidence simulation, answer validation, graph configuration, LangGraph orchestration, counterfactual action optimization, vector search, security/RBAC, async tasks, API replay, timelines, approvals, and simulated action persistence.
+Current validated result: **66 tests passed** with **0 lint or formatting errors**. The suite covers the autonomous graph-evidence loop, detectors, policy routing, uncertainty, disclosed evidence simulation, semantic answer validation, graph configuration, LangGraph orchestration, counterfactual action optimization, stable vector search, security/RBAC, async tasks, API replay, timelines, approvals, and simulated action persistence.
 
 ## Production Containerization (Docker)
 
-To run the entire forensic workstation with one command:
+Prepare `data/level0/` with the ingestion command first; the raw challenge data and generated database are intentionally excluded from Git and container images. Then run:
 
 ```bash
 docker compose up --build
@@ -409,7 +409,7 @@ Ravel/
 │   │   ├── llm.py               # Optional model abstraction
 │   │   └── persistence.py       # Investigation, approval, and memory persistence
 │   └── interfaces/              # FastAPI, security RBAC, CLI, and static analyst workstation
-├── tests/                       # 55 unit and integration tests
+├── tests/                       # 66 unit and integration tests
 ├── pyproject.toml
 └── uv.lock
 ```
@@ -420,6 +420,9 @@ Ravel/
 - All action execution is simulated; no real card, payment, customer-messaging or regulatory system is connected.
 - Simulated customer evidence is explicitly disclosed and is not ground truth.
 - Both LangGraph StateGraph and deterministic state machines are fully supported and interchangeable via `RAVEL_WORKFLOW_ORCHESTRATOR`.
+- The challenge answer key is unavailable. Benchmark percentages measure internal output consistency, not verdict accuracy.
+- Counterfactual costs, efficacy rates, and Bayesian likelihood ratios are transparent decision heuristics, not production-calibrated banking models.
+- The MCP server is a controlled external interface; the current in-process LangGraph workflow calls the equivalent bounded adapter methods directly.
 
 ## License
 
