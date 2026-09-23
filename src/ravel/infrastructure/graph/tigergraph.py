@@ -135,8 +135,16 @@ class TigerGraphAdapter(GraphAdapter):
     # --------------------------------------------------------------- lifecycle
     def health(self) -> dict[str, Any]:
         try:
-            ver = self.conn.getVersion()
-            return {"backend": "tigergraph", "status": "ok", "version": ver}
+            echo = self.conn.echo()
+            version: Any = None
+            with contextlib.suppress(Exception):
+                version = self.conn.getVersion()
+            return {
+                "backend": "tigergraph",
+                "status": "ok",
+                "echo": echo,
+                "version": version,
+            }
         except Exception as exc:  # noqa: BLE001
             raise GraphUnavailableError(f"tigergraph unreachable: {exc}") from exc
 
