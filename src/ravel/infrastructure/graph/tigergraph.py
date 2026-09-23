@@ -440,7 +440,59 @@ class TigerGraphAdapter(GraphAdapter):
                     }
                     for r in rows
                 ]
-        return []
+
+        # Bounded native traversal for the supplied HHGOA schema:
+        # Customer -> Transaction -> Device -> Transaction -> other Customer/Card.
+        customer_edges = self.conn.getEdges("Customer", customer_id) or []
+        source_txn_ids = [
+            str(edge.get("to_id"))
+            for edge in customer_edges
+            if edge.get("e_type") == "transaction_of_customer"
+        ][:100]
+        device_ids: set[str] = set()
+        for txn_id in source_txn_ids:
+            txn_edges = self.conn.getEdges("Transaction", txn_id) or []
+            device_id = _edge_target(txn_edges, "transaction_uses_device", "FROM_DEVICE")
+            if device_id:
+                device_ids.add(device_id)
+            if len(device_ids) >= 50:
+                break
+
+        shared: list[dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+        for device_id in sorted(device_ids):
+            device_vertices = self.conn.getVerticesById("Device", device_id) or []
+            device_attrs = device_vertices[0].get("attributes", {}) if device_vertices else {}
+            device_edges = self.conn.getEdges("Device", device_id) or []
+            for device_edge in device_edges[: min(max(limit * 4, 20), 200)]:
+                if device_edge.get("e_type") != "transaction_uses_device":
+                    continue
+                other_txn_id = str(device_edge.get("to_id", ""))
+                other_edges = self.conn.getEdges("Transaction", other_txn_id) or []
+                other_customer = _edge_target(other_edges, "transaction_of_customer", "CARD_OF")
+                if not other_customer or other_customer == customer_id:
+                    continue
+                key = (device_id, other_customer)
+                if key in seen:
+                    continue
+                seen.add(key)
+                txn_vertices = self.conn.getVerticesById("Transaction", other_txn_id) or []
+                txn_attrs = txn_vertices[0].get("attributes", {}) if txn_vertices else {}
+                shared.append(
+                    {
+                        "device_id": device_id,
+                        "device_profile": str(device_attrs.get("dev_profile", "")),
+                        "other_customer_id": other_customer,
+                        "other_card_id": _edge_target(other_edges, "transaction_of_card", "MADE_BY"),
+                        "device_new": str(txn_attrs.get("device_new", "")),
+                        "device_proxy": str(txn_attrs.get("device_proxy", "")),
+                        "shared_txns": 1,
+                        "last_seen": str(txn_attrs.get("ts", "")),
+                    }
+                )
+                if len(shared) >= limit:
+                    return shared
+        return shared
 
     def shared_regions(self, customer_id: str, limit: int = 50) -> list[dict[str, Any]]:
         if self._has_query("shared_regions"):

@@ -15,6 +15,35 @@ class QueryOnlyConnection:
         self.scripts.append(script)
 
 
+class SharedDeviceConnection:
+    edges = {
+        ("Customer", "C1"): [
+            {"e_type": "transaction_of_customer", "to_id": "T1"},
+        ],
+        ("Transaction", "T1"): [
+            {"e_type": "transaction_uses_device", "to_id": "D1"},
+        ],
+        ("Device", "D1"): [
+            {"e_type": "transaction_uses_device", "to_id": "T1"},
+            {"e_type": "transaction_uses_device", "to_id": "T2"},
+        ],
+        ("Transaction", "T2"): [
+            {"e_type": "transaction_of_customer", "to_id": "C2"},
+            {"e_type": "transaction_of_card", "to_id": "C2-K1"},
+        ],
+    }
+
+    def getEdges(self, vertex_type, vertex_id):
+        return self.edges.get((vertex_type, str(vertex_id)), [])
+
+    def getVerticesById(self, vertex_type, vertex_id):
+        if vertex_type == "Device":
+            return [{"attributes": {"dev_profile": "profile-1"}}]
+        if vertex_type == "Transaction":
+            return [{"attributes": {"ts": "2016-12-01 10:00:00", "device_proxy": "true"}}]
+        return []
+
+
 def test_schema_is_created_from_global_scope():
     assert SCHEMA_GSQL.lstrip().startswith("USE GLOBAL")
     assert "USE GRAPH @@graphname@@" not in SCHEMA_GSQL
@@ -86,3 +115,22 @@ def test_query_install_does_not_attempt_to_recreate_schema():
     assert "CREATE OR REPLACE QUERY" in adapter.conn.scripts[0]
     assert "CREATE VERTEX" not in adapter.conn.scripts[0]
     assert adapter._installed_cache is None
+
+
+def test_shared_devices_native_fallback_finds_other_customer():
+    adapter = object.__new__(TigerGraphAdapter)
+    adapter.conn = SharedDeviceConnection()
+    adapter._installed_cache = set()
+
+    assert adapter.shared_devices("C1") == [
+        {
+            "device_id": "D1",
+            "device_profile": "profile-1",
+            "other_customer_id": "C2",
+            "other_card_id": "C2-K1",
+            "device_new": "",
+            "device_proxy": "true",
+            "shared_txns": 1,
+            "last_seen": "2016-12-01 10:00:00",
+        }
+    ]
