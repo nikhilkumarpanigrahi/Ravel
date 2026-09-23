@@ -468,10 +468,10 @@
     <aside>
       <div class="aside-header">
         <div class="filter-tabs">
-          <button class="filter-btn active" onclick="setFilter('all')">All (20)</button>
-          <button class="filter-btn" onclick="setFilter('fraud')">Fraud</button>
-          <button class="filter-btn" onclick="setFilter('legit')">Legit</button>
-          <button class="filter-btn" onclick="setFilter('sar')">SAR</button>
+          <button class="filter-btn active" onclick="setFilter('all', this)">All (20)</button>
+          <button class="filter-btn" onclick="setFilter('fraud', this)">Fraud</button>
+          <button class="filter-btn" onclick="setFilter('legit', this)">Legit</button>
+          <button class="filter-btn" onclick="setFilter('sar', this)">SAR</button>
         </div>
       </div>
       <ul class="case-list" id="case-list-ul">
@@ -741,10 +741,10 @@
       });
     }
 
-    function setFilter(filter) {
+    function setFilter(filter, button) {
       currentFilter = filter;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
+      button?.classList.add('active');
       renderCaseList();
     }
 
@@ -1223,9 +1223,26 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (cy && data.subgraph) {
+          // The API returns portable graph JSON; Cytoscape requires each element
+          // to be nested under `data` and edges to use source/target keys.
+          const nodes = (data.subgraph.nodes || []).map(node => ({
+            data: {
+              id: String(node.id),
+              label: node.label || String(node.id),
+              type: node.type || 'entity'
+            }
+          }));
+          const edges = (data.subgraph.edges || []).map((edge, index) => ({
+            data: {
+              id: `${edge.from}-${edge.to}-${edge.type || 'RELATED'}-${index}`,
+              source: String(edge.from),
+              target: String(edge.to),
+              label: edge.type || 'RELATED'
+            }
+          }));
           cy.elements().remove();
-          cy.add(data.subgraph.nodes || []);
-          cy.add(data.subgraph.edges || []);
+          cy.add(nodes);
+          cy.add(edges);
           cy.layout({ name: 'concentric', animate: true, animationDuration: 400 }).run();
           document.getElementById('evidence-count').innerText = `Fraud Ring: ${data.ring_size} Connected`;
         }
