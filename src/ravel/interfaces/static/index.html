@@ -481,6 +481,10 @@
     .state-name { display: block; font: 600 11px var(--font-mono); line-height: 1.35; word-break: break-word; }
     .state-node.current .state-index { color: #d7eee7; }
     .state-node.current .state-name { color: #fff; }
+    .state-node.pending { background:#fafbf9; border-style:dashed; border-color:#dfe6e1; }
+    .state-node.pending .state-name, .state-node.pending .state-index { color:#93a099; }
+    .state-node.pending::before { background:#dfe6e1; }
+    .state-node.pending::after { border-left-color:#dfe6e1; }
     .trace-summary { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 14px; background:#f4f8f5; border:1px solid #dce8e1; border-radius:10px; margin-bottom:18px; color:var(--text-muted); }
     .trace-summary strong { color:var(--text-main); }
     .trace-detail-title { font-size:12px; color:var(--text-muted); font-weight:600; margin:6px 0 10px; }
@@ -494,6 +498,27 @@
     [style*="color:#fff"], [style*="color:#f8fafc"], [style*="color:#f1f5f9"], [style*="color:#e2e8f0"] { color: var(--text-main) !important; }
     [style*="background:#334155"], [style*="background:#1e293b"] { background:#e9efeb !important; color:#45564e !important; }
     [style*="background:linear-gradient(90deg, #1e293b, #0f172a)"] { background:linear-gradient(105deg, #edf6f1, #f7faf8) !important; border-color:#d6e5dc !important; }
+    [style*="color:#38bdf8"] { color:#32756a !important; }
+    [style*="color:#22c55e"] { color:#287b5a !important; }
+    [style*="color:#f59e0b"] { color:#8a631c !important; }
+    [style*="color:#94a3b8"] { color:#62736b !important; }
+    [style*="color:#64748b"] { color:#718078 !important; }
+    [style*="color:#cbd5e1"] { color:#40534a !important; }
+    .workspace-header { background:rgba(255,255,255,.9); }
+    .case-title { letter-spacing:-.02em; }
+    .brand-title { color:#1e332c; letter-spacing:.08em; }
+    .brand-sub { color:#718078; }
+    .case-list::-webkit-scrollbar, .content-viewport::-webkit-scrollbar, .evidence-list::-webkit-scrollbar { width:8px; }
+    .case-list::-webkit-scrollbar-thumb, .content-viewport::-webkit-scrollbar-thumb, .evidence-list::-webkit-scrollbar-thumb { background:#d8e1dc; border-radius:8px; }
+    .case-loading { padding:14px; color:var(--text-muted); font-size:12px; }
+    .loading-line { height:10px; border-radius:99px; background:linear-gradient(90deg,#edf1ee 25%,#f8faf8 38%,#edf1ee 58%); background-size:400% 100%; animation:shimmer 1.25s ease infinite; }
+    @keyframes shimmer { 0% { background-position:100% 0; } 100% { background-position:0 0; } }
+    .briefing-bar { background:linear-gradient(105deg,#edf6f1,#fbfcfa); border:1px solid #d7e6de; border-radius:12px; padding:15px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
+    .briefing-icon { width:36px; height:36px; display:grid; place-items:center; border-radius:10px; background:#dceee6; color:#32756a; font-weight:700; font-family:var(--font-mono); }
+    .briefing-label { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); font-weight:700; }
+    .briefing-headline { font-size:14px; font-weight:700; color:var(--text-main); margin-top:2px; }
+    .briefing-stat-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+    .briefing-stat-value { font-weight:700; color:var(--text-main); margin-top:2px; }
     @media (max-width: 980px) { .dashboard-grid { grid-template-columns: 1fr; } aside { width: 240px; } .top-stats { display:none; } }
     @media (max-width: 720px) { body { overflow:auto; height:auto; } .app-container { min-height:calc(100vh - 52px); } aside { width: 200px; } .brand-sub { display:none; } .workspace-header { padding:14px; } .content-viewport { padding:16px; } .nav-tabs { overflow-x:auto; padding:0 16px; gap:18px; } }
   </style>
@@ -556,26 +581,26 @@
 
       <div class="content-viewport" id="tab-record">
         <!-- Forensic Discovery Briefing Bar -->
-        <div id="forensic-briefing-bar" style="background:linear-gradient(90deg, #1e293b, #0f172a); border:1px solid #334155; border-radius:8px; padding:12px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div id="forensic-briefing-bar" class="briefing-bar">
           <div style="display:flex; align-items:center; gap:14px;">
-            <div style="font-size:22px;">🔍</div>
+            <div class="briefing-icon">01</div>
             <div>
-              <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:600;">Discovery At A Glance</div>
-              <div id="briefing-headline" style="font-size:13.5px; font-weight:700; color:#f8fafc;">Analyzing case topology and multi-hop graph paths...</div>
+              <div class="briefing-label">Investigation summary</div>
+              <div id="briefing-headline" class="briefing-headline">Loading case evidence and graph relationships...</div>
             </div>
           </div>
           <div style="display:flex; gap:16px; font-size:11.5px;">
             <div style="text-align:right;">
-              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Evidence Ledger</div>
-              <div id="briefing-evidence-stat" style="font-weight:700; color:#38bdf8;">--</div>
+              <div class="briefing-stat-label">Evidence ledger</div>
+              <div id="briefing-evidence-stat" class="briefing-stat-value">--</div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Decision Rationale</div>
-              <div id="briefing-action-stat" style="font-weight:700; color:#22c55e;">--</div>
+              <div class="briefing-stat-label">Recommended action</div>
+              <div id="briefing-action-stat" class="briefing-stat-value">--</div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Governance Gate</div>
-              <div id="briefing-gov-stat" style="font-weight:700; color:#f59e0b;">--</div>
+              <div class="briefing-stat-label">Governance</div>
+              <div id="briefing-gov-stat" class="briefing-stat-value">--</div>
             </div>
           </div>
         </div>
@@ -754,6 +779,8 @@
     let currentActions = [];
     let currentTimeline = null;
     let currentFilter = 'all';
+    let selectedCaseId = null;
+    let caseLoadSequence = 0;
 
     async function init() {
       try {
@@ -781,7 +808,7 @@
 
       filtered.forEach(c => {
         const li = document.createElement('li');
-        li.className = 'case-item' + (currentCaseData && currentCaseData.case_id === c.case_id ? ' active' : '');
+        li.className = 'case-item' + (selectedCaseId === c.case_id ? ' active' : '');
         li.onclick = () => loadCase(c.case_id);
 
         let badgeClass = 'badge-legit';
@@ -810,14 +837,25 @@
     }
 
     async function loadCase(caseId) {
+      const requestId = ++caseLoadSequence;
+      selectedCaseId = caseId;
+      currentCaseData = null;
+      currentApprovals = [];
+      currentActions = [];
+      currentTimeline = null;
+      renderCaseList();
+      renderCaseLoading(caseId);
       try {
         const res = await fetch(`/api/cases/${caseId}`);
-        currentCaseData = await res.json();
+        if (!res.ok) throw new Error(`Case request failed with HTTP ${res.status}`);
+        const caseData = await res.json();
         const [approvalRes, actionRes, timelineRes] = await Promise.all([
           fetch(`/api/cases/${caseId}/approvals`),
           fetch(`/api/cases/${caseId}/actions`),
           fetch(`/api/cases/${caseId}/timeline`)
         ]);
+        if (requestId !== caseLoadSequence) return;
+        currentCaseData = caseData;
         currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
         currentActions = actionRes.ok ? await actionRes.json() : [];
         currentTimeline = timelineRes.ok ? await timelineRes.json() : null;
@@ -829,6 +867,80 @@
         }
       } catch (err) {
         console.error("Error loading case", err);
+        if (requestId === caseLoadSequence) renderCaseLoadError(caseId);
+      }
+    }
+
+    function renderCaseLoading(caseId) {
+      document.getElementById('current-case-id').innerText = caseId;
+      document.getElementById('current-chips').innerHTML = '<span class="badge" style="background:#e9efeb">LOADING CASE</span>';
+      document.getElementById('case-summary').innerHTML = '<span class="loading-line" style="display:block; width:90%; margin:7px 0;"></span><span class="loading-line" style="display:block; width:68%;"></span>';
+      document.getElementById('case-stop-reason').innerText = 'Loading the selected investigation...';
+      document.getElementById('briefing-headline').innerText = 'Loading case-specific evidence and graph relationships...';
+      document.getElementById('briefing-evidence-stat').innerText = '--';
+      document.getElementById('briefing-action-stat').innerText = '--';
+      document.getElementById('briefing-gov-stat').innerText = '--';
+      document.getElementById('evidence-container').innerHTML = '<div class="case-loading">Loading evidence for this case...</div>';
+      document.getElementById('evidence-count').innerText = 'Loading';
+      document.getElementById('final-actions-list').innerHTML = '<div class="case-loading">Loading policy decision...</div>';
+      document.getElementById('uncertainty-missing').innerText = 'Loading';
+      ['uncertainty-risk', 'uncertainty-confidence', 'uncertainty-completeness', 'uncertainty-contradictions'].forEach(id => document.getElementById(id).innerText = '--');
+      document.getElementById('approval-status-tag').innerText = 'LOADING';
+      document.getElementById('sar-panel').style.display = 'none';
+      document.getElementById('optimizer-options-container').innerHTML = '<div class="case-loading">Loading case-specific evidence options...</div>';
+      document.getElementById('counterfactual-container').innerHTML = '<div class="case-loading">Loading case-specific action trade-offs...</div>';
+      document.getElementById('optimizer-entropy-badge').innerText = 'H(S) = --';
+      document.getElementById('trace-summary').innerHTML = `<span>Loading the persisted workflow for <strong>${caseId}</strong>...</span>`;
+      document.getElementById('state-flow').innerHTML = '';
+      document.getElementById('timeline-container').innerHTML = '<div class="timeline-card">Loading case-specific transitions...</div>';
+      if (cy) cy.elements().remove();
+    }
+
+    function renderCaseLoadError(caseId) {
+      document.getElementById('case-summary').innerText = `Could not load ${caseId}. Select it again to retry.`;
+      document.getElementById('case-stop-reason').innerText = 'Case data was not loaded.';
+      document.getElementById('evidence-container').innerHTML = '<div class="case-loading">No prior case evidence is displayed.</div>';
+      document.getElementById('approval-status-tag').innerText = 'LOAD FAILED';
+    }
+
+    const workflowStages = [
+      ['TRIGGERED', 'Opening the case and validating the alert'],
+      ['CASE_CREATED', 'Setting the investigation scope'],
+      ['INVESTIGATING', 'Collecting graph and transaction evidence'],
+      ['EVIDENCE_COLLECTED', 'Organising supporting and contradicting evidence'],
+      ['ASSESSING', 'Assessing risk, confidence, and uncertainty'],
+      ['REASSESSING', 'Selecting the next best action'],
+      ['POLICY_EVALUATION', 'Applying policy and approval controls'],
+      ['ACTION_PROPOSED', 'Preparing governed recommendations'],
+      ['CASE_CLOSED', 'Finalising the investigation record'],
+      ['MEMORY_UPDATED', 'Writing the case outcome to graph memory']
+    ];
+
+    const pause = ms => new Promise(resolve => window.setTimeout(resolve, ms));
+
+    function renderInvestigationProgress(caseId, completedIndex) {
+      const flow = document.getElementById('state-flow');
+      const summary = document.getElementById('trace-summary');
+      const timeline = document.getElementById('timeline-container');
+      flow.innerHTML = '';
+      summary.innerHTML = `<span><strong>Investigation in progress</strong> for ${caseId}.</span><span>Stage ${completedIndex + 1} of ${workflowStages.length}</span>`;
+      workflowStages.forEach(([state, detail], index) => {
+        const node = document.createElement('div');
+        const nodeState = index < completedIndex ? ' active' : (index === completedIndex ? ' active current' : ' pending');
+        node.className = `state-node${nodeState}`;
+        node.title = detail;
+        node.innerHTML = `<span class="state-index">STEP ${index + 1}</span><span class="state-name">${state.replaceAll('_', ' ')}</span>`;
+        flow.appendChild(node);
+      });
+      const [state, detail] = workflowStages[completedIndex];
+      timeline.innerHTML = `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-card"><div style="font-weight:600; font-family:var(--font-mono); font-size:11px; color:var(--accent-blue);">${state}</div><div style="font-weight:600; font-size:13px; color:var(--text-main);">Workflow stage in progress</div><div style="font-size:12px; color:var(--text-muted);">${detail}</div></div></div>`;
+    }
+
+    async function animateInvestigationProgress(caseId) {
+      switchTab('timeline', document.querySelectorAll('.nav-tab')[2]);
+      for (let index = 0; index < workflowStages.length; index++) {
+        renderInvestigationProgress(caseId, index);
+        await pause(index === workflowStages.length - 1 ? 450 : 360);
       }
     }
 
@@ -837,18 +949,14 @@
       const button = document.getElementById('replay-btn');
       const status = document.getElementById('replay-status');
       const caseId = currentCaseData.case_id;
-      const stages = ['Opening case context...', 'Reviewing graph evidence and history...', 'Applying risk and policy checks...', 'Saving the refreshed trace...'];
-      let stage = 0;
       button.disabled = true;
       button.innerText = 'Investigation running...';
       status.className = 'replay-status running';
-      status.innerText = stages[stage];
-      const progressTimer = window.setInterval(() => {
-        stage = Math.min(stage + 1, stages.length - 1);
-        status.innerText = stages[stage];
-      }, 1400);
+      status.innerText = 'Refreshing evidence and the case decision...';
       try {
-        const response = await fetch(`/api/cases/${caseId}/replay`, {method: 'POST'});
+        const replayRequest = fetch(`/api/cases/${caseId}/replay`, {method: 'POST'});
+        await animateInvestigationProgress(caseId);
+        const response = await replayRequest;
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.detail || 'Replay failed');
         currentCaseData = payload;
@@ -865,13 +973,12 @@
         renderGraph();
         if (document.getElementById('tab-optimizer').style.display !== 'none') loadOptimizerData(caseId);
         status.className = 'replay-status success';
-        status.innerText = `Updated ${caseId}: evidence, policy decision, and trace are ready.`;
+        status.innerText = `Updated ${caseId}: the persisted trace is ready to review.`;
       } catch (error) {
         console.error(error);
         status.className = 'replay-status error';
         status.innerText = `Could not refresh ${caseId}. Please try again.`;
       } finally {
-        window.clearInterval(progressTimer);
         button.disabled = false;
         button.innerText = 'Re-run investigation';
       }
@@ -1196,24 +1303,24 @@
                 selector: 'node',
                 style: {
                   'label': 'data(label)',
-                  'color': '#cbd5e1',
+                  'color': '#31443b',
                   'font-size': '10px',
                   'font-family': 'JetBrains Mono, monospace',
                   'text-valign': 'bottom',
                   'text-margin-y': 5,
-                  'background-color': '#38bdf8',
+                  'background-color': '#4d9183',
                   'width': 26,
                   'height': 26,
                   'border-width': 2,
                   'border-color': '#ffffff'
                 }
               },
-              { selector: 'node[type = "txn"]', style: { 'background-color': '#22c55e', 'width': 32, 'height': 32 } },
-              { selector: 'node[type = "card"]', style: { 'background-color': '#f59e0b' } },
-              { selector: 'node[type = "customer"]', style: { 'background-color': '#38bdf8' } },
-              { selector: 'node[type = "device"]', style: { 'background-color': '#a855f7' } },
-              { selector: 'node[type = "region"]', style: { 'background-color': '#64748b' } },
-              { selector: 'node[type = "historical_case"]', style: { 'background-color': '#e11d48' } },
+              { selector: 'node[type = "txn"]', style: { 'background-color': '#3c9a70', 'width': 32, 'height': 32 } },
+              { selector: 'node[type = "card"]', style: { 'background-color': '#bd842a' } },
+              { selector: 'node[type = "customer"]', style: { 'background-color': '#4b85a6' } },
+              { selector: 'node[type = "device"]', style: { 'background-color': '#7c6fa6' } },
+              { selector: 'node[type = "region"]', style: { 'background-color': '#718078' } },
+              { selector: 'node[type = "historical_case"]', style: { 'background-color': '#b85a67' } },
               {
                 selector: 'node.highlighted',
                 style: {
@@ -1228,13 +1335,13 @@
                 selector: 'edge',
                 style: {
                   'width': 1.5,
-                  'line-color': '#334155',
-                  'target-arrow-color': '#334155',
+                  'line-color': '#aabbb2',
+                  'target-arrow-color': '#aabbb2',
                   'target-arrow-shape': 'triangle',
                   'curve-style': 'bezier',
                   'label': 'data(label)',
                   'font-size': '8px',
-                  'color': '#64748b',
+                  'color': '#62736b',
                   'font-family': 'JetBrains Mono, monospace',
                   'text-rotation': 'autorotate'
                 }
@@ -1454,7 +1561,7 @@
 
       const edges = [[0, 1], [0, 2], [0, 3], [0, 4], [2, 1], [3, 5]];
 
-      ctx.strokeStyle = '#2b3545';
+      ctx.strokeStyle = '#b8c9c0';
       ctx.lineWidth = 1.5;
       edges.forEach(([i, j]) => {
         ctx.beginPath();
@@ -1472,7 +1579,7 @@
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = '#cbd5e1';
+        ctx.fillStyle = '#31443b';
         ctx.font = '11px JetBrains Mono';
         ctx.textAlign = 'center';
         ctx.fillText(n.label, n.x, n.y + 26);
