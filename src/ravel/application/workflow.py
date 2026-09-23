@@ -8,6 +8,7 @@ import uuid
 from typing import Any
 
 from ravel.application.detectors import run_detectors
+from ravel.application.evidence_simulation import simulate_customer_response
 from ravel.application.graphrag import GraphRAGService
 from ravel.application.policy_engine import PolicyEngine
 from ravel.application.uncertainty_service import assess_uncertainty
@@ -217,49 +218,42 @@ class AgentWorkflow:
             )
             step_no = len(inv.steps) + 1
 
-            if is_customer_dispute:
-                assumed_resp = f"Customer confirmed dispute: '{trigger.trigger_text}'"
-                req_type = "customer_validation"
-            elif top_pattern in (FraudPattern.CARD_TESTING, FraudPattern.CARD_NOT_PRESENT_NEW_DEVICE):
-                assumed_resp = "Customer stated they did not make these purchases and still have the card"
-                req_type = "customer_validation"
-            elif is_recurring:
-                assumed_resp = (
-                    "Customer stated they recognize the subscription merchant and confirmed the charge"
-                )
-                req_type = "customer_validation"
-            elif candidate_confidence < 0.35:
-                assumed_resp = "Customer confirmed transaction as legitimate cardholder activity"
-                req_type = "customer_validation"
-            else:
-                assumed_resp = "Customer denied the transaction when asked"
-                req_type = "customer_validation"
-
-            customer_response = assumed_resp
+            assumed_resp = simulate_customer_response(
+                trigger_type=trigger.type,
+                trigger_text=trigger.trigger_text,
+                is_recurring=is_recurring,
+            )
+            req_type = "customer_validation"
             evidence_requests_payload.append(
                 {
                     "type": req_type,
                     "asked_after_step": step_no,
-                    "assumed_response": assumed_resp,
+                    "assumed_response": assumed_resp if self.simulate_customer else "",
+                    "simulation_disclosure": "Synthetic response for benchmark/demo; not ground truth",
                 }
             )
             inv.record(step_no, "request_customer_validation", f"Dispatched {req_type} request to customer")
 
-            # 8. State: EVIDENCE_RECEIVED
-            inv.transition(
-                InvestigationState.EVIDENCE_RECEIVED, "Customer response received and recorded into evidence"
-            )
-            rag_ctx.evidence.append(
-                EvidenceRecord(
-                    case_id=case_id,
-                    claim=f"Customer verification response: {assumed_resp}",
-                    source=EvidenceSource.CUSTOMER,
-                    ref=f"evidence_request:{len(evidence_requests_payload)}",
-                    entity_ids=[trigger.customer_id],
-                    evidence_type=EvidenceType.CUSTOMER_RESPONSE,
-                    strength=0.95,
+            if self.simulate_customer:
+                customer_response = assumed_resp
+                # 8. State: EVIDENCE_RECEIVED
+                inv.transition(
+                    InvestigationState.EVIDENCE_RECEIVED,
+                    "Simulated customer response received and recorded with disclosure",
                 )
-            )
+                rag_ctx.evidence.append(
+                    EvidenceRecord(
+                        case_id=case_id,
+                        claim=f"Simulated customer verification response: {assumed_resp}",
+                        source=EvidenceSource.CUSTOMER,
+                        ref=f"evidence_request:{len(evidence_requests_payload)}",
+                        entity_ids=[trigger.customer_id],
+                        evidence_type=EvidenceType.CUSTOMER_RESPONSE,
+                        strength=0.7,
+                        confidence=0.5,
+                        policy_context="Synthetic benchmark/demo evidence; not ground truth",
+                    )
+                )
 
         # 9. State: REASSESSING
         inv.transition(
