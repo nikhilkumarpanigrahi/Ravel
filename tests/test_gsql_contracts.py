@@ -40,7 +40,16 @@ class SharedDeviceConnection:
         if vertex_type == "Device":
             return [{"attributes": {"dev_profile": "profile-1"}}]
         if vertex_type == "Transaction":
-            return [{"attributes": {"ts": "2016-12-01 10:00:00", "device_proxy": "true"}}]
+            return [
+                {
+                    "v_id": str(vertex_id[0]) if isinstance(vertex_id, list) else str(vertex_id),
+                    "attributes": {
+                        "ts": "2016-12-01 10:00:00",
+                        "device_profile": "profile-1",
+                        "device_proxy": "true",
+                    },
+                }
+            ]
         return []
 
 

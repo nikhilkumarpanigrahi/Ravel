@@ -453,8 +453,24 @@ class TigerGraphAdapter(GraphAdapter):
             for edge in customer_edges
             if edge.get("e_type") == "transaction_of_customer"
         ][:100]
+        source_vertices = (
+            self.conn.getVerticesById(
+                "Transaction",
+                [int(txn_id) if txn_id.isdigit() else txn_id for txn_id in source_txn_ids],
+            )
+            if source_txn_ids
+            else []
+        ) or []
+        online_txn_ids = {
+            str(vertex.get("v_id", ""))
+            for vertex in source_vertices
+            if vertex.get("attributes", {}).get("device_profile")
+            or vertex.get("attributes", {}).get("device_type")
+        }
         device_ids: set[str] = set()
         for txn_id in source_txn_ids:
+            if txn_id not in online_txn_ids:
+                continue
             txn_edges = self.conn.getEdges("Transaction", txn_id) or []
             device_id = _edge_target(txn_edges, "transaction_uses_device", "FROM_DEVICE")
             if device_id:
