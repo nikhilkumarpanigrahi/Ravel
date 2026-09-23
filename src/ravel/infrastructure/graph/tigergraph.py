@@ -653,7 +653,7 @@ class TigerGraphAdapter(GraphAdapter):
                     txn_ids[0],
                 )
         except Exception as exc:  # noqa: BLE001
-            print(f"[tigergraph] write_case notice: {exc}")
+            raise GraphUnavailableError(f"case memory write failed: {exc}") from exc
         return gid
 
     def subgraph_for_viz(self, root: str, depth: int = 2, limit: int = 100) -> dict[str, Any]:

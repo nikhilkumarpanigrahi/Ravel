@@ -62,5 +62,32 @@ def validate_answer(answer: AnswerFile) -> None:
     if case.exposure_usd < 0:
         errors.append("exposure_usd cannot be negative")
 
+    assumed_responses = " ".join(
+        str(request.get("assumed_response", "")) for request in answer.evidence_requests
+    ).lower()
+    customer_unreachable = any(
+        term in assumed_responses for term in ("no reply", "timeout", "unreachable", "unverified")
+    )
+    if customer_unreachable:
+        narrative = " ".join(
+            [
+                str(answer.next_best_actions.get("what_changed", "")),
+                *(str(action.get("reason", "")) for action in final_actions),
+            ]
+        ).lower()
+        if "customer denied" in narrative or "confirmed unauthorized" in narrative:
+            errors.append("no-response assumption cannot be described as a customer denial")
+
+    pending_actions = {
+        str(action.get("action", ""))
+        for action in final_actions
+        if str(action.get("state", "")) == ApprovalState.PENDING.value
+    }
+    sar_narrative = answer.sar.narrative.lower()
+    if ActionType.BLOCK_CARD.value in pending_actions and any(
+        phrase in sar_narrative for phrase in ("has been blocked", "card blocked", "blocked and reissued")
+    ):
+        errors.append("SAR describes a pending card block as already executed")
+
     if errors:
         raise AnswerValidationError(f"{answer.case_id}: " + "; ".join(errors))
