@@ -37,13 +37,24 @@ class BenchmarkService:
         from ravel.infrastructure.llm import build_llm
 
         self.llm = build_llm(settings)
-        self.workflow = AgentWorkflow(
+        base_workflow = AgentWorkflow(
             graph=self.graph,
             repo=self.repo,
             policy_engine=self.policy_engine,
             simulate_customer=settings.simulate_customer_response,
             llm=self.llm,
         )
+        if settings.workflow_orchestrator == "langgraph":
+            from ravel.application.langgraph_workflow import LangGraphWorkflowRunner
+
+            self.workflow = LangGraphWorkflowRunner(
+                graph=self.graph,
+                repo=self.repo,
+                llm=self.llm,
+                simulate_customer=settings.simulate_customer_response,
+            )
+        else:
+            self.workflow = base_workflow
 
     def run_all(
         self,
