@@ -51,6 +51,12 @@ def _clean(v: Any) -> Any:
         return str(v)
 
 
+def _edge_target(edges: list[dict[str, Any]], *edge_types: str) -> str:
+    """Return the first adjacent vertex reached through one of ``edge_types``."""
+    wanted = set(edge_types)
+    return str(next((edge.get("to_id", "") for edge in edges if edge.get("e_type") in wanted), ""))
+
+
 class TigerGraphAdapter(GraphAdapter):
     def __init__(
         self,
@@ -258,10 +264,12 @@ class TigerGraphAdapter(GraphAdapter):
                 raise KeyError(f"transaction {txn_id} not found")
             attrs = res[0].get("attributes", {})
             edges = self.conn.getEdges("Transaction", tid) or []
-            cust_id = next((e["to_id"] for e in edges if e.get("e_type") == "CARD_OF"), "")
-            card_id = next((e["to_id"] for e in edges if e.get("e_type") == "MADE_BY"), "")
-            dev_id = next((e["to_id"] for e in edges if e.get("e_type") == "FROM_DEVICE"), "")
-            p_email = next((e["to_id"] for e in edges if e.get("e_type") == "PURCHASER_EMAIL"), "")
+            # The supplied HHGOA graph uses the lower-case names; the upper-case
+            # aliases keep compatibility with graphs created by older RAVEL scripts.
+            cust_id = _edge_target(edges, "transaction_of_customer", "CARD_OF")
+            card_id = _edge_target(edges, "transaction_of_card", "MADE_BY")
+            dev_id = _edge_target(edges, "transaction_uses_device", "FROM_DEVICE")
+            p_email = _edge_target(edges, "transaction_has_p_emaildomain", "PURCHASER_EMAIL")
 
             return {
                 "txn_id": str(attrs.get("transaction_id", txn_id)),

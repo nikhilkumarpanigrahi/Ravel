@@ -1,7 +1,7 @@
 """Static contracts for installable GSQL and TigerGraph result normalization."""
 
 from ravel.infrastructure.graph.gsql_scripts import QUERIES_GSQL, SCHEMA_GSQL
-from ravel.infrastructure.graph.tigergraph import TigerGraphAdapter, _norm_list
+from ravel.infrastructure.graph.tigergraph import TigerGraphAdapter, _edge_target, _norm_list
 
 
 class QueryOnlyConnection:
@@ -57,6 +57,17 @@ def test_normalizer_flattens_printed_vertex_attributes():
             "v_type": "Transaction",
         }
     ]
+
+
+def test_edge_target_supports_live_hhgoa_edge_names():
+    edges = [
+        {"e_type": "transaction_of_card", "to_id": "C12382-K1"},
+        {"e_type": "transaction_of_customer", "to_id": "C12382"},
+    ]
+
+    assert _edge_target(edges, "transaction_of_customer", "CARD_OF") == "C12382"
+    assert _edge_target(edges, "transaction_of_card", "MADE_BY") == "C12382-K1"
+    assert _edge_target(edges, "transaction_uses_device", "FROM_DEVICE") == ""
 
 
 def test_normalizer_keeps_scalar_accumulator_results():
