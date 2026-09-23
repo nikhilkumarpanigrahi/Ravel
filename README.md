@@ -23,17 +23,17 @@
 
 ## 20-Case Benchmark Summary
 
-Executed on all 20 exam cases from `HHGOA_IEEE/case_pack.csv`:
+Executed deterministically on all 20 exam cases from `HHGOA_IEEE/case_pack.csv` using the local mock graph adapter:
 
 | Metric | Result |
 | :--- | :--- |
 | **Cases Evaluated** | **20 / 20** |
-| **Confirmed Fraud** | 13 cases |
-| **Legitimate Cleared** | 6 cases |
-| **Uncertain Escalated** | 1 case |
-| **SARs Filed** | 5 regulatory filings |
-| **Total Exposure Identified** | **$3,277.56 USD** |
-| **Average Latency** | **0.53 seconds / case** |
+| **Confirmed Fraud** | 9 cases |
+| **Legitimate Cleared** | 4 cases |
+| **Uncertain Escalated** | 7 cases |
+| **SARs Recommended** | 9 simulated regulatory filings |
+| **Total Exposure Identified** | **$2,996.56 USD** |
+| **Average Latency** | **1.59 seconds / case** |
 | **Average Graph Queries** | **14.0 queries / case** |
 
 Detailed breakdown available in [`benchmark/report.md`](benchmark/report.md) and individual graded answer files in [`cases/`](cases/).

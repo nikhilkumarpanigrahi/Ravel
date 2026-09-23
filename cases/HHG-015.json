@@ -2,42 +2,42 @@
   "case_id": "HHG-015",
   "case": {
     "case_id": "HHG-015",
-    "status": "closed_legitimate",
-    "verdict": "legitimate",
-    "fraud_probability": 0.05,
+    "status": "escalated",
+    "verdict": "uncertain",
+    "fraud_probability": 0.3,
     "pattern": "card_not_present_fraud",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
     "connected_card_ids": [
-      "C05031-K2",
-      "C05245-K2",
-      "C04597-K1",
-      "C12942-K2",
-      "C07212-K1",
-      "C11000-K2",
-      "C11309-K1",
-      "C02716-K1",
-      "C04108-K2",
-      "C05381-K2",
-      "C07562-K2",
-      "C11965-K1",
-      "C00854-K2",
-      "C11509-K2",
-      "C03218-K2",
       "C04125-K1",
-      "C06224-K2",
-      "C01155-K2",
-      "C05560-K2",
-      "C08391-K2",
-      "C08962-K2",
-      "C05704-K2",
-      "C12897-K1",
-      "C10308-K1",
       "C03040-K2",
-      "C00750-K2",
+      "C04597-K1",
+      "C00854-K2",
+      "C05031-K2",
+      "C11509-K2",
+      "C05704-K2",
+      "C02716-K1",
+      "C08391-K2",
       "C06744-K2",
-      "C11923-K2"
+      "C12897-K1",
+      "C00750-K2",
+      "C07562-K2",
+      "C11923-K2",
+      "C11309-K1",
+      "C01155-K2",
+      "C08962-K2",
+      "C11965-K1",
+      "C05560-K2",
+      "C05245-K2",
+      "C05381-K2",
+      "C11000-K2",
+      "C04108-K2",
+      "C06224-K2",
+      "C10308-K1",
+      "C07212-K1",
+      "C03218-K2",
+      "C12942-K2"
     ],
     "connected_device_profiles": [],
     "exposure_usd": 0.0,
@@ -60,38 +60,38 @@
         ]
       },
       {
-        "claim": "Device shared across 28 other card(s): C05031-K2, C05245-K2, C04597-K1",
+        "claim": "Device shared across 28 other card(s): C04125-K1, C03040-K2, C04597-K1",
         "source": "graph",
         "ref": "query:shared_devices(C03042)",
         "entity_ids": [
-          "C05031-K2",
-          "C05245-K2",
-          "C04597-K1",
-          "C12942-K2",
-          "C07212-K1",
-          "C11000-K2",
-          "C11309-K1",
-          "C02716-K1",
-          "C04108-K2",
-          "C05381-K2",
-          "C07562-K2",
-          "C11965-K1",
-          "C00854-K2",
-          "C11509-K2",
-          "C03218-K2",
           "C04125-K1",
-          "C06224-K2",
-          "C01155-K2",
-          "C05560-K2",
-          "C08391-K2",
-          "C08962-K2",
-          "C05704-K2",
-          "C12897-K1",
-          "C10308-K1",
           "C03040-K2",
-          "C00750-K2",
+          "C04597-K1",
+          "C00854-K2",
+          "C05031-K2",
+          "C11509-K2",
+          "C05704-K2",
+          "C02716-K1",
+          "C08391-K2",
           "C06744-K2",
-          "C11923-K2"
+          "C12897-K1",
+          "C00750-K2",
+          "C07562-K2",
+          "C11923-K2",
+          "C11309-K1",
+          "C01155-K2",
+          "C08962-K2",
+          "C11965-K1",
+          "C05560-K2",
+          "C05245-K2",
+          "C05381-K2",
+          "C11000-K2",
+          "C04108-K2",
+          "C06224-K2",
+          "C10308-K1",
+          "C07212-K1",
+          "C03218-K2",
+          "C12942-K2"
         ]
       },
       {
@@ -105,7 +105,7 @@
         ]
       },
       {
-        "claim": "Customer verification response: Customer confirmed transaction as legitimate cardholder activity",
+        "claim": "Simulated customer verification response: No reply received within 24 hours; ownership remains unverified",
         "source": "customer",
         "ref": "evidence_request:1",
         "entity_ids": [
@@ -117,17 +117,18 @@
       "CC-3886",
       "CC-1313"
     ],
-    "summary": "Investigation of HHG-015 (C03042 / C03042-K1): Flagged transaction 3464869 ($599.94) evaluated under card_not_present_fraud. Customer reported: Customer confirmed transaction as legitimate cardholder activity. No fraudulent exposure confirmed. Verdict: legitimate (fraud probability: 0.05). Recommended 1 action(s) adhering to bank policy.",
+    "summary": "Investigation of HHG-015 (C03042 / C03042-K1): Flagged transaction 3464869 ($599.94) evaluated under card_not_present_fraud. Customer reported: No reply received within 24 hours; ownership remains unverified. No fraudulent exposure confirmed. Verdict: uncertain (fraud probability: 0.30). Recommended 2 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-F7C6C8D4",
-    "opened_at": "2026-09-19 09:07:54.669260",
-    "updated_at": "2026-09-19 09:07:54.669262"
+    "graph_case_id": "CASE-2016-7C7204E1",
+    "opened_at": "2026-09-23 11:47:58.736998+00:00",
+    "updated_at": "2026-09-23 11:47:58.736998+00:00"
   },
   "evidence_requests": [
     {
       "type": "customer_validation",
       "asked_after_step": 3,
-      "assumed_response": "Customer confirmed transaction as legitimate cardholder activity"
+      "assumed_response": "No reply received within 24 hours; ownership remains unverified",
+      "simulation_disclosure": "Synthetic response for benchmark/demo; not ground truth"
     }
   ],
   "next_best_actions": {
@@ -137,6 +138,7 @@
         "route": "auto",
         "reason": "Section 3a: Open internal fraud case as probability reaches threshold",
         "order": 1,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       },
@@ -145,6 +147,7 @@
         "route": "auto",
         "reason": "R1: Single signal / probability 0.30 < 0.70; verify before blocking",
         "order": 2,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       },
@@ -153,21 +156,71 @@
         "route": "auto",
         "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
         "order": 3,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       }
     ],
     "final": [
       {
-        "action": "CLOSE_NO_FRAUD",
+        "action": "MONITOR_CARD",
         "route": "auto",
-        "reason": "R3: Customer confirmed transaction as legitimate cardholder activity",
+        "reason": "R4: Customer uncontactable, heighten card monitoring for 72 hours",
         "order": 1,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R4: Decline pending authorization until cardholder responds",
+        "order": 2,
+        "approval_id": "APP-231EC258",
+        "requires_approval": true,
+        "state": "PENDING"
       }
     ],
-    "what_changed": "Customer confirmed transaction as legitimate; alert closed with no fraud."
+    "what_changed": "Uncertainty persisted after inquiry; case escalated to analyst for manual review."
+  },
+  "uncertainty": {
+    "initial": {
+      "risk": 0.77,
+      "confidence": 0.7,
+      "evidence_completeness": 0.66,
+      "contradictions": 0,
+      "decision_readiness": "PARTIALLY_READY",
+      "risk_level": "HIGH",
+      "missing_evidence": [
+        "customer ownership confirmation"
+      ],
+      "stale_evidence": 0,
+      "weak_evidence": 0,
+      "hypotheses": [
+        "card_not_present_fraud: partial (0.30)",
+        "card_not_present_new_device: partial (0.30)",
+        "account_takeover: partial (0.30)"
+      ]
+    },
+    "final": {
+      "risk": 0.77,
+      "confidence": 0.7,
+      "evidence_completeness": 0.85,
+      "contradictions": 0,
+      "decision_readiness": "PARTIALLY_READY",
+      "risk_level": "HIGH",
+      "missing_evidence": [],
+      "stale_evidence": 0,
+      "weak_evidence": 0,
+      "hypotheses": [
+        "card_not_present_fraud: partial (0.30)",
+        "card_not_present_new_device: partial (0.30)",
+        "account_takeover: partial (0.30)"
+      ]
+    },
+    "what_reduced_uncertainty": [
+      "customer validation response"
+    ]
   },
   "sar": {
     "file": false,
@@ -177,8 +230,8 @@
     "total_amount_usd": 0.0,
     "activity_dates": []
   },
-  "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
+  "stop_reason": "Further steps unlikely to change verdict; escalated under policy R8.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.69
+  "latency_s": 1.13
 }

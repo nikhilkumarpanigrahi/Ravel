@@ -1,35 +1,200 @@
 {
-  "cases_run": 2,
+  "cases_run": 20,
   "verdicts": {
-    "legitimate": 1,
-    "uncertain": 1
+    "legitimate": 4,
+    "uncertain": 7,
+    "fraud": 9
   },
   "patterns": {
-    "none": 1,
-    "card_not_present_fraud": 1
+    "none": 6,
+    "card_not_present_fraud": 7,
+    "account_takeover": 6,
+    "card_not_present_new_device": 1
   },
-  "sar_filed": 0,
-  "total_exposure_usd": 52.47,
-  "avg_latency_s": 109.14,
+  "sar_filed": 9,
+  "total_exposure_usd": 2996.56,
+  "avg_latency_s": 1.59,
   "avg_tool_calls": 14.0,
   "cases": [
     {
       "case_id": "HHG-001",
       "verdict": "legitimate",
       "pattern": "none",
-      "fraud_probability": 0.05,
+      "fraud_probability": 0.15,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 180.18
+      "latency_s": 0.89
     },
     {
       "case_id": "HHG-002",
       "verdict": "uncertain",
       "pattern": "card_not_present_fraud",
-      "fraud_probability": 0.75,
-      "exposure_usd": 52.47,
+      "fraud_probability": 0.3,
+      "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 38.09
+      "latency_s": 1.13
+    },
+    {
+      "case_id": "HHG-003",
+      "verdict": "fraud",
+      "pattern": "none",
+      "fraud_probability": 0.98,
+      "exposure_usd": 49.0,
+      "sar_file": true,
+      "latency_s": 2.66
+    },
+    {
+      "case_id": "HHG-004",
+      "verdict": "fraud",
+      "pattern": "card_not_present_fraud",
+      "fraud_probability": 0.98,
+      "exposure_usd": 128.33,
+      "sar_file": true,
+      "latency_s": 1.24
+    },
+    {
+      "case_id": "HHG-005",
+      "verdict": "uncertain",
+      "pattern": "account_takeover",
+      "fraud_probability": 0.75,
+      "exposure_usd": 100.07,
+      "sar_file": false,
+      "latency_s": 0.48
+    },
+    {
+      "case_id": "HHG-006",
+      "verdict": "fraud",
+      "pattern": "card_not_present_new_device",
+      "fraud_probability": 0.98,
+      "exposure_usd": 1906.07,
+      "sar_file": true,
+      "latency_s": 1.15
+    },
+    {
+      "case_id": "HHG-007",
+      "verdict": "legitimate",
+      "pattern": "none",
+      "fraud_probability": 0.15,
+      "exposure_usd": 0.0,
+      "sar_file": false,
+      "latency_s": 5.08
+    },
+    {
+      "case_id": "HHG-008",
+      "verdict": "fraud",
+      "pattern": "card_not_present_fraud",
+      "fraud_probability": 0.98,
+      "exposure_usd": 55.68,
+      "sar_file": true,
+      "latency_s": 3.16
+    },
+    {
+      "case_id": "HHG-009",
+      "verdict": "fraud",
+      "pattern": "none",
+      "fraud_probability": 0.98,
+      "exposure_usd": 30.02,
+      "sar_file": true,
+      "latency_s": 1.34
+    },
+    {
+      "case_id": "HHG-010",
+      "verdict": "uncertain",
+      "pattern": "card_not_present_fraud",
+      "fraud_probability": 0.3,
+      "exposure_usd": 0.0,
+      "sar_file": false,
+      "latency_s": 0.82
+    },
+    {
+      "case_id": "HHG-011",
+      "verdict": "fraud",
+      "pattern": "card_not_present_fraud",
+      "fraud_probability": 0.98,
+      "exposure_usd": 131.3,
+      "sar_file": true,
+      "latency_s": 4.63
+    },
+    {
+      "case_id": "HHG-012",
+      "verdict": "legitimate",
+      "pattern": "none",
+      "fraud_probability": 0.15,
+      "exposure_usd": 0.0,
+      "sar_file": false,
+      "latency_s": 0.77
+    },
+    {
+      "case_id": "HHG-013",
+      "verdict": "uncertain",
+      "pattern": "account_takeover",
+      "fraud_probability": 0.75,
+      "exposure_usd": 197.38,
+      "sar_file": false,
+      "latency_s": 0.9
+    },
+    {
+      "case_id": "HHG-014",
+      "verdict": "fraud",
+      "pattern": "account_takeover",
+      "fraud_probability": 0.9,
+      "exposure_usd": 74.96,
+      "sar_file": true,
+      "latency_s": 0.55
+    },
+    {
+      "case_id": "HHG-015",
+      "verdict": "uncertain",
+      "pattern": "card_not_present_fraud",
+      "fraud_probability": 0.3,
+      "exposure_usd": 0.0,
+      "sar_file": false,
+      "latency_s": 1.13
+    },
+    {
+      "case_id": "HHG-016",
+      "verdict": "fraud",
+      "pattern": "account_takeover",
+      "fraud_probability": 0.98,
+      "exposure_usd": 59.67,
+      "sar_file": true,
+      "latency_s": 1.15
+    },
+    {
+      "case_id": "HHG-017",
+      "verdict": "legitimate",
+      "pattern": "card_not_present_fraud",
+      "fraud_probability": 0.05,
+      "exposure_usd": 0.0,
+      "sar_file": false,
+      "latency_s": 0.87
+    },
+    {
+      "case_id": "HHG-018",
+      "verdict": "fraud",
+      "pattern": "none",
+      "fraud_probability": 0.98,
+      "exposure_usd": 39.08,
+      "sar_file": true,
+      "latency_s": 2.62
+    },
+    {
+      "case_id": "HHG-019",
+      "verdict": "uncertain",
+      "pattern": "account_takeover",
+      "fraud_probability": 0.75,
+      "exposure_usd": 99.92,
+      "sar_file": false,
+      "latency_s": 0.86
+    },
+    {
+      "case_id": "HHG-020",
+      "verdict": "uncertain",
+      "pattern": "account_takeover",
+      "fraud_probability": 0.75,
+      "exposure_usd": 125.08,
+      "sar_file": false,
+      "latency_s": 0.46
     }
   ]
 }

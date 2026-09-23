@@ -4,30 +4,30 @@
     "case_id": "HHG-007",
     "status": "closed_legitimate",
     "verdict": "legitimate",
-    "fraud_probability": 0.05,
+    "fraud_probability": 0.15,
     "pattern": "none",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
     "connected_card_ids": [
-      "C08962-K2",
-      "C05704-K2",
-      "C05031-K2",
-      "C06663-K2",
-      "C05381-K2",
-      "C08391-K2",
-      "C04597-K1",
-      "C11509-K2",
-      "C00294-K2",
-      "C10308-K1",
-      "C02716-K1",
-      "C07562-K2",
-      "C09657-K2",
-      "C06744-K2",
-      "C06224-K2",
-      "C01155-K2",
       "C11923-K2",
-      "C11919-K2"
+      "C06224-K2",
+      "C02716-K1",
+      "C08391-K2",
+      "C05381-K2",
+      "C04597-K1",
+      "C01155-K2",
+      "C05704-K2",
+      "C06663-K2",
+      "C06744-K2",
+      "C08962-K2",
+      "C11919-K2",
+      "C09657-K2",
+      "C11509-K2",
+      "C05031-K2",
+      "C00294-K2",
+      "C07562-K2",
+      "C10308-K1"
     ],
     "connected_device_profiles": [],
     "exposure_usd": 0.0,
@@ -50,28 +50,28 @@
         ]
       },
       {
-        "claim": "Device shared across 18 other card(s): C08962-K2, C05704-K2, C05031-K2",
+        "claim": "Device shared across 18 other card(s): C11923-K2, C06224-K2, C02716-K1",
         "source": "graph",
         "ref": "query:shared_devices(C09933)",
         "entity_ids": [
-          "C08962-K2",
-          "C05704-K2",
-          "C05031-K2",
-          "C06663-K2",
-          "C05381-K2",
-          "C08391-K2",
-          "C04597-K1",
-          "C11509-K2",
-          "C00294-K2",
-          "C10308-K1",
-          "C02716-K1",
-          "C07562-K2",
-          "C09657-K2",
-          "C06744-K2",
-          "C06224-K2",
-          "C01155-K2",
           "C11923-K2",
-          "C11919-K2"
+          "C06224-K2",
+          "C02716-K1",
+          "C08391-K2",
+          "C05381-K2",
+          "C04597-K1",
+          "C01155-K2",
+          "C05704-K2",
+          "C06663-K2",
+          "C06744-K2",
+          "C08962-K2",
+          "C11919-K2",
+          "C09657-K2",
+          "C11509-K2",
+          "C05031-K2",
+          "C00294-K2",
+          "C07562-K2",
+          "C10308-K1"
         ]
       },
       {
@@ -85,7 +85,7 @@
         ]
       },
       {
-        "claim": "Customer verification response: Customer confirmed transaction as legitimate cardholder activity",
+        "claim": "Simulated customer verification response: No reply received within 24 hours; ownership remains unverified",
         "source": "customer",
         "ref": "evidence_request:1",
         "entity_ids": [
@@ -97,17 +97,18 @@
       "CC-5521",
       "CC-5092"
     ],
-    "summary": "Investigation of HHG-007 (C09933 / C09933-K2): Flagged transaction 3514948 ($111.92) evaluated under none. Customer reported: Customer confirmed transaction as legitimate cardholder activity. No fraudulent exposure confirmed. Verdict: legitimate (fraud probability: 0.05). Recommended 1 action(s) adhering to bank policy.",
+    "summary": "Investigation of HHG-007 (C09933 / C09933-K2): Flagged transaction 3514948 ($111.92) evaluated under none. Customer reported: No reply received within 24 hours; ownership remains unverified. No fraudulent exposure confirmed. Verdict: legitimate (fraud probability: 0.15). Recommended 2 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-A0EE5887",
-    "opened_at": "2026-09-19 09:07:50.851768",
-    "updated_at": "2026-09-19 09:07:50.851769"
+    "graph_case_id": "CASE-2016-11641372",
+    "opened_at": "2026-09-23 11:47:43.588854+00:00",
+    "updated_at": "2026-09-23 11:47:43.588854+00:00"
   },
   "evidence_requests": [
     {
       "type": "customer_validation",
       "asked_after_step": 3,
-      "assumed_response": "Customer confirmed transaction as legitimate cardholder activity"
+      "assumed_response": "No reply received within 24 hours; ownership remains unverified",
+      "simulation_disclosure": "Synthetic response for benchmark/demo; not ground truth"
     }
   ],
   "next_best_actions": {
@@ -117,6 +118,7 @@
         "route": "auto",
         "reason": "R1: Single signal / probability 0.15 < 0.70; verify before blocking",
         "order": 2,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       },
@@ -125,21 +127,63 @@
         "route": "auto",
         "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
         "order": 3,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       }
     ],
     "final": [
       {
-        "action": "CLOSE_NO_FRAUD",
+        "action": "MONITOR_CARD",
         "route": "auto",
-        "reason": "R3: Customer confirmed transaction as legitimate cardholder activity",
+        "reason": "R4: Customer uncontactable, heighten card monitoring for 72 hours",
         "order": 1,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R4: Decline pending authorization until cardholder responds",
+        "order": 2,
+        "approval_id": "APP-E1BE56CF",
+        "requires_approval": true,
+        "state": "PENDING"
       }
     ],
     "what_changed": "Customer confirmed transaction as legitimate; alert closed with no fraud."
+  },
+  "uncertainty": {
+    "initial": {
+      "risk": 0.87,
+      "confidence": 0.85,
+      "evidence_completeness": 0.66,
+      "contradictions": 0,
+      "decision_readiness": "PARTIALLY_READY",
+      "risk_level": "HIGH",
+      "missing_evidence": [
+        "customer ownership confirmation"
+      ],
+      "stale_evidence": 0,
+      "weak_evidence": 0,
+      "hypotheses": []
+    },
+    "final": {
+      "risk": 0.87,
+      "confidence": 0.85,
+      "evidence_completeness": 0.85,
+      "contradictions": 0,
+      "decision_readiness": "READY",
+      "risk_level": "HIGH",
+      "missing_evidence": [],
+      "stale_evidence": 0,
+      "weak_evidence": 0,
+      "hypotheses": []
+    },
+    "what_reduced_uncertainty": [
+      "customer validation response"
+    ]
   },
   "sar": {
     "file": false,
@@ -152,5 +196,5 @@
   "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.68
+  "latency_s": 5.08
 }

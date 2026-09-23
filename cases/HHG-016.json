@@ -5,33 +5,33 @@
     "status": "closed_fraud",
     "verdict": "fraud",
     "fraud_probability": 0.98,
-    "pattern": "card_not_present_fraud",
+    "pattern": "account_takeover",
     "pattern_description": "",
     "affected_txn_ids": [
       "3534820"
     ],
     "first_suspicious_txn_id": "3534820",
     "connected_card_ids": [
-      "C05031-K2",
       "C04597-K1",
+      "C05307-K2",
       "C09657-K2",
-      "C13171-K2",
-      "C05381-K2",
-      "C07562-K2",
-      "C11847-K2",
-      "C06663-K2",
+      "C05031-K2",
       "C11509-K2",
       "C00294-K2",
-      "C02147-K2",
-      "C06224-K2",
-      "C08962-K2",
-      "C04034-K2",
-      "C10308-K1",
-      "C05307-K2",
       "C06744-K2",
       "C11919-K2",
+      "C07562-K2",
       "C11923-K2",
-      "C06630-K2"
+      "C06663-K2",
+      "C06630-K2",
+      "C08962-K2",
+      "C13171-K2",
+      "C05381-K2",
+      "C10308-K1",
+      "C06224-K2",
+      "C04034-K2",
+      "C11847-K2",
+      "C02147-K2"
     ],
     "connected_device_profiles": [],
     "exposure_usd": 59.67,
@@ -54,30 +54,30 @@
         ]
       },
       {
-        "claim": "Device shared across 20 other card(s): C05031-K2, C04597-K1, C09657-K2",
+        "claim": "Device shared across 20 other card(s): C04597-K1, C05307-K2, C09657-K2",
         "source": "graph",
         "ref": "query:shared_devices(C09988)",
         "entity_ids": [
-          "C05031-K2",
           "C04597-K1",
+          "C05307-K2",
           "C09657-K2",
-          "C13171-K2",
-          "C05381-K2",
-          "C07562-K2",
-          "C11847-K2",
-          "C06663-K2",
+          "C05031-K2",
           "C11509-K2",
           "C00294-K2",
-          "C02147-K2",
-          "C06224-K2",
-          "C08962-K2",
-          "C04034-K2",
-          "C10308-K1",
-          "C05307-K2",
           "C06744-K2",
           "C11919-K2",
+          "C07562-K2",
           "C11923-K2",
-          "C06630-K2"
+          "C06663-K2",
+          "C06630-K2",
+          "C08962-K2",
+          "C13171-K2",
+          "C05381-K2",
+          "C10308-K1",
+          "C06224-K2",
+          "C04034-K2",
+          "C11847-K2",
+          "C02147-K2"
         ]
       },
       {
@@ -91,7 +91,7 @@
         ]
       },
       {
-        "claim": "Customer verification response: Customer confirmed dispute: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'",
+        "claim": "Simulated customer verification response: Customer reaffirmed the original report: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'",
         "source": "customer",
         "ref": "evidence_request:1",
         "entity_ids": [
@@ -103,17 +103,18 @@
       "CC-5559",
       "CC-5558"
     ],
-    "summary": "Investigation of HHG-016 (C09988 / C09988-K1): Flagged transaction 3534820 ($59.67) evaluated under card_not_present_fraud. Customer reported: Customer confirmed dispute: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'. Identified 1 affected transaction(s) totaling $59.67 USD exposure. Verdict: fraud (fraud probability: 0.98). Recommended 1 action(s) adhering to bank policy.",
+    "summary": "Investigation of HHG-016 (C09988 / C09988-K1): Flagged transaction 3534820 ($59.67) evaluated under account_takeover. Customer reported: Customer reaffirmed the original report: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'. Identified 1 affected transaction(s) totaling $59.67 USD exposure. Verdict: fraud (fraud probability: 0.98). Recommended 4 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-4FDD89CA",
-    "opened_at": "2026-09-19 09:07:55.616096",
-    "updated_at": "2026-09-19 09:07:55.616097"
+    "graph_case_id": "CASE-2016-8AD8B2DE",
+    "opened_at": "2026-09-23 11:48:00.159438+00:00",
+    "updated_at": "2026-09-23 11:48:00.159438+00:00"
   },
   "evidence_requests": [
     {
       "type": "customer_validation",
       "asked_after_step": 3,
-      "assumed_response": "Customer confirmed dispute: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'"
+      "assumed_response": "Customer reaffirmed the original report: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.'",
+      "simulation_disclosure": "Synthetic response for benchmark/demo; not ground truth"
     }
   ],
   "next_best_actions": {
@@ -123,6 +124,7 @@
         "route": "auto",
         "reason": "Section 3a: Open internal fraud case as probability reaches threshold",
         "order": 1,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       },
@@ -131,6 +133,7 @@
         "route": "auto",
         "reason": "R1: Single signal / probability 0.75 < 0.70; verify before blocking",
         "order": 2,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       },
@@ -139,32 +142,122 @@
         "route": "auto",
         "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
         "order": 3,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       }
     ],
     "final": [
       {
-        "action": "CLOSE_NO_FRAUD",
-        "route": "auto",
-        "reason": "R3: Customer confirmed transaction as legitimate cardholder activity",
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: Customer denied activity; card compromised (exposure $59.67)",
         "order": 1,
+        "approval_id": "APP-F8E6E52E",
+        "requires_approval": true,
+        "state": "PENDING"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2 and Section 3a: Internal fraud case record with graph persistence",
+        "order": 2,
+        "approval_id": "",
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R2 & R6: Exposure exceeds $1,000, shared device cluster, or coordinated pattern",
+        "order": 3,
+        "approval_id": "APP-0471613F",
+        "requires_approval": true,
+        "state": "PENDING"
+      },
+      {
+        "action": "MONITOR_CONNECTED_CARDS",
+        "route": "auto",
+        "reason": "R6: Monitor 20 connected card(s) linked via shared infrastructure",
+        "order": 4,
+        "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       }
     ],
     "what_changed": "Customer response confirmed unauthorized use, increasing fraud probability to 0.98. Actions escalated from verification to card block and case creation."
   },
+  "uncertainty": {
+    "initial": {
+      "risk": 0.75,
+      "confidence": 0.75,
+      "evidence_completeness": 0.66,
+      "contradictions": 0,
+      "decision_readiness": "PARTIALLY_READY",
+      "risk_level": "HIGH",
+      "missing_evidence": [
+        "customer ownership confirmation"
+      ],
+      "stale_evidence": 0,
+      "weak_evidence": 0,
+      "hypotheses": [
+        "account_takeover: partial (0.30)"
+      ]
+    },
+    "final": {
+      "risk": 0.98,
+      "confidence": 0.98,
+      "evidence_completeness": 0.85,
+      "contradictions": 0,
+      "decision_readiness": "READY",
+      "risk_level": "CRITICAL",
+      "missing_evidence": [],
+      "stale_evidence": 0,
+      "weak_evidence": 0,
+      "hypotheses": [
+        "account_takeover: partial (0.30)"
+      ]
+    },
+    "what_reduced_uncertainty": [
+      "customer validation response"
+    ]
+  },
   "sar": {
-    "file": false,
-    "reason": "Policy criteria for regulatory filing not met (exposure <= $1,000 and no multi-card link)",
-    "narrative": "",
-    "subjects": [],
-    "total_amount_usd": 0.0,
-    "activity_dates": []
+    "file": true,
+    "reason": "R2/R6: Confirmed unauthorized activity under account_takeover with exposure of $59.67 USD linking to 20 other card(s)",
+    "narrative": "Between 2016-12-11 and 2016-12-11, account C09988 on card C09988-K1 was subjected to unauthorized fraudulent activity consistent with account takeover. A total of 1 transaction(s) were flagged, representing an aggregate exposure of $59.67 USD. Investigation uncovered common infrastructure links to connected card(s) C04597-K1, C05307-K2, C09657-K2, C05031-K2, C11509-K2, C00294-K2, C06744-K2, C11919-K2, C07562-K2, C11923-K2, C06663-K2, C06630-K2, C08962-K2, C13171-K2, C05381-K2, C10308-K1, C06224-K2, C04034-K2, C11847-K2, C02147-K2. Customer was contacted and reported: 'Customer reaffirmed the original report: 'Customer C09988 message: 'I never made this $59.67 purchase. Please check my card.' Refers to 3534820.''. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Based on regulatory guidelines under FinCEN and bank fraud policy R2/R6, the card has been blocked and reissued, connected entities placed under heightened monitoring, and this report is submitted to document the illicit financial activity.",
+    "subjects": [
+      "C00294-K2",
+      "C02147-K2",
+      "C04034-K2",
+      "C04597-K1",
+      "C05031-K2",
+      "C05307-K2",
+      "C05381-K2",
+      "C06224-K2",
+      "C06630-K2",
+      "C06663-K2",
+      "C06744-K2",
+      "C07562-K2",
+      "C08962-K2",
+      "C09657-K2",
+      "C09988",
+      "C09988-K1",
+      "C10308-K1",
+      "C11509-K2",
+      "C11847-K2",
+      "C11919-K2",
+      "C11923-K2",
+      "C13171-K2"
+    ],
+    "total_amount_usd": 59.67,
+    "activity_dates": [
+      "2016-12-11",
+      "2016-12-11"
+    ]
   },
   "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.94
+  "latency_s": 1.15
 }
