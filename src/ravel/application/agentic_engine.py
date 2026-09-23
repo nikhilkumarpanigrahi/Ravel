@@ -43,6 +43,7 @@ class AgenticInvestigationEngine:
         flagged_txn_id: str,
         trigger_type: TriggerType,
         risk_score: float | None = None,
+        exposure_usd: float = 0.0,
         max_steps: int = 4,
     ) -> tuple[float, list[EvidenceRecord], list[dict[str, Any]]]:
         """Execute the active evidence-acquisition loop.
@@ -87,15 +88,17 @@ class AgenticInvestigationEngine:
             # 2. Rank Next Best Tool by Value of Information
             ranked_inquiries = self.optimizer.rank_evidence_inquiries(
                 current_fraud_prob=current_belief,
-                exposure_usd=100.0,
+                exposure_usd=exposure_usd,
                 customer_id=customer_id,
                 txn_id=flagged_txn_id,
             )
 
-            # Pick top candidate not yet executed
+            # Execute passive, controlled graph tools only. Customer contact and
+            # human review belong to the governed evidence-request workflow.
+            autonomous_tools = {"DEVICE_REPUTATION_TELEMETRY", "MERCHANT_TERMINAL_AUDIT"}
             chosen_tool = None
             for opt in ranked_inquiries:
-                if opt.inquiry_type not in executed_tools:
+                if opt.inquiry_type in autonomous_tools and opt.inquiry_type not in executed_tools:
                     chosen_tool = opt
                     break
 

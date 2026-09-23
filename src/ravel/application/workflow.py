@@ -167,18 +167,26 @@ class AgentWorkflow:
             first_suspicious_id = first_suspicious_id or trigger.flagged_txn_id
 
         # Run principled agentic active-learning loop for autonomous hypothesis testing
-        _, agent_evs, agent_trace = self.agentic_engine.run_agentic_loop(
+        agent_probability, agent_evs, agent_trace = self.agentic_engine.run_agentic_loop(
             case_id=case_id,
             customer_id=trigger.customer_id,
             card_id=trigger.card_id,
             flagged_txn_id=trigger.flagged_txn_id,
             trigger_type=trigger.type,
             risk_score=trigger.risk_score,
+            exposure_usd=float(flagged_txn.get("amount", 0.0)),
             max_steps=3,
         )
         for a_ev in agent_evs:
             if not any(e.ref == a_ev.ref for e in rag_ctx.evidence):
                 rag_ctx.evidence.append(a_ev)
+        # Detector evidence remains primary; independently acquired graph evidence
+        # contributes to the actual posterior instead of being display-only.
+        if agent_evs:
+            candidate_confidence = round(
+                min(0.99, max(0.01, (0.70 * candidate_confidence) + (0.30 * agent_probability))),
+                3,
+            )
 
         # Check for recurring legitimate pattern
         is_recurring = False
