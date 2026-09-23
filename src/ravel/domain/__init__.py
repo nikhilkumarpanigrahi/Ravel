@@ -28,7 +28,7 @@ from ravel.domain.policy import (
     PolicyEvaluation,
     RecommendedAction,
 )
-from ravel.domain.uncertainty import Assessment, UncertaintyAssessment
+from ravel.domain.uncertainty import Assessment, UncertaintyAssessment, UncertaintyJourney
 
 __all__ = [
     "ActionExecution",
@@ -65,5 +65,6 @@ __all__ = [
     "Trigger",
     "TriggerType",
     "UncertaintyAssessment",
+    "UncertaintyJourney",
     "Verdict",
 ]

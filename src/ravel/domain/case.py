@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from ravel.domain.enums import CaseStatus, FraudPattern, Verdict
 from ravel.domain.evidence import EvidenceRecord
+from ravel.domain.uncertainty import UncertaintyJourney
 
 
 class CaseEvidence(BaseModel):
@@ -68,6 +69,7 @@ class AnswerFile(BaseModel):
     case: Case
     evidence_requests: list[dict] = Field(default_factory=list)
     next_best_actions: dict = Field(default_factory=dict)
+    uncertainty: UncertaintyJourney = Field(default_factory=UncertaintyJourney)
     sar: SAR = Field(default_factory=SAR)
     stop_reason: str = ""
     tool_calls: int = 0

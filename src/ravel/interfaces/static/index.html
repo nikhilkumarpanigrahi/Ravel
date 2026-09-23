@@ -544,6 +544,22 @@
 
             <div class="panel">
               <div class="panel-title">
+                <span>Uncertainty & Decision Readiness</span>
+                <span class="route-tag" id="readiness-tag">NOT READY</span>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; font-size:12px;">
+                <div>Risk <strong id="uncertainty-risk" style="float:right"></strong></div>
+                <div>Confidence <strong id="uncertainty-confidence" style="float:right"></strong></div>
+                <div>Completeness <strong id="uncertainty-completeness" style="float:right"></strong></div>
+                <div>Contradictions <strong id="uncertainty-contradictions" style="float:right"></strong></div>
+              </div>
+              <div style="margin-top:10px; font-size:11.5px; color:var(--text-muted);">
+                <strong>Missing evidence:</strong> <span id="uncertainty-missing"></span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-title">
                 <span>Next Best Actions & Approval Governance</span>
                 <span class="route-tag" id="approval-status-tag">GOVERNED</span>
               </div>
@@ -719,6 +735,14 @@
 
       document.getElementById('case-summary').innerText = c.summary || 'No summary available.';
       document.getElementById('case-stop-reason').innerText = d.stop_reason || 'Investigation concluded.';
+
+      const uncertainty = d.uncertainty?.final || {};
+      document.getElementById('uncertainty-risk').innerText = `${((uncertainty.risk || 0) * 100).toFixed(0)}% · ${uncertainty.risk_level || 'UNKNOWN'}`;
+      document.getElementById('uncertainty-confidence').innerText = `${((uncertainty.confidence || 0) * 100).toFixed(0)}%`;
+      document.getElementById('uncertainty-completeness').innerText = `${((uncertainty.evidence_completeness || 0) * 100).toFixed(0)}%`;
+      document.getElementById('uncertainty-contradictions').innerText = uncertainty.contradictions || 0;
+      document.getElementById('uncertainty-missing').innerText = (uncertainty.missing_evidence || []).join(', ') || 'None';
+      document.getElementById('readiness-tag').innerText = uncertainty.decision_readiness || 'NOT READY';
 
       // Evidence
       const evList = document.getElementById('evidence-container');

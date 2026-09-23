@@ -31,3 +31,11 @@ class Assessment(BaseModel):
     pattern_results: list[dict] = Field(default_factory=list)
     assessment_text: str = ""
     step: int = 0
+
+
+class UncertaintyJourney(BaseModel):
+    """Uncertainty before and after controlled additional evidence."""
+
+    initial: UncertaintyAssessment = Field(default_factory=UncertaintyAssessment)
+    final: UncertaintyAssessment = Field(default_factory=UncertaintyAssessment)
+    what_reduced_uncertainty: list[str] = Field(default_factory=list)

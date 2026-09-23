@@ -10,6 +10,7 @@ from typing import Any
 from ravel.application.detectors import run_detectors
 from ravel.application.graphrag import GraphRAGService
 from ravel.application.policy_engine import PolicyEngine
+from ravel.application.uncertainty_service import assess_uncertainty
 from ravel.domain.case import AnswerFile, Case, CaseMemoryEntry
 from ravel.domain.enums import (
     ApprovalState,
@@ -26,6 +27,7 @@ from ravel.domain.evidence import EvidenceRecord
 from ravel.domain.investigation import Investigation, Trigger
 from ravel.domain.pattern import InvestigationContext, PatternResult
 from ravel.domain.policy import ApprovalRecord, RecommendedAction
+from ravel.domain.uncertainty import UncertaintyJourney
 from ravel.infrastructure.graph.base import GraphAdapter
 from ravel.infrastructure.llm import DeterministicSynthesizer, LLMProvider, timed_complete
 from ravel.infrastructure.persistence import InvestigationRepository
@@ -189,6 +191,15 @@ class AgentWorkflow:
             is_recurring=is_recurring,
             cleared_over_100=(exposure > 100.0),
         )
+        initial_uncertainty = assess_uncertainty(
+            fraud_probability=candidate_confidence,
+            model_risk_score=trigger.risk_score,
+            verdict=Verdict.UNCERTAIN if candidate_confidence < 0.85 else Verdict.FRAUD,
+            pattern_results=pattern_results,
+            evidence_count=len(rag_ctx.evidence),
+            has_history=bool(rag_ctx.historical_cases),
+            has_connected_entities=bool(ctx.connected_entities),
+        )
 
         # 6. & 7. External Evidence Request (R1 Verification or Customer Report follow-up)
         evidence_requests_payload: list[dict[str, Any]] = []
@@ -294,6 +305,21 @@ class AgentWorkflow:
             has_shared_device=bool(rag_ctx.connected_cards),
             connected_card_ids=rag_ctx.connected_cards,
             is_recurring=is_recurring,
+        )
+        final_uncertainty = assess_uncertainty(
+            fraud_probability=final_fraud_prob,
+            model_risk_score=trigger.risk_score,
+            verdict=final_verdict,
+            pattern_results=pattern_results,
+            evidence_count=len(rag_ctx.evidence),
+            has_history=bool(rag_ctx.historical_cases),
+            has_connected_entities=bool(ctx.connected_entities),
+            customer_response=customer_response,
+        )
+        uncertainty_journey = UncertaintyJourney(
+            initial=initial_uncertainty,
+            final=final_uncertainty,
+            what_reduced_uncertainty=["customer validation response"] if customer_response else [],
         )
 
         # What changed description
@@ -523,6 +549,7 @@ class AgentWorkflow:
             case=case_deliverable,
             evidence_requests=evidence_requests_payload,
             next_best_actions=nba.model_dump(mode="json"),
+            uncertainty=uncertainty_journey,
             sar=sar,
             stop_reason=inv.stop_reason,
             tool_calls=tool_calls,
