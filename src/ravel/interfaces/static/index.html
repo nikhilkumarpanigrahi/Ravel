@@ -494,10 +494,10 @@
       </div>
 
       <div class="nav-tabs">
-        <button class="nav-tab active" onclick="switchTab('record')">Forensic Case Record</button>
-        <button class="nav-tab" onclick="switchTab('optimizer')">Value Optimizer & Counterfactuals</button>
-        <button class="nav-tab" onclick="switchTab('timeline')">State Machine Trace</button>
-        <button class="nav-tab" onclick="switchTab('benchmark')">Benchmark Matrix</button>
+        <button class="nav-tab active" onclick="switchTab('record', this)">Forensic Case Record</button>
+        <button class="nav-tab" onclick="switchTab('optimizer', this)">Value Optimizer & Counterfactuals</button>
+        <button class="nav-tab" onclick="switchTab('timeline', this)">State Machine Trace</button>
+        <button class="nav-tab" onclick="switchTab('benchmark', this)">Benchmark Matrix</button>
       </div>
 
       <div class="content-viewport" id="tab-record">
@@ -763,6 +763,9 @@
         renderActiveCase();
         renderCaseList();
         renderGraph();
+        if (document.getElementById('tab-optimizer').style.display !== 'none') {
+          loadOptimizerData(caseId);
+        }
       } catch (err) {
         console.error("Error loading case", err);
       }
@@ -990,15 +993,20 @@
       }
     }
 
-    function switchTab(tab) {
+    function switchTab(tab, el) {
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
+      if (el && el.classList) {
+        el.classList.add('active');
+      } else if (window.event && window.event.target && window.event.target.classList) {
+        window.event.target.classList.add('active');
+      }
       document.getElementById('tab-record').style.display = tab === 'record' ? 'block' : 'none';
       document.getElementById('tab-optimizer').style.display = tab === 'optimizer' ? 'block' : 'none';
       document.getElementById('tab-timeline').style.display = tab === 'timeline' ? 'block' : 'none';
       document.getElementById('tab-benchmark').style.display = tab === 'benchmark' ? 'block' : 'none';
-      if (tab === 'optimizer' && currentCaseData?.case_id) {
-        loadOptimizerData(currentCaseData.case_id);
+      if (tab === 'optimizer') {
+        const cid = currentCaseData?.case_id || (allCases[0] ? allCases[0].case_id : null);
+        loadOptimizerData(cid);
       }
     }
 
@@ -1229,68 +1237,91 @@
     async function loadOptimizerData(caseId) {
       const optContainer = document.getElementById('optimizer-options-container');
       const cfContainer = document.getElementById('counterfactual-container');
+      if (!caseId) {
+        optContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Select a case from the left sidebar to inspect optimization metrics.</div>';
+        cfContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Select a case to inspect counterfactual trade-offs.</div>';
+        return;
+      }
+      optContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Calculating expected information gain and entropy reduction...</div>';
+      cfContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Simulating counterfactual intervention trade-offs...</div>';
+
       try {
         const [optRes, cfRes] = await Promise.all([
           fetch(`/api/cases/${caseId}/evidence-optimizer`),
           fetch(`/api/cases/${caseId}/counterfactuals`)
         ]);
+
         if (optRes.ok) {
           const options = await optRes.json();
-          if (options.length > 0) {
-            document.getElementById('optimizer-entropy-badge').innerText = `Prior H(S): ${options[0].prior_entropy.toFixed(3)} bits`;
+          if (Array.isArray(options) && options.length > 0) {
+            const topEig = Number(options[0].expected_info_gain_bits ?? 0);
+            document.getElementById('optimizer-entropy-badge').innerText = `Top EIG: +${topEig.toFixed(3)} bits`;
+            optContainer.innerHTML = options.map((opt, i) => `
+              <div style="background:var(--bg-card); border:1px solid ${i === 0 ? 'var(--accent-blue)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="badge" style="background:${i === 0 ? '#0284c7' : '#334155'}; font-size:10px;">RANK #${opt.recommended_order ?? (i + 1)}</span>
+                    <strong style="font-size:13px; color:#f8fafc;">${opt.inquiry_type || 'INQUIRY'}</strong>
+                    <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-subtle);">${opt.channel || ''}</span>
+                  </div>
+                  <div style="display:flex; gap:12px; font-family:var(--font-mono); font-size:11px;">
+                    <span style="color:#38bdf8;">EIG: +${Number(opt.expected_info_gain_bits ?? 0).toFixed(3)} bits</span>
+                    <span style="color:#f59e0b;">VoI: ${Number(opt.value_of_information ?? 0).toFixed(2)}</span>
+                    <span style="color:var(--text-subtle);">Cost: $${Number(opt.friction_cost_usd ?? 0).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
+                  ${opt.rationale || 'Ranked by information gain.'}
+                </div>
+                <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
+                  <span>Target: ${opt.target_entity || 'Case Transaction'}</span>
+                  <span>Expected Loss Reduction: $${Number(opt.expected_loss_reduction_usd ?? 0).toFixed(2)}</span>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            optContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">No evidence inquiries recommended (sufficient information already established).</div>';
           }
-          optContainer.innerHTML = options.map((opt, i) => `
-            <div style="background:var(--bg-card); border:1px solid ${i === 0 ? 'var(--accent-blue)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <span class="badge" style="background:${i === 0 ? '#0284c7' : '#334155'}; font-size:10px;">RANK #${i + 1}</span>
-                  <strong style="font-size:13px; color:#f8fafc;">${opt.step_name}</strong>
-                  <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-subtle);">${opt.target_entity}</span>
-                </div>
-                <div style="display:flex; gap:12px; font-family:var(--font-mono); font-size:11px;">
-                  <span style="color:#38bdf8;">EIG: +${opt.expected_info_gain.toFixed(3)} bits</span>
-                  <span style="color:#f59e0b;">VoI: $${opt.value_of_information.toFixed(2)}</span>
-                  <span style="color:var(--text-subtle);">Cost: $${opt.inquiry_cost_usd.toFixed(2)}</span>
-                </div>
-              </div>
-              <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
-                ${opt.mathematical_rationale}
-              </div>
-              <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
-                <span>Posterior H(S): ${opt.posterior_entropy.toFixed(3)} bits</span>
-                <span>Friction Score: ${(opt.friction_score * 100).toFixed(0)}%</span>
-              </div>
-            </div>
-          `).join('');
+        } else {
+          optContainer.innerHTML = '<div style="color:var(--fraud-red); font-size:12px;">Could not retrieve evidence value optimizations.</div>';
         }
 
         if (cfRes.ok) {
           const cfs = await cfRes.json();
-          cfContainer.innerHTML = cfs.map(cf => `
-            <div style="background:var(--bg-card); border:1px solid ${cf.pareto_optimal ? 'var(--legit-green)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <strong style="font-size:13px; font-family:var(--font-mono); color:#f8fafc;">${cf.action_type}</strong>
-                  ${cf.pareto_optimal ? '<span class="badge badge-legit" style="font-size:10px;">PARETO OPTIMAL</span>' : '<span class="badge" style="background:#334155; font-size:10px;">SUB-OPTIMAL</span>'}
+          if (Array.isArray(cfs) && cfs.length > 0) {
+            cfContainer.innerHTML = cfs.map(cf => `
+              <div style="background:var(--bg-card); border:1px solid ${cf.pareto_optimal ? 'var(--legit-green)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <strong style="font-size:13px; font-family:var(--font-mono); color:#f8fafc;">${cf.action_type || 'ACTION'}</strong>
+                    ${cf.pareto_optimal ? '<span class="badge badge-legit" style="font-size:10px;">PARETO OPTIMAL</span>' : '<span class="badge" style="background:#334155; font-size:10px;">SUB-OPTIMAL</span>'}
+                    <span class="badge" style="background:#1e293b; font-size:10px; font-family:var(--font-mono);">${cf.route || 'AUTO'}</span>
+                  </div>
+                  <div style="display:flex; gap:14px; font-family:var(--font-mono); font-size:11.5px;">
+                    <span style="color:#22c55e;">Loss Prev: $${Number(cf.loss_prevented_usd ?? 0).toFixed(2)}</span>
+                    <span style="color:#f59e0b;">Friction: $${Number(cf.customer_friction_cost_usd ?? 0).toFixed(2)}</span>
+                    <span style="color:#38bdf8;">Net Utility: ${Number(cf.net_utility_score ?? 0).toFixed(2)}</span>
+                  </div>
                 </div>
-                <div style="display:flex; gap:14px; font-family:var(--font-mono); font-size:11.5px;">
-                  <span style="color:#22c55e;">Loss Prev: $${cf.expected_loss_prevented_usd.toFixed(2)}</span>
-                  <span style="color:#f59e0b;">Friction: ${(cf.customer_friction_index * 100).toFixed(0)}%</span>
-                  <span style="color:#38bdf8;">Net Val: $${cf.net_expected_value_usd.toFixed(2)}</span>
+                <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
+                  ${cf.rationale || 'Evaluated trade-off.'}
+                </div>
+                <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
+                  <span>Target: ${cf.target || 'Entity'}</span>
+                  <span>Compliance Risk: $${Number(cf.compliance_risk_penalty_usd ?? 0).toFixed(2)}</span>
                 </div>
               </div>
-              <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
-                ${cf.tradeoff_analysis}
-              </div>
-              <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
-                <span>Residual Risk: ${(cf.residual_risk * 100).toFixed(1)}%</span>
-                <span>Compliance Risk: ${(cf.compliance_risk_score * 100).toFixed(1)}%</span>
-              </div>
-            </div>
-          `).join('');
+            `).join('');
+          } else {
+            cfContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">No counterfactual candidate actions available.</div>';
+          }
+        } else {
+          cfContainer.innerHTML = '<div style="color:var(--fraud-red); font-size:12px;">Could not retrieve counterfactual action models.</div>';
         }
       } catch (err) {
         console.error("Error loading optimizer data", err);
+        optContainer.innerHTML = `<div style="color:var(--fraud-red); font-size:12px;">Error: ${err.message}</div>`;
+        cfContainer.innerHTML = `<div style="color:var(--fraud-red); font-size:12px;">Error: ${err.message}</div>`;
       }
     }
 
