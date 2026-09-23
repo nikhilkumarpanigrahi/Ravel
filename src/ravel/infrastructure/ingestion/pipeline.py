@@ -52,6 +52,7 @@ class IngestionMetrics:
     txn_rows_dropped: int = 0
     identity_rows_seen: int = 0
     customers: int = 0
+    cards: int = 0
     devices: int = 0
     email_domains: int = 0
     regions: int = 0
@@ -166,7 +167,17 @@ class DataPipeline:
             if profile not in device_map:
                 device_map[profile] = self._device_id(profile)
             device_id = device_map[profile]
-            device_id_map[txn_id] = (device_id, profile, dev_type, dev_proxy, dev_new, match_status)
+            device_id_map[txn_id] = (
+                device_id,
+                profile,
+                dev_type,
+                dev_proxy,
+                dev_new,
+                match_status,
+                os_,
+                browser,
+                screen,
+            )
 
         # Customer -> card label mapping from closed cases + case pack
         for path, cols in (
@@ -218,6 +229,7 @@ class DataPipeline:
             ],
         )
         customers: dict[str, str] = {}
+        cards: dict[str, list[str]] = {}
         emails: set[str] = set()
         regions: set[str] = set()
         devices: dict[str, list[str]] = {}
@@ -259,10 +271,17 @@ class DataPipeline:
                 addr1 = _clean_str(row.get("addr1"))
                 if addr1 and addr1 != "0" and not addr1.lower().startswith("nan"):
                     regions.add(addr1)
-                dev = device_id_map.get(tid, ("", "", "", "", "", ""))
-                device_id, profile, dev_type, dev_proxy, dev_new, _match = dev
+                dev = device_id_map.get(tid, ("", "", "", "", "", "", "", "", ""))
+                device_id, profile, dev_type, dev_proxy, dev_new, _match, os_, browser, screen = dev
                 if device_id and device_id not in devices:
-                    devices[device_id] = [device_id, profile, dev_type]
+                    devices[device_id] = [device_id, profile, dev_type, os_, browser, screen]
+                cards[card_label] = [
+                    card_label,
+                    cust,
+                    card1,
+                    _clean_str(row.get("card6")),
+                    _clean_str(row.get("card4")),
+                ]
                 # email conflict: purchaser vs recipient domain differ, cardholders usually use their own
                 email_conflict = "1" if (pemail and remail and pemail != remail) else "0"
                 w.writerow(
@@ -297,6 +316,7 @@ class DataPipeline:
 
         self.metrics.txn_rows_loaded = self.metrics.txn_rows_seen - self.metrics.txn_rows_dropped
         self.metrics.customers = len(customers)
+        self.metrics.cards = len(cards)
         self.metrics.devices = len(devices)
         self.metrics.email_domains = len(emails)
         self.metrics.regions = len(regions)
@@ -309,7 +329,16 @@ class DataPipeline:
 
         write_set("email_domains", ["email_domain"], [[e] for e in sorted(emails)])
         write_set("billing_regions", ["region_id"], [[r] for r in sorted(regions)])
-        write_set("devices", ["device_id", "dev_profile", "device_type"], list(devices.values()))
+        write_set(
+            "devices",
+            ["device_id", "dev_profile", "device_type", "os", "browser", "screen"],
+            list(devices.values()),
+        )
+        write_set(
+            "cards",
+            ["card_id", "customer_id", "card1", "card6", "network"],
+            list(cards.values()),
+        )
         self._make_customer_file()
 
         # NEXT edges (per card ordered by ts)
@@ -405,6 +434,9 @@ class DataPipeline:
                 ]
             )
         f.close()
+        members_f, members_w = self._w("closed_case_txn", ["case_id", "txn_id"])
+        members_w.writerows(txn_members)
+        members_f.close()
         self.metrics.closed_cases = len(df)
         self.metrics.closed_txn_links = len(txn_members)
 

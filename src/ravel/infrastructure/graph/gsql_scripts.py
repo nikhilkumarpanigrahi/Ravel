@@ -64,6 +64,7 @@ CREATE LOADING JOB load_ravel FOR GRAPH @@graphname@@ {
 
     LOAD f_customer TO VERTEX Customer VALUES($0, $1, $2, $3, $4) USING header="true", separator=",";
     LOAD f_card TO VERTEX Card VALUES($0, $1, $2, $3, $4) USING header="true", separator=",";
+    LOAD f_card TO EDGE OWNS VALUES($1, $0) USING header="true", separator=",";
     LOAD f_txn TO VERTEX Transaction VALUES($0, ToDateTime($2), $3, $4, $5, $6, $7, $8, $11, $12, $13, $16,
         $21 == "1") USING header="true", separator=",";
     LOAD f_txn TO EDGE MADE_BY VALUES($0, $8) USING header="true", separator=",";
@@ -78,7 +79,7 @@ CREATE LOADING JOB load_ravel FOR GRAPH @@graphname@@ {
         $9, $10, $12, $13, $14) USING header="true", separator=",";
     LOAD f_closed_txn TO EDGE INVOLVES VALUES($0, $1) USING header="true", separator=",";
     LOAD f_closed TO EDGE ON_CARD VALUES($0, $2) USING header="true", separator=",";
-    LOAD f_next TO EDGE NEXT VALUES($0, $1, $2) USING header="true", separator=",";
+    LOAD f_next TO EDGE NEXT VALUES($0, $1, $3) USING header="true", separator=",";
 }
 """
 

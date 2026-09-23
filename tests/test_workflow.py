@@ -62,7 +62,8 @@ def test_agent_workflow_single_case():
 
 def test_benchmark_service_limit():
     service = BenchmarkService(settings)
-    report = service.run_all(limit=2)
+    output_dir = settings.data_dir.parent / "data" / "test-output" / "cases"
+    report = service.run_all(limit=2, output_dir=str(output_dir))
     assert report["cases_run"] == 2
     assert len(report["cases"]) == 2
     assert report["avg_latency_s"] >= 0
