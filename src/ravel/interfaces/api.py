@@ -180,13 +180,24 @@ def record_approval(decision: ApprovalDecision):
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return {"status": "recorded", **updated}
+    executions = repo.list_actions(requested["investigation_id"])
+    execution = next(
+        (item for item in executions if item["action_id"] == f"ACT-{decision.approval_id}"),
+        None,
+    )
+    return {"status": "recorded", **updated, "execution": execution}
 
 
 @app.get("/api/cases/{case_id}/approvals")
 def get_case_approvals(case_id: str):
     """Return persisted approval state for a case's investigation runs."""
     return repo.list_case_approvals(case_id)
+
+
+@app.get("/api/cases/{case_id}/actions")
+def get_case_actions(case_id: str):
+    """Return durable, simulated action executions for the latest case run."""
+    return repo.list_case_actions(case_id)
 
 
 @app.get("/api/benchmark/results")

@@ -626,6 +626,7 @@
     let allCases = [];
     let currentCaseData = null;
     let currentApprovals = [];
+    let currentActions = [];
     let currentFilter = 'all';
 
     async function init() {
@@ -686,8 +687,12 @@
       try {
         const res = await fetch(`/api/cases/${caseId}`);
         currentCaseData = await res.json();
-        const approvalRes = await fetch(`/api/cases/${caseId}/approvals`);
+        const [approvalRes, actionRes] = await Promise.all([
+          fetch(`/api/cases/${caseId}/approvals`),
+          fetch(`/api/cases/${caseId}/actions`)
+        ]);
         currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
+        currentActions = actionRes.ok ? await actionRes.json() : [];
         renderActiveCase();
         renderCaseList();
         renderGraph();
@@ -707,8 +712,12 @@
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.detail || 'Replay failed');
         currentCaseData = payload;
-        const approvalRes = await fetch(`/api/cases/${currentCaseData.case_id}/approvals`);
+        const [approvalRes, actionRes] = await Promise.all([
+          fetch(`/api/cases/${currentCaseData.case_id}/approvals`),
+          fetch(`/api/cases/${currentCaseData.case_id}/actions`)
+        ]);
         currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
+        currentActions = actionRes.ok ? await actionRes.json() : [];
         renderActiveCase();
       } catch (error) {
         console.error(error);
@@ -772,7 +781,12 @@
           a.approval_id === act.approval_id ||
           (!act.approval_id && a.action === act.action && a.route === act.route)
         );
-        const actionState = persisted?.state || act.state || (act.route === 'auto' ? 'NOT_REQUIRED' : 'PENDING');
+        const execution = act.approval_id
+          ? currentActions.find(a => a.action_id === `ACT-${act.approval_id}`)
+          : null;
+        const actionState = execution
+          ? `${execution.simulated ? 'SIMULATED ' : ''}${execution.state}`
+          : (persisted?.state || act.state || (act.route === 'auto' ? 'NOT_REQUIRED' : 'PENDING'));
         const row = document.createElement('div');
         row.className = 'action-row';
         row.innerHTML = `

@@ -443,8 +443,56 @@ class Repository:
             row.approver = approver
             row.reason = reason
             row.decided_at = utc_now_iso()
+            if state == "APPROVED":
+                s.merge(
+                    ActionModel(
+                        action_id=f"ACT-{row.approval_id}",
+                        investigation_id=row.investigation_id,
+                        action=row.action,
+                        route=row.route,
+                        reason=f"Approved by {approver}: {reason}" if reason else f"Approved by {approver}",
+                        state="EXECUTED",
+                        simulated=1,
+                        executed_at=utc_now_iso(),
+                    )
+                )
             s.commit()
         return self.get_approval(approval_id)
+
+    def list_actions(self, inv_id: str) -> list[dict[str, Any]]:
+        with self.session() as s:
+            rows = (
+                s.query(ActionModel)
+                .filter(ActionModel.investigation_id == inv_id)
+                .order_by(ActionModel.executed_at, ActionModel.action_id)
+                .all()
+            )
+            return [
+                {
+                    "action_id": row.action_id,
+                    "investigation_id": row.investigation_id,
+                    "action": row.action,
+                    "route": row.route,
+                    "reason": row.reason,
+                    "state": row.state,
+                    "simulated": bool(row.simulated),
+                    "executed_at": row.executed_at,
+                }
+                for row in rows
+            ]
+
+    def list_case_actions(self, case_id: str) -> list[dict[str, Any]]:
+        with self.session() as s:
+            latest = (
+                s.query(InvestigationModel)
+                .filter(InvestigationModel.case_id == case_id)
+                .order_by(InvestigationModel.updated_at.desc())
+                .first()
+            )
+            if latest is None:
+                return []
+            investigation_id = latest.investigation_id
+        return self.list_actions(investigation_id)
 
     def add_action(self, inv_id: str, action: Any) -> None:
         with self.session() as s:
