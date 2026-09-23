@@ -102,8 +102,9 @@ class PolicyEngine:
             )
             return actions
 
-        # R1: Verify before block on weak signal (prob < 0.70 or single signal)
-        if fraud_prob < 0.70 or signals_count <= 1:
+        # R1 applies only when both conditions hold: a single signal and
+        # assessed probability below 0.70.
+        if fraud_prob < 0.70 and signals_count <= 1:
             if fraud_prob >= 0.30:
                 actions.append(
                     RecommendedAction(
@@ -117,7 +118,7 @@ class PolicyEngine:
                 RecommendedAction(
                     action=ActionType.VERIFY_WITH_CUSTOMER,
                     route=ApprovalRoute.AUTO,
-                    reason=f"R1: Single signal / probability {fraud_prob:.2f} < 0.70; verify before blocking",
+                    reason=f"R1: Single signal with probability {fraud_prob:.2f} below 0.70; verify before blocking",
                     order=2,
                 )
             )
@@ -212,14 +213,73 @@ class PolicyEngine:
             )
             return actions
 
-        # R2: Customer denies transaction (or confirmed fraud)
+        # R4 takes precedence over R2 when the customer has not responded.
+        # Strong shared-origin evidence can still trigger the R6 case/report
+        # controls, but it must not be described as a customer denial.
+        if "no reply" in cust_norm or "timeout" in cust_norm or "unreachable" in cust_norm:
+            actions.append(
+                RecommendedAction(
+                    action=ActionType.MONITOR_CARD,
+                    route=ApprovalRoute.AUTO,
+                    reason="R4: Customer uncontactable, heighten card monitoring for 72 hours",
+                    order=1,
+                )
+            )
+            actions.append(
+                RecommendedAction(
+                    action=ActionType.DECLINE_TRANSACTION,
+                    route=ApprovalRoute.L1,
+                    reason="R4: Decline pending authorization until cardholder responds",
+                    order=2,
+                )
+            )
+            if exposure_usd > 500.0:
+                actions.append(
+                    RecommendedAction(
+                        action=ActionType.ESCALATE_TO_ANALYST,
+                        route=ApprovalRoute.AUTO,
+                        reason="R4: Exposure > $500 with unverified cardholder activity",
+                        order=3,
+                    )
+                )
+            if verdict == Verdict.FRAUD and has_shared_device:
+                actions.extend(
+                    [
+                        RecommendedAction(
+                            action=ActionType.CREATE_CASE,
+                            route=ApprovalRoute.AUTO,
+                            reason="R6: Preserve the coordinated shared-origin investigation",
+                            order=len(actions) + 1,
+                        ),
+                        RecommendedAction(
+                            action=ActionType.FILE_REPORT,
+                            route=ApprovalRoute.L2,
+                            reason="R6: Multiple suspicious cards share the same origin",
+                            order=len(actions) + 2,
+                        ),
+                        RecommendedAction(
+                            action=ActionType.MONITOR_CONNECTED_CARDS,
+                            route=ApprovalRoute.AUTO,
+                            reason=f"R6: Monitor {len(connected_card_ids)} card(s) linked through shared infrastructure",
+                            order=len(actions) + 3,
+                        ),
+                    ]
+                )
+            return actions
+
+        # R2: Customer denies transaction, or independent evidence establishes fraud.
         if is_denial or verdict == Verdict.FRAUD:
             route = self.determine_approval_route(ActionType.BLOCK_CARD, exposure_usd)
+            block_reason = (
+                f"R2: Customer denied activity; card compromised (exposure ${exposure_usd:.2f})"
+                if is_denial
+                else f"Policy 1: Independent evidence supports fraud at probability {final_fraud_prob:.2f}"
+            )
             actions.append(
                 RecommendedAction(
                     action=ActionType.BLOCK_CARD,
                     route=route,
-                    reason=f"R2: Customer denied activity; card compromised (exposure ${exposure_usd:.2f})",
+                    reason=block_reason,
                     order=1,
                 )
             )
@@ -247,35 +307,6 @@ class PolicyEngine:
                         route=ApprovalRoute.AUTO,
                         reason=f"R6: Monitor {len(connected_card_ids)} connected card(s) linked via shared infrastructure",
                         order=4,
-                    )
-                )
-            return actions
-
-        # R4: No response / timed out
-        if "no reply" in cust_norm or "timeout" in cust_norm or "unreachable" in cust_norm:
-            actions.append(
-                RecommendedAction(
-                    action=ActionType.MONITOR_CARD,
-                    route=ApprovalRoute.AUTO,
-                    reason="R4: Customer uncontactable, heighten card monitoring for 72 hours",
-                    order=1,
-                )
-            )
-            actions.append(
-                RecommendedAction(
-                    action=ActionType.DECLINE_TRANSACTION,
-                    route=ApprovalRoute.L1,
-                    reason="R4: Decline pending authorization until cardholder responds",
-                    order=2,
-                )
-            )
-            if exposure_usd > 500.0:
-                actions.append(
-                    RecommendedAction(
-                        action=ActionType.ESCALATE_TO_ANALYST,
-                        route=ApprovalRoute.AUTO,
-                        reason="R4: Exposure > $500 with unverified cardholder activity",
-                        order=3,
                     )
                 )
             return actions
@@ -373,12 +404,12 @@ class PolicyEngine:
             f"A total of {len(affected_txn_ids)} transaction(s) were flagged, representing an aggregate exposure of "
             f"${exposure_usd:.2f} USD.{dev_text}{conn_text}{cust_text} "
             f"The pattern of unauthorized transactions diverges significantly from cardholder historical profile. "
-            f"Based on regulatory guidelines under FinCEN and bank fraud policy R2/R6, the card has been blocked and "
-            f"reissued, connected entities placed under heightened monitoring, and this report is submitted to document the illicit financial activity."
+            f"Under bank policy R2/R6, blocking or reissuing the subject card remains subject to the stated approval route; "
+            f"connected entities are recommended for heightened monitoring, and this report documents the suspicious activity."
         )
 
         reason = (
-            f"R2/R6: Confirmed unauthorized activity under {pattern.value} with exposure of ${exposure_usd:.2f} USD"
+            f"R2/R6: Suspicious activity under {pattern.value} with exposure of ${exposure_usd:.2f} USD"
             + (f" linking to {len(connected_cards)} other card(s)" if connected_cards else "")
         )
 

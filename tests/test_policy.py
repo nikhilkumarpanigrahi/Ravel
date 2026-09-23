@@ -58,6 +58,22 @@ def test_rule_r1_weak_signal():
     assert ActionType.BLOCK_CARD not in action_types  # Must not block on single weak signal
 
 
+def test_rule_r1_does_not_override_strong_probability():
+    engine = PolicyEngine()
+    actions = engine.evaluate_initial_actions(
+        verdict=Verdict.FRAUD,
+        fraud_prob=0.90,
+        pattern=FraudPattern.ACCOUNT_TAKEOVER,
+        exposure_usd=75.0,
+        signals_count=1,
+        has_shared_device=True,
+        is_recurring=False,
+    )
+    reasons = " ".join(action.reason for action in actions)
+    assert "0.90 < 0.70" not in reasons
+    assert ActionType.VERIFY_WITH_CUSTOMER not in [action.action for action in actions]
+
+
 def test_rule_r2_customer_denial():
     engine = PolicyEngine()
     actions = engine.evaluate_final_actions(
@@ -90,3 +106,24 @@ def test_rule_r3_customer_confirmation():
     assert len(actions) == 1
     assert actions[0].action == ActionType.CLOSE_NO_FRAUD
     assert actions[0].route == ApprovalRoute.AUTO
+
+
+def test_rule_r4_no_reply_never_claims_customer_denial():
+    engine = PolicyEngine()
+    actions = engine.evaluate_final_actions(
+        verdict=Verdict.FRAUD,
+        final_fraud_prob=0.90,
+        pattern=FraudPattern.ACCOUNT_TAKEOVER,
+        exposure_usd=75.0,
+        customer_response="No reply received within 24 hours; ownership remains unverified",
+        has_shared_device=True,
+        connected_card_ids=["C12345-K2"],
+    )
+    action_types = [action.action for action in actions]
+    reasons = " ".join(action.reason.lower() for action in actions)
+
+    assert ActionType.MONITOR_CARD in action_types
+    assert ActionType.DECLINE_TRANSACTION in action_types
+    assert ActionType.BLOCK_CARD not in action_types
+    assert ActionType.FILE_REPORT in action_types
+    assert "customer denied" not in reasons

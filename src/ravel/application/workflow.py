@@ -280,12 +280,19 @@ class AgentWorkflow:
         )
         final_fraud_prob = candidate_confidence
         final_verdict = Verdict.UNCERTAIN
+        response_norm = customer_response.lower()
+        customer_denied = any(
+            term in response_norm for term in ("deni", "never made", "stolen", "unauthorized")
+        )
+        customer_confirmed = (
+            any(term in response_norm for term in ("confirm", "legitimate", "made this purchase"))
+            and not customer_denied
+        )
+        customer_unreachable = any(
+            term in response_norm for term in ("no reply", "timeout", "unreachable", "unverified")
+        )
 
-        if (
-            "deni" in customer_response.lower()
-            or "never made" in customer_response.lower()
-            or "stolen" in customer_response.lower()
-        ):
+        if customer_denied:
             base_risk = trigger.risk_score if trigger.risk_score is not None else 0.65
             final_fraud_prob = round(
                 min(0.985, max(0.88, 0.84 + (candidate_confidence * 0.08) + (base_risk * 0.05))), 3
@@ -293,7 +300,7 @@ class AgentWorkflow:
             final_verdict = Verdict.FRAUD
             if top_pattern == FraudPattern.NONE:
                 top_pattern = FraudPattern.CARD_NOT_PRESENT_FRAUD
-        elif "confirm" in customer_response.lower() or "legitimate" in customer_response.lower():
+        elif customer_confirmed:
             base_risk = trigger.risk_score if trigger.risk_score is not None else 0.50
             final_fraud_prob = round(max(0.025, min(0.085, 0.03 + (base_risk * 0.04))), 3)
             final_verdict = Verdict.LEGITIMATE
@@ -346,19 +353,33 @@ class AgentWorkflow:
         uncertainty_journey = UncertaintyJourney(
             initial=initial_uncertainty,
             final=final_uncertainty,
-            what_reduced_uncertainty=["customer validation response"] if customer_response else [],
+            what_reduced_uncertainty=(
+                ["customer validation response"]
+                if customer_response and not customer_unreachable
+                else []
+            ),
         )
 
         # What changed description
         if not evidence_requests_payload:
             what_changed = "nothing"
-        elif final_verdict == Verdict.FRAUD:
+        elif customer_denied:
             what_changed = (
                 f"Customer response confirmed unauthorized use, increasing fraud probability to {final_fraud_prob:.2f}. "
                 f"Actions escalated from verification to card block and case creation."
             )
-        elif final_verdict == Verdict.LEGITIMATE:
+        elif customer_confirmed:
             what_changed = "Customer confirmed transaction as legitimate; alert closed with no fraud."
+        elif customer_unreachable:
+            what_changed = (
+                "The cardholder did not respond, so ownership remains unverified. "
+                "R4 monitoring and pending-authorization controls replace any customer-denial action."
+            )
+        elif final_verdict == Verdict.FRAUD:
+            what_changed = (
+                f"Independent transaction and relationship evidence supports fraud probability {final_fraud_prob:.2f}; "
+                "the recommendation does not rely on a customer denial."
+            )
         else:
             what_changed = "Uncertainty persisted after inquiry; case escalated to analyst for manual review."
 
@@ -414,7 +435,7 @@ class AgentWorkflow:
         # 13. State: CASE_CLOSED & SAR generation
         inv.transition(InvestigationState.CASE_CLOSED, "Investigation closed with defensible decision")
         inv.stop_reason = (
-            "Verification and graph evidence settled the decision; policy actions proposed and recorded."
+            "Available graph and verification evidence support the recorded decision; policy actions remain recommendations until any required approval is recorded."
             if (
                 final_verdict in (Verdict.FRAUD, Verdict.LEGITIMATE)
                 or final_fraud_prob >= 0.85
@@ -433,7 +454,7 @@ class AgentWorkflow:
         summary_text = (
             f"Investigation of {trigger.case_id} ({trigger.customer_id} / {trigger.card_id}): "
             f"Flagged transaction {trigger.flagged_txn_id} (${flagged_txn.get('amount', 0):.2f}) evaluated under {top_pattern.value}. "
-            + (f"Customer reported: {customer_response}. " if customer_response else "")
+            + (f"Assumed verification outcome: {customer_response}. " if customer_response else "")
             + (
                 f"Identified {len(affected_txn_ids)} affected transaction(s) totaling ${exposure:.2f} USD exposure. "
                 if affected_txn_ids
