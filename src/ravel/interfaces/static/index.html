@@ -3,1595 +3,1381 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RAVEL — Forensic Fraud Workstation</title>
+  <title>RAVEL — Autonomous Forensic Fraud Workstation</title>
+  <meta name="description" content="RAVEL Autonomous Forensic Fraud Workstation — AI-driven investigation lifecycle and graph analysis for financial fraud detection." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f4f4f6' stroke-width='2'><polygon points='12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
   <style>
+    /* ──────────────────────────────────────────────
+       DESIGN TOKENS
+    ────────────────────────────────────────────── */
     :root {
-      --bg-base: #f6f7f4;
-      --bg-panel: #ffffff;
-      --bg-card: #fbfcfa;
-      --bg-subtle: #eef2ef;
-      --border: #dde4df;
-      --text-main: #1f2a26;
-      --text-muted: #62736b;
-      --text-subtle: #87958e;
-      --fraud-red: #b84a4a;
-      --fraud-bg: #fbeeee;
-      --legit-green: #287b5a;
-      --legit-bg: #eaf6f0;
-      --warn-amber: #9a6914;
-      --warn-bg: #fbf4e4;
-      --accent-blue: #32756a;
-      --accent-bg: #e7f2ef;
-      --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      /* backgrounds — pure neutral dark, completely free of blue tint */
+      --bg-base:         #09090b;
+      --bg-surface:      #111113;
+      --bg-panel:        #161618;
+      --bg-card:         #1c1c1f;
+      --bg-card-alt:     #222226;
+      --bg-card-hover:   #27272c;
+      --bg-elevated:     #2c2c31;
+      --bg-input:        #0e0e11;
+      --bg-stripe:       rgba(255,255,255,0.02);
+
+      /* borders */
+      --border-subtle:   rgba(255,255,255,0.06);
+      --border-base:     rgba(255,255,255,0.09);
+      --border-strong:   rgba(255,255,255,0.14);
+      --border-focus:    rgba(255,255,255,0.25);
+
+      /* text */
+      --txt-primary:     #f4f4f6;
+      --txt-secondary:   #9ea0a8;
+      --txt-tertiary:    #676872;
+      --txt-disabled:    #3e3f47;
+
+      /* semantic */
+      --red:         #d95f5f;  --red-dim:    rgba(217,95,95,0.12);   --red-border:    rgba(217,95,95,0.24);
+      --green:       #4da87c;  --green-dim:  rgba(77,168,124,0.12);  --green-border:  rgba(77,168,124,0.24);
+      --amber:       #c9883a;  --amber-dim:  rgba(201,136,58,0.12);  --amber-border:  rgba(201,136,58,0.24);
+      --blue:        #528ae4;  --blue-dim:   rgba(82,138,228,0.12);  --blue-border:   rgba(82,138,228,0.24);
+      --purple:      #8a78d4;  --purple-dim: rgba(138,120,212,0.12); --purple-border: rgba(138,120,212,0.24);
+      --slate:       #82838e;
+
+      /* pipeline */
+      --pipe-done:     #4da87c;
+      --pipe-active:   #f4f4f6;
+      --pipe-pending:  #242429;
+      --pipe-line:     rgba(255,255,255,0.08);
+
+      /* typography */
+      --font-ui:   'Inter',   -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+      /* radii */
+      --r-xs: 3px; --r-sm: 5px; --r-md: 7px; --r-lg: 10px; --r-xl: 14px;
+
+      /* transitions */
+      --t-fast: 0.12s ease; --t-base: 0.2s ease; --t-slow: 0.35s ease;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
     body {
-      background-color: var(--bg-base);
-      color: var(--text-main);
-      font-family: var(--font-ui);
-      font-size: 13px;
-      line-height: 1.5;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      background: var(--bg-base); color: var(--txt-primary);
+      font-family: var(--font-ui); font-size: 13px; line-height: 1.5;
+      height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Top Bar */
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+    /* ── Header ── */
     header {
       background: var(--bg-panel);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 52px;
-      flex-shrink: 0;
+      border-bottom: 1px solid var(--border-base);
+      padding: 0 20px; height: 50px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; z-index: 100; position: relative;
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand-logo-wrap {
+      display: flex; align-items: center; gap: 9px;
     }
-    .brand-title {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .brand-icon {
+      width: 30px; height: 30px; border-radius: var(--r-md);
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      color: var(--txt-primary);
+      display: grid; place-items: center; flex-shrink: 0;
     }
-    .badge-tg {
-      background: #32756a;
-      color: var(--text-main);
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
+    .brand-icon svg { width: 15px; height: 15px; stroke: var(--txt-primary); }
+    .brand-name { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--txt-primary); }
+    .brand-divider { width: 1px; height: 18px; background: var(--border-strong); }
+    .brand-desc { font-size: 11.5px; color: var(--txt-tertiary); font-weight: 400; }
+    .brand-connection {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--txt-tertiary); font-weight: 500;
+      padding: 3px 10px; border: 1px solid var(--border-base);
+      border-radius: var(--r-md); background: var(--bg-card); margin-left: 8px;
     }
-    .brand-sub {
-      color: var(--text-subtle);
-      font-size: 12px;
-      border-left: 1px solid var(--border);
-      padding-left: 12px;
-    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: livepulse 2.8s ease infinite; }
+    @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    .top-stats {
-      display: flex;
-      gap: 20px;
-      font-size: 12px;
-    }
-    .stat-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .stat-pill span {
-      font-family: var(--font-mono);
-      font-weight: 600;
-      color: var(--text-main);
-    }
+    .header-pills { display: flex; gap: 2px; background: var(--bg-card); border: 1px solid var(--border-base); border-radius: var(--r-lg); padding: 3px; overflow: hidden; }
+    .pill { padding: 3px 12px; border-radius: var(--r-sm); font-size: 11.5px; color: var(--txt-tertiary); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .pill-value { font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--txt-primary); }
+    .pill-value.clr-red    { color: var(--red);   }
+    .pill-value.clr-green  { color: var(--green); }
+    .pill-value.clr-amber  { color: var(--amber); }
+    .pill-value.clr-blue   { color: var(--blue);  }
 
-    /* Layout */
-    .app-container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+    /* ── Shell ── */
+    .shell { display: flex; flex: 1; overflow: hidden; }
 
-    /* Sidebar Case Explorer */
-    aside {
-      width: 280px;
-      background: var(--bg-panel);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
+    /* ── Sidebar ── */
+    nav {
+      width: 280px; background: var(--bg-panel); border-right: 1px solid var(--border-base);
+      display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
     }
-    .aside-header {
-      padding: 12px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .filter-tabs {
-      display: flex;
-      background: var(--bg-card);
-      border-radius: 6px;
-      padding: 2px;
-      gap: 2px;
-    }
-    .filter-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 11px;
-      padding: 4px 6px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .filter-btn.active {
-      background: var(--bg-subtle);
-      color: #fff;
-    }
+    .nav-top { padding: 10px; border-bottom: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 7px; }
 
-    .case-list {
-      flex: 1;
-      overflow-y: auto;
-      list-style: none;
+    /* search */
+    .search-row { position: relative; }
+    .search-ico { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--txt-tertiary); pointer-events: none; width: 12px; height: 12px; }
+    .search-inp {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border-strong);
+      color: var(--txt-primary); padding: 6px 10px 6px 28px; font-size: 12px;
+      border-radius: var(--r-md); outline: none; font-family: var(--font-ui); transition: border-color var(--t-fast);
     }
+    .search-inp:focus { border-color: var(--border-focus); }
+    .search-inp::placeholder { color: var(--txt-disabled); }
+
+    /* filter tabs */
+    .filter-strip { display: flex; gap: 2px; background: var(--bg-input); border: 1px solid var(--border-base); border-radius: var(--r-md); padding: 2px; }
+    .filt-btn {
+      flex: 1; background: none; border: none; color: var(--txt-tertiary);
+      font-size: 11px; padding: 4px 6px; border-radius: var(--r-sm); cursor: pointer;
+      font-weight: 500; font-family: var(--font-ui); transition: background var(--t-fast), color var(--t-fast);
+    }
+    .filt-btn:hover { color: var(--txt-secondary); }
+    .filt-btn.on { background: var(--bg-elevated); color: var(--txt-primary); font-weight: 600; }
+
+    /* case list */
+    .case-list { flex: 1; overflow-y: auto; }
     .case-item {
-      padding: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      cursor: pointer;
-      transition: background 0.15s;
+      padding: 10px 12px; border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer; transition: background var(--t-fast); border-left: 2px solid transparent;
+      position: relative;
     }
-    .case-item:hover {
-      background: var(--bg-card);
-    }
-    .case-item.active {
-      background: var(--bg-subtle);
-      border-left: 3px solid var(--accent-blue);
-    }
-    .case-item-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-    .case-cid {
-      font-family: var(--font-mono);
-      font-weight: 600;
-      color: #fff;
-    }
+    .case-item:hover { background: var(--bg-card-alt); }
+    .case-item.on { background: var(--bg-card); border-left-color: var(--txt-primary); }
+    .ci-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+    .ci-id { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; color: var(--txt-primary); letter-spacing: 0.02em; }
+    .ci-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--txt-tertiary); }
+    .ci-amount { font-family: var(--font-mono); font-weight: 600; color: var(--txt-secondary); }
+
+    /* ── Badge system ── */
     .badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-family: var(--font-mono);
+      display: inline-flex; align-items: center; gap: 3px;
+      font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+      padding: 2px 6px; border-radius: var(--r-xs);
+      text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid transparent;
+      white-space: nowrap;
     }
-    .badge-fraud { background: var(--fraud-bg); color: var(--fraud-red); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge-legit { background: var(--legit-bg); color: var(--legit-green); border: 1px solid rgba(34, 197, 94, 0.3); }
-    .badge-uncertain { background: var(--warn-bg); color: var(--warn-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .bdg-fraud   { background: var(--red-dim);    color: var(--red);    border-color: var(--red-border);    }
+    .bdg-legit   { background: var(--green-dim);  color: var(--green);  border-color: var(--green-border);  }
+    .bdg-amber   { background: var(--amber-dim);  color: var(--amber);  border-color: var(--amber-border);  }
+    .bdg-blue    { background: var(--blue-dim);   color: var(--blue);   border-color: var(--blue-border);   }
+    .bdg-purple  { background: var(--purple-dim); color: var(--purple); border-color: var(--purple-border); }
+    .bdg-neutral { background: var(--bg-elevated); color: var(--txt-tertiary); border-color: var(--border-strong); }
 
-    /* Main Workspace */
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: var(--bg-base);
-    }
+    /* ── Main area ── */
+    main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-    .workspace-header {
-      background: var(--bg-panel);
-      padding: 14px 24px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
+    /* workspace header */
+    .ws-header {
+      background: var(--bg-panel); border-bottom: 1px solid var(--border-base);
+      padding: 0 22px; height: 56px; display: flex; align-items: center;
+      justify-content: space-between; flex-shrink: 0; gap: 16px;
     }
-    .active-case-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .case-title {
-      font-size: 18px;
-      font-weight: 700;
-      font-family: var(--font-mono);
-    }
-    .case-chips {
-      display: flex;
-      gap: 8px;
-    }
+    .ws-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .case-id-big { font-family: var(--font-mono); font-size: 19px; font-weight: 700; color: var(--txt-primary); letter-spacing: 0.03em; flex-shrink: 0; }
+    .ws-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .ws-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .replay-status-txt { font-size: 11px; color: var(--txt-tertiary); }
+    .replay-status-txt.running { color: var(--amber); }
+    .replay-status-txt.ok      { color: var(--green); }
+    .replay-status-txt.err     { color: var(--red);   }
 
-    .nav-tabs {
-      display: flex;
-      gap: 24px;
-      margin-top: 8px;
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      background: var(--bg-panel);
-    }
-    .nav-tab {
-      padding: 10px 0;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 13px;
-      position: relative;
-    }
-    .nav-tab.active {
-      color: #fff;
-      font-weight: 600;
-    }
-    .nav-tab.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--accent-blue);
-    }
-
-    .content-viewport {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-    }
-
-    /* Grid Sections */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .panel {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .panel-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding-bottom: 10px;
-    }
-
-    /* Subgraph Canvas */
-    #graph-container {
-      height: 340px;
-      width: 100%;
-      background: #f1f5f2;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      position: relative;
-      overflow: hidden;
-    }
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    /* Evidence Ledger */
-    .evidence-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      max-height: 380px;
-      overflow-y: auto;
-    }
-    .evidence-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .evidence-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-    }
-    .source-tag {
-      color: var(--accent-blue);
-      font-weight: 600;
-      font-family: var(--font-mono);
-      font-size: 10px;
-    }
-    .evidence-claim {
-      font-size: 12.5px;
-      color: var(--text-main);
-    }
-    .evidence-ref {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      color: var(--text-subtle);
-    }
-
-    /* Next Best Actions */
-    .nba-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .action-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      background: var(--bg-subtle);
-      border-radius: 5px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-    }
-    .action-name {
-      font-weight: 600;
-      color: var(--text-main);
-    }
-    .route-tag {
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 10px;
-      background: #334155;
-      color: #cbd5e1;
-    }
-
-    /* SAR Narrative Box */
-    .sar-box {
-      background: #f7f9f7;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 14px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.6;
-      color: #34423c;
-      white-space: pre-wrap;
-      max-height: 240px;
-      overflow-y: auto;
-    }
-
-    /* Buttons */
+    /* buttons */
     .btn {
-      background: var(--bg-subtle);
-      color: var(--text-main);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 15px; border-radius: var(--r-md); font-size: 12px;
+      font-weight: 600; font-family: var(--font-ui);
+      cursor: pointer; transition: background var(--t-fast), border-color var(--t-fast), opacity var(--t-fast);
+      border: 1px solid transparent; outline: none; flex-shrink: 0;
     }
-    .btn:hover { background: #e3ebe6; }
-    .btn-primary { background: #32756a; border-color: #32756a; color: #fff; }
-    .btn-primary:hover { background: #285f56; }
-    .btn-approve { background: #287b5a; border-color: #287b5a; color: #fff; }
-    .btn-approve:hover { background: #1f6248; }
+    .btn:disabled { opacity: 0.38; cursor: not-allowed; }
+    .btn-primary { background: #f4f4f6; color: #09090b; border-color: #ffffff; font-weight: 600; }
+    .btn-primary:not(:disabled):hover { background: #e4e4e7; }
+    .btn-ghost { background: var(--bg-card); border-color: var(--border-strong); color: var(--txt-secondary); }
+    .btn-ghost:not(:disabled):hover { background: var(--bg-card-hover); color: var(--txt-primary); }
+    .btn-approve { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+    .btn-approve:not(:disabled):hover { background: rgba(77,168,124,0.2); }
+    .btn-reject  { background: var(--red-dim);   border-color: var(--red-border);   color: var(--red);   }
+    .btn-reject:not(:disabled):hover  { background: rgba(217,95,95,0.2);   }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
 
-    /* Timeline Stepper */
-    .timeline {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      position: relative;
-      padding-left: 20px;
+    /* tab strip */
+    .tab-strip {
+      display: flex; border-bottom: 1px solid var(--border-base);
+      padding: 0 22px; background: var(--bg-panel); flex-shrink: 0;
     }
-    .timeline::before {
+    .tab-btn {
+      padding: 11px 18px; background: none; border: none; border-bottom: 2px solid transparent;
+      color: var(--txt-tertiary); cursor: pointer; font-weight: 500; font-size: 12.5px;
+      font-family: var(--font-ui); transition: color var(--t-fast), border-color var(--t-fast);
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--txt-secondary); }
+    .tab-btn.on { color: var(--txt-primary); border-bottom-color: var(--txt-primary); font-weight: 600; }
+
+    /* content pane */
+    .pane { flex: 1; overflow-y: auto; padding: 20px 22px 36px; display: none; }
+    .pane.on { display: block; }
+
+    /* ── Briefing bar ── */
+    .briefing {
+      background: var(--bg-panel); border: 1px solid var(--border-base);
+      border-radius: var(--r-lg); padding: 14px 18px; margin-bottom: 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+    }
+    .briefing-left { display: flex; align-items: center; gap: 13px; }
+    .briefing-icon {
+      width: 38px; height: 38px; border-radius: var(--r-md); flex-shrink: 0;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      display: grid; place-items: center;
+      font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--txt-primary);
+    }
+    .briefing-lbl { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--txt-tertiary); font-weight: 600; margin-bottom: 3px; }
+    .briefing-headline { font-size: 13px; font-weight: 600; color: var(--txt-primary); line-height: 1.35; }
+    .briefing-right { display: flex; gap: 28px; }
+    .bstat { min-width: 100px; }
+    .bstat-lbl { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--txt-tertiary); font-weight: 600; }
+    .bstat-val { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--txt-primary); margin-top: 3px; }
+
+    /* ── Dashboard grid ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .col { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--bg-panel); border: 1px solid var(--border-base);
+      border-radius: var(--r-lg); padding: 0; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .panel-head {
+      padding: 12px 16px; border-bottom: 1px solid var(--border-subtle);
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .panel-title { font-size: 11px; font-weight: 700; color: var(--txt-tertiary); text-transform: uppercase; letter-spacing: 0.09em; }
+    .panel-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .panel-body.compact { padding: 10px 16px; gap: 8px; }
+
+    /* ── Cytoscape graph ── */
+    #graph-container {
+      height: 320px; width: 100%;
+      background: var(--bg-base);
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 22px 22px;
+      border-radius: 0 0 var(--r-lg) var(--r-lg);
+      position: relative; overflow: hidden;
+    }
+    .graph-legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 9px 16px; border-top: 1px solid var(--border-subtle); }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--txt-tertiary); }
+    .leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Meters ── */
+    .meter-row { display: flex; flex-direction: column; gap: 5px; }
+    .meter-hdr { display: flex; justify-content: space-between; font-size: 12px; color: var(--txt-secondary); }
+    .meter-hdr strong { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: var(--txt-primary); }
+    .meter-track { height: 4px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
+    .meter-fill { height: 100%; border-radius: 99px; transition: width 0.7s cubic-bezier(0.16,1,0.3,1); }
+    .fill-low  { background: var(--green); }
+    .fill-med  { background: var(--amber); }
+    .fill-high { background: var(--red);   }
+    .fill-conf { background: var(--blue);  }
+    .fill-comp { background: var(--pipe-done); }
+
+    /* ── Evidence cards ── */
+    .ev-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 390px; }
+    .ev-card {
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md); padding: 9px 12px; cursor: pointer;
+      transition: background var(--t-fast), border-color var(--t-fast);
+    }
+    .ev-card:hover { background: var(--bg-card-hover); border-color: var(--border-base); }
+    .ev-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; gap: 8px; }
+    .ev-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+    .ev-source { font-family: var(--font-mono); font-size: 9px; font-weight: 700; background: var(--blue-dim); border: 1px solid var(--blue-border); color: var(--blue); padding: 1px 5px; border-radius: var(--r-xs); text-transform: uppercase; }
+    .ev-ref { font-size: 10px; font-family: var(--font-mono); color: var(--txt-tertiary); white-space: nowrap; }
+    .ev-claim { font-size: 12.5px; color: var(--txt-primary); line-height: 1.45; }
+    .ev-path { font-family: var(--font-mono); font-size: 10px; color: var(--slate); background: var(--bg-stripe); border-left: 2px solid var(--border-strong); padding: 3px 8px; border-radius: 0 var(--r-xs) var(--r-xs) 0; margin-top: 5px; word-break: break-all; }
+    .ev-policy { font-size: 11px; color: var(--txt-tertiary); margin-top: 4px; }
+
+    /* ── Summary & stop ── */
+    .summary-text { font-size: 13px; line-height: 1.65; color: var(--txt-primary); }
+    .stop-block {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-left: 2px solid var(--border-strong); border-radius: 0 var(--r-md) var(--r-md) 0;
+      padding: 9px 12px;
+    }
+    .stop-lbl { font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; color: var(--txt-tertiary); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; margin-top: 1px; }
+    .stop-text { font-size: 12.5px; color: var(--txt-secondary); }
+
+    /* ── Actions ── */
+    .action-list { display: flex; flex-direction: column; gap: 5px; }
+    .action-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md); padding: 8px 11px; gap: 10px;
+    }
+    .action-name { font-family: var(--font-mono); font-weight: 600; font-size: 12px; color: var(--txt-primary); }
+    .action-sub  { font-size: 10.5px; color: var(--txt-tertiary); margin-top: 2px; }
+    .route-chip  { font-size: 9.5px; font-family: var(--font-mono); font-weight: 700; padding: 2px 7px; border-radius: var(--r-xs); background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--txt-tertiary); white-space: nowrap; }
+
+    /* SAR */
+    .sar-box { font-family: var(--font-mono); font-size: 11.5px; line-height: 1.65; color: var(--txt-secondary); background: var(--bg-card); border: 1px solid var(--red-border); border-radius: var(--r-md); padding: 12px 14px; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+
+    /* meta strip */
+    .meta-strip { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--txt-secondary); padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+    .meta-strip strong { color: var(--txt-primary); font-family: var(--font-mono); }
+
+    /* approve buttons row */
+    .approval-row { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* shimmer */
+    .shimmer { height: 10px; border-radius: var(--r-xs); background: linear-gradient(90deg,var(--bg-card) 25%,var(--bg-elevated) 45%,var(--bg-card) 65%); background-size: 400% 100%; animation: shimmer 1.5s ease infinite; }
+    @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:0 0} }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       STATE MACHINE PIPELINE
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .trace-summary-bar {
+      background: var(--bg-card); border: 1px solid var(--border-base);
+      border-radius: var(--r-md); padding: 10px 16px; margin-bottom: 22px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--txt-secondary);
+    }
+    .trace-summary-bar strong { color: var(--txt-primary); }
+
+    /* One pipeline row = horizontal sequence of stages */
+    .pipe-row {
+      display: flex; align-items: flex-start; position: relative; padding-bottom: 0;
+    }
+    /* The horizontal connector line that goes behind all steps in a row */
+    .pipe-row::before {
       content: '';
-      position: absolute;
-      top: 6px;
-      bottom: 6px;
-      left: 6px;
-      width: 2px;
-      background: var(--border);
-    }
-    .timeline-item {
-      position: relative;
-    }
-    .timeline-dot {
-      position: absolute;
-      left: -20px;
-      top: 4px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--accent-blue);
-      border: 2px solid var(--bg-panel);
-    }
-    .timeline-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 14px;
+      position: absolute; top: 13px; /* half of circle height */
+      left: calc(100% / 14); right: calc(100% / 14); /* stay within first/last node centers */
+      height: 1px; background: var(--pipe-line); z-index: 0;
     }
 
-    /* Calm light-workspace refinements */
-    header { box-shadow: 0 1px 0 rgba(31, 42, 38, 0.03); }
-    .workspace-header { padding: 16px 28px; }
-    .content-viewport { padding: 24px 28px 32px; }
-    .panel { border-radius: 12px; box-shadow: 0 2px 8px rgba(31, 42, 38, 0.035); }
-    .filter-tabs { background: #f2f5f2; padding: 3px; border-radius: 8px; }
-    .filter-btn { border-radius: 6px; padding: 6px; }
-    .filter-btn.active { background: #fff; color: var(--text-main); box-shadow: 0 1px 3px rgba(31,42,38,.10); }
-    .case-item { border-bottom-color: #edf0ed; }
-    .case-item:hover { background: #f6faf7; }
-    .case-item.active { background: #edf6f2; border-left-color: var(--accent-blue); }
-    .nav-tab.active { color: var(--accent-blue); }
-    .panel-title { border-bottom-color: #edf0ed; }
-    #graph-container { border-color: #d8e3dd; }
-    .evidence-card, .nba-box, .action-row, .timeline-card { background: #fff; border-color: #e1e8e3; }
-    .action-row { background: #f7faf8; }
-    .route-tag { background: #e9efeb; color: #45564e; }
-    .badge-fraud { border-color: #efcaca; }
-    .badge-legit { border-color: #cce6d8; }
-    .badge-uncertain { border-color: #ecd9a6; }
-    .top-stats { color: var(--text-muted); }
-    .top-stats .stat-pill span, .case-cid, .action-name { color: var(--text-main); }
-    .state-flow { display:grid; grid-template-columns:repeat(auto-fit, minmax(145px, 1fr)); gap:10px; padding:2px 0 16px; }
-    .state-node { min-height:86px; position:relative; padding:13px 14px 12px; background:#f6f8f6; border:1px solid #dfe7e2; border-radius:10px; transition:background .28s ease, border-color .28s ease, box-shadow .28s ease, transform .28s ease; animation:state-enter .46s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--state-order, 0) * 52ms); }
-    .state-node:hover { transform:translateY(-2px); box-shadow:0 5px 12px rgba(34,57,47,.08); }
-    .state-node.active { background: #e6f2ed; border-color: #78af9b; }
-    .state-node.current { background: #32756a; border-color: #32756a; color: #fff; box-shadow: 0 4px 12px rgba(50,117,106,.22); }
-    .state-index { display: block; color: var(--text-subtle); font: 600 10px var(--font-mono); margin-bottom: 5px; }
-    .state-name { display: block; font: 600 11px var(--font-mono); line-height: 1.35; word-break: break-word; }
-    .state-node.current .state-index { color: #d7eee7; }
-    .state-node.current .state-name { color: #fff; }
-    .state-node.pending { background:#fafbf9; border-style:dashed; border-color:#dfe6e1; }
-    .state-node.pending .state-name, .state-node.pending .state-index { color:#93a099; }
-    @keyframes state-enter { from { opacity:0; transform:translateY(10px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
-    .trace-summary { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 14px; background:#f4f8f5; border:1px solid #dce8e1; border-radius:10px; margin-bottom:18px; color:var(--text-muted); }
-    .trace-summary strong { color:var(--text-main); }
-    .trace-detail-title { font-size:12px; color:var(--text-muted); font-weight:600; margin:6px 0 10px; }
-    .timeline-dot { border-color: #fff; }
-    .replay-wrap { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
-    .replay-status { min-height:16px; color:var(--text-muted); font-size:11px; }
-    .replay-status.running { color:#9a6914; }
-    .replay-status.success { color:#287b5a; }
-    .replay-status.error { color:#b84a4a; }
-    .btn:disabled { cursor:wait; opacity:.7; }
-    [style*="color:#fff"], [style*="color:#f8fafc"], [style*="color:#f1f5f9"], [style*="color:#e2e8f0"] { color: var(--text-main) !important; }
-    [style*="background:#334155"], [style*="background:#1e293b"] { background:#e9efeb !important; color:#45564e !important; }
-    [style*="background:linear-gradient(90deg, #1e293b, #0f172a)"] { background:linear-gradient(105deg, #edf6f1, #f7faf8) !important; border-color:#d6e5dc !important; }
-    [style*="color:#38bdf8"] { color:#32756a !important; }
-    [style*="color:#22c55e"] { color:#287b5a !important; }
-    [style*="color:#f59e0b"] { color:#8a631c !important; }
-    [style*="color:#94a3b8"] { color:#62736b !important; }
-    [style*="color:#64748b"] { color:#718078 !important; }
-    [style*="color:#cbd5e1"] { color:#40534a !important; }
-    .workspace-header { background:rgba(255,255,255,.9); }
-    .case-title { letter-spacing:-.02em; }
-    .brand-title { color:#1e332c; letter-spacing:.08em; }
-    .brand-sub { color:#718078; }
-    .case-list::-webkit-scrollbar, .content-viewport::-webkit-scrollbar, .evidence-list::-webkit-scrollbar { width:8px; }
-    .case-list::-webkit-scrollbar-thumb, .content-viewport::-webkit-scrollbar-thumb, .evidence-list::-webkit-scrollbar-thumb { background:#d8e1dc; border-radius:8px; }
-    .case-loading { padding:14px; color:var(--text-muted); font-size:12px; }
-    .loading-line { height:10px; border-radius:99px; background:linear-gradient(90deg,#edf1ee 25%,#f8faf8 38%,#edf1ee 58%); background-size:400% 100%; animation:shimmer 1.25s ease infinite; }
-    @keyframes shimmer { 0% { background-position:100% 0; } 100% { background-position:0 0; } }
-    .briefing-bar { background:linear-gradient(105deg,#edf6f1,#fbfcfa); border:1px solid #d7e6de; border-radius:12px; padding:15px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
-    .briefing-icon { width:36px; height:36px; display:grid; place-items:center; border-radius:10px; background:#dceee6; color:#32756a; font-weight:700; font-family:var(--font-mono); }
-    .briefing-label { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); font-weight:700; }
-    .briefing-headline { font-size:14px; font-weight:700; color:var(--text-main); margin-top:2px; }
-    .briefing-stat-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
-    .briefing-stat-value { font-weight:700; color:var(--text-main); margin-top:2px; }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
-    @media (max-width: 980px) { .dashboard-grid { grid-template-columns: 1fr; } aside { width: 240px; } .top-stats { display:none; } }
-    @media (max-width: 720px) { body { overflow:auto; height:auto; } .app-container { min-height:calc(100vh - 52px); } aside { width: 200px; } .brand-sub { display:none; } .workspace-header { padding:14px; } .content-viewport { padding:16px; } .nav-tabs { overflow-x:auto; padding:0 16px; gap:18px; } }
+    .pipe-stage {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      min-width: 0; padding: 0 2px; position: relative; z-index: 1;
+    }
+
+    /* Circle */
+    .pipe-circle {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: grid; place-items: center; position: relative; z-index: 2;
+      border: 1.5px solid var(--pipe-pending);
+      background: var(--bg-panel); color: var(--txt-disabled);
+      font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+      transition: border-color var(--t-base), background var(--t-base), color var(--t-base);
+    }
+    .pipe-circle.done {
+      border-color: var(--pipe-done); background: rgba(61,122,88,0.2); color: transparent;
+    }
+    .pipe-circle.done::after {
+      content: '';
+      position: absolute; width: 8px; height: 5px;
+      border-left: 1.8px solid var(--green); border-bottom: 1.8px solid var(--green);
+      transform: rotate(-46deg) translate(0.5px,-1px);
+    }
+    .pipe-circle.active {
+      border-color: var(--pipe-active); background: rgba(244,244,246,0.12); color: var(--txt-primary);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+    }
+    .pipe-circle.active::before {
+      content: '';
+      position: absolute; width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.18);
+      animation: activeRing 1.8s ease infinite;
+    }
+    @keyframes activeRing { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:0.5} }
+
+    /* Label under circle */
+    .pipe-label { margin-top: 7px; text-align: center; min-width: 0; width: 100%; }
+    .pipe-idx  { font-family: var(--font-mono); font-size: 9px; color: var(--txt-disabled); font-weight: 600; letter-spacing: 0.04em; display: block; }
+    .pipe-name { font-size: 9px; font-weight: 600; color: var(--txt-disabled); display: block; line-height: 1.25; word-break: break-word; text-transform: uppercase; letter-spacing: 0.03em; }
+
+    .pipe-stage.done  .pipe-idx  { color: var(--pipe-done); }
+    .pipe-stage.done  .pipe-name { color: var(--txt-tertiary); }
+    .pipe-stage.active .pipe-idx  { color: var(--txt-primary); }
+    .pipe-stage.active .pipe-name { color: var(--txt-primary); font-weight: 700; }
+
+    /* Connector line segment: overriding with done colour */
+    .pipe-stage.done .pipe-connector { background: var(--pipe-done); }
+
+    /* Between rows: arrow */
+    .pipe-row-sep {
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 7px 0; color: var(--txt-disabled); font-size: 13px;
+    }
+
+    /* ── Timeline ── */
+    .tl-section-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--txt-tertiary); margin-bottom: 10px; }
+    .tl { display: flex; flex-direction: column; gap: 0; }
+    .tl-item { display: flex; gap: 14px; }
+    .tl-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .tl-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--pipe-done); border: 2px solid var(--bg-panel); flex-shrink: 0; }
+    .tl-line { flex: 1; width: 1px; background: var(--border-base); min-height: 14px; margin: 3px 0; }
+    .tl-item:last-child .tl-line { display: none; }
+    .tl-card { flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: 9px 12px; margin-bottom: 8px; }
+    .tl-state { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; color: var(--txt-primary); margin-bottom: 2px; }
+    .tl-title { font-size: 12.5px; font-weight: 600; color: var(--txt-primary); }
+    .tl-reason { font-size: 11.5px; color: var(--txt-secondary); margin-top: 2px; line-height: 1.4; }
+
+    /* ── Benchmark table ── */
+    .bench-table { width: 100%; border-collapse: collapse; }
+    .bench-table th { padding: 9px 12px; text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--txt-tertiary); border-bottom: 1px solid var(--border-strong); }
+    .bench-table td { padding: 9px 12px; border-bottom: 1px solid var(--border-subtle); color: var(--txt-primary); font-size: 12.5px; }
+    .bench-table tr.bench-row { cursor: pointer; transition: background var(--t-fast); }
+    .bench-table tr.bench-row:hover { background: var(--bg-card-alt); }
+    .bench-table tr.bench-row.on { background: rgba(255,255,255,0.05); }
+
+    /* ── Optimizer ── */
+    .opt-card, .cf-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .opt-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .opt-metrics { display: flex; gap: 14px; font-family: var(--font-mono); font-size: 11px; }
+    .m-eig { color: var(--green); } .m-voi { color: var(--amber); } .m-cost { color: var(--txt-tertiary); }
+    .cf-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; font-size: 11px; font-family: var(--font-mono); color: var(--txt-secondary); margin-top: 3px; }
+    .cf-grid strong { display: block; font-size: 12.5px; margin-top: 2px; }
+
+    @media (max-width: 1000px) {
+      .grid2 { grid-template-columns: 1fr; }
+      nav { width: 230px; }
+      .header-pills { display: none; }
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="brand">
-      <div class="brand-title">
-        RAVEL
-        <span class="badge-tg">TigerGraph</span>
+<!-- ██ HEADER ██████████████████████████████████████████████████ -->
+<header>
+  <div class="brand">
+    <div class="brand-logo-wrap">
+      <div class="brand-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"></polygon>
+          <polyline points="22 8.5 12 15.5 2 8.5"></polyline>
+          <line x1="12" y1="22" x2="12" y2="15.5"></line>
+        </svg>
       </div>
-      <div class="brand-sub">Agentic Fraud Investigation Workstation</div>
+      <span class="brand-name">RAVEL</span>
     </div>
-    <div class="top-stats">
-      <div class="stat-pill">Cases: <span id="stat-cases">20</span></div>
-      <div class="stat-pill">Confirmed Fraud: <span id="stat-fraud" style="color:var(--fraud-red)">13</span></div>
-      <div class="stat-pill">Legitimate: <span id="stat-legit" style="color:var(--legit-green)">6</span></div>
-      <div class="stat-pill">SARs Filed: <span id="stat-sar">5</span></div>
-      <div class="stat-pill">Total Exposure: <span id="stat-exposure">$3,277.56</span></div>
+    <div class="brand-divider"></div>
+    <span class="brand-desc">Autonomous Forensic Fraud Workstation</span>
+    <div class="brand-connection">
+      <span class="live-dot"></span>TigerGraph Cloud
     </div>
-  </header>
+  </div>
+  <div class="header-pills">
+    <div class="pill">Cases <span class="pill-value" id="st-cases">—</span></div>
+    <div class="pill">Fraud <span class="pill-value clr-red" id="st-fraud">—</span></div>
+    <div class="pill">Legit <span class="pill-value clr-green" id="st-legit">—</span></div>
+    <div class="pill">SARs <span class="pill-value clr-blue" id="st-sar">—</span></div>
+    <div class="pill">Exposure <span class="pill-value clr-amber" id="st-exposure">$—</span></div>
+  </div>
+</header>
 
-  <div class="app-container">
-    <aside>
-      <div class="aside-header">
-        <div class="filter-tabs">
-          <button class="filter-btn active" onclick="setFilter('all', this)">All (20)</button>
-          <button class="filter-btn" onclick="setFilter('fraud', this)">Fraud</button>
-          <button class="filter-btn" onclick="setFilter('legit', this)">Legit</button>
-          <button class="filter-btn" onclick="setFilter('sar', this)">SAR</button>
-        </div>
+<!-- ██ SHELL █████████████████████████████████████████████████████ -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav>
+    <div class="nav-top">
+      <div class="search-row">
+        <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-inp" id="search-inp" type="text" placeholder="Search case, pattern, amount…" oninput="filterCases(this.value)" aria-label="Search cases"/>
       </div>
-      <ul class="case-list" id="case-list-ul">
-        <!-- Rendered via JS -->
-      </ul>
-    </aside>
-
-    <main>
-      <div class="workspace-header">
-        <div class="active-case-meta">
-          <div class="case-title" id="current-case-id">HHG-001</div>
-          <div class="case-chips" id="current-chips">
-            <span class="badge badge-legit">LEGITIMATE</span>
-            <span class="badge" style="background:#334155">PATTERN: NONE</span>
-          </div>
-        </div>
-        <div class="replay-wrap">
-          <button class="btn btn-primary" id="replay-btn" onclick="runSingleCase()">Re-run investigation</button>
-          <span class="replay-status" id="replay-status" aria-live="polite">Ready to analyse this case again.</span>
-        </div>
+      <div class="filter-strip">
+        <button class="filt-btn on" id="filt-all"   onclick="setFilter('all',this)">All</button>
+        <button class="filt-btn"    id="filt-fraud" onclick="setFilter('fraud',this)">Fraud</button>
+        <button class="filt-btn"    id="filt-legit" onclick="setFilter('legit',this)">Legit</button>
+        <button class="filt-btn"    id="filt-sar"   onclick="setFilter('sar',this)">SAR</button>
       </div>
+    </div>
+    <ul class="case-list" id="case-list" role="listbox" aria-label="Investigation cases"></ul>
+  </nav>
 
-      <div class="nav-tabs">
-        <button class="nav-tab active" onclick="switchTab('record', this)">Forensic Case Record</button>
-        <button class="nav-tab" onclick="switchTab('optimizer', this)">Value Optimizer & Counterfactuals</button>
-        <button class="nav-tab" onclick="switchTab('timeline', this)">State Machine Trace</button>
-        <button class="nav-tab" onclick="switchTab('benchmark', this)">Benchmark Matrix</button>
+  <!-- MAIN -->
+  <main>
+    <div class="ws-header">
+      <div class="ws-left">
+        <div class="case-id-big" id="ws-case-id">—</div>
+        <div class="ws-chips"   id="ws-chips"><span class="badge bdg-neutral">SELECT A CASE</span></div>
       </div>
+      <div class="ws-right">
+        <span class="replay-status-txt" id="replay-txt" aria-live="polite">Ready to analyse.</span>
+        <button class="btn btn-primary" id="replay-btn" onclick="runReplay()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Re-run investigation
+        </button>
+      </div>
+    </div>
 
-      <div class="content-viewport" id="tab-record">
-        <!-- Forensic Discovery Briefing Bar -->
-        <div id="forensic-briefing-bar" class="briefing-bar">
-          <div style="display:flex; align-items:center; gap:14px;">
-            <div class="briefing-icon" id="briefing-case-number">--</div>
-            <div>
-              <div class="briefing-label">Investigation summary</div>
-              <div id="briefing-headline" class="briefing-headline">Loading case evidence and graph relationships...</div>
-            </div>
-          </div>
-          <div style="display:flex; gap:16px; font-size:11.5px;">
-            <div style="text-align:right;">
-              <div class="briefing-stat-label">Evidence ledger</div>
-              <div id="briefing-evidence-stat" class="briefing-stat-value">--</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="briefing-stat-label">Recommended action</div>
-              <div id="briefing-action-stat" class="briefing-stat-value">--</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="briefing-stat-label">Governance</div>
-              <div id="briefing-gov-stat" class="briefing-stat-value">--</div>
-            </div>
+    <div class="tab-strip" role="tablist">
+      <button class="tab-btn on" role="tab" onclick="switchTab('record',this)">Forensic Case Record</button>
+      <button class="tab-btn"    role="tab" onclick="switchTab('optimizer',this)">Value Optimizer</button>
+      <button class="tab-btn"    role="tab" onclick="switchTab('timeline',this)">State Machine Trace</button>
+      <button class="tab-btn"    role="tab" onclick="switchTab('bench',this)">Benchmark Matrix</button>
+    </div>
+
+    <!-- ── TAB 1: FORENSIC RECORD ── -->
+    <div class="pane on" id="pane-record" role="tabpanel">
+      <!-- Briefing bar -->
+      <div class="briefing">
+        <div class="briefing-left">
+          <div class="briefing-icon" id="br-num">—</div>
+          <div>
+            <div class="briefing-lbl">Investigation Summary</div>
+            <div class="briefing-headline" id="br-headline">Loading case data…</div>
           </div>
         </div>
-
-        <div class="dashboard-grid">
-          
-          <!-- Left Column -->
-          <div style="display:flex; flex-direction:column; gap:20px;">
-            <div class="panel">
-              <div class="panel-title">
-                <span>Relationship Subgraph</span>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="loadFraudRing()" title="Traverse full TigerGraph fraud ring for this entity">🕸️ Fraud Ring</button>
-                  <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="resetGraphView()" title="Reset graph view">↺ Reset</button>
-                  <span style="font-size:11px; font-weight:normal;">TigerGraph 2-Hop</span>
-                </div>
-              </div>
-              <div id="graph-container">
-                <canvas id="subgraph-canvas"></canvas>
-              </div>
-              <div style="display:flex; gap:16px; font-size:11px; color:var(--text-muted); justify-content:center;">
-                <span>🟢 Flagged Txn</span>
-                <span>🔵 Customer</span>
-                <span>🟠 Card</span>
-                <span>🟣 Device / Region</span>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-title">
-                <span>Evidence Ledger</span>
-                <span id="evidence-count" style="font-family:var(--font-mono)">0 Records</span>
-              </div>
-              <div class="evidence-list" id="evidence-container">
-                <!-- Injected via JS -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Column -->
-          <div style="display:flex; flex-direction:column; gap:20px;">
-            <div class="panel">
-              <div class="panel-title">
-                <span>Executive Summary & Stop Reason</span>
-              </div>
-              <p id="case-summary" style="font-size:13.5px; line-height:1.6; color:#e2e8f0;"></p>
-              <div style="background:var(--bg-card); padding:10px; border-radius:6px; font-size:12px; border-left:3px solid var(--accent-blue);">
-                <strong style="color:var(--accent-blue)">Stop Reason:</strong> <span id="case-stop-reason"></span>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-title">
-                <span>Uncertainty & Decision Readiness</span>
-                <span class="route-tag" id="readiness-tag">NOT READY</span>
-              </div>
-              <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; font-size:12px;">
-                <div>Risk <strong id="uncertainty-risk" style="float:right"></strong></div>
-                <div>Confidence <strong id="uncertainty-confidence" style="float:right"></strong></div>
-                <div>Completeness <strong id="uncertainty-completeness" style="float:right"></strong></div>
-                <div>Contradictions <strong id="uncertainty-contradictions" style="float:right"></strong></div>
-              </div>
-              <div style="margin-top:10px; font-size:11.5px; color:var(--text-muted);">
-                <strong>Missing evidence:</strong> <span id="uncertainty-missing"></span>
-              </div>
-            </div>
-
-            <div class="panel">
-              <div class="panel-title">
-                <span>Next Best Actions & Approval Governance</span>
-                <span class="route-tag" id="approval-status-tag">GOVERNED</span>
-              </div>
-              <div class="nba-box">
-                <div style="font-weight:600; font-size:11.5px; color:var(--text-muted);">FINAL RECOMMENDED ACTIONS:</div>
-                <div id="final-actions-list" style="display:flex; flex-direction:column; gap:6px;"></div>
-                <div style="margin-top:4px; font-size:11.5px; color:var(--text-subtle);">
-                  <strong>What changed:</strong> <span id="nba-what-changed"></span>
-                </div>
-                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
-                  <button class="btn" id="reject-btn" onclick="decidePendingActions('REJECTED')">Reject Pending</button>
-                  <button class="btn btn-approve" id="approve-btn" onclick="decidePendingActions('APPROVED')">Approve Pending</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel" id="sar-panel">
-              <div class="panel-title">
-                <span>Regulatory Filing (SAR Narrative)</span>
-                <span id="sar-filed-tag" class="badge badge-fraud">FILED</span>
-              </div>
-              <div class="sar-box" id="sar-narrative-text"></div>
-            </div>
-          </div>
-
+        <div class="briefing-right">
+          <div class="bstat"><div class="bstat-lbl">Evidence</div><div class="bstat-val" id="br-evidence">—</div></div>
+          <div class="bstat"><div class="bstat-lbl">Recommended Action</div><div class="bstat-val" id="br-action">—</div></div>
+          <div class="bstat"><div class="bstat-lbl">Governance Gate</div><div class="bstat-val" id="br-gov">—</div></div>
         </div>
       </div>
 
-      <!-- Value Optimizer & Counterfactuals Tab -->
-      <div class="content-viewport" id="tab-optimizer" style="display:none;">
-        <div style="display:flex; flex-direction:column; gap:20px; max-width:960px; margin:0 auto;">
-          <!-- Evidence Value Optimizer -->
+      <div class="grid2">
+        <!-- LEFT col -->
+        <div class="col">
+          <!-- Graph panel -->
           <div class="panel">
-            <div class="panel-title">
-              <span>Evidence Value Optimizer (EIG & Information Gain)</span>
-              <span id="optimizer-entropy-badge" class="badge" style="background:#334155">H(S) = --</span>
+            <div class="panel-head">
+              <span class="panel-title">Relationship Subgraph — TigerGraph 2-Hop</span>
+              <div style="display:flex;gap:5px;align-items:center;">
+                <button class="btn btn-ghost btn-sm" onclick="loadFraudRing()">🕸 Fraud Ring</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetGraph()">↺ Reset</button>
+              </div>
             </div>
-            <p style="font-size:12px; color:var(--text-muted);">
-              Shannon binary entropy reduction: Dynamically ranks candidate investigation steps by expected information gain (EIG) relative to inquiry cost and customer friction before querying TigerGraph.
-            </p>
-            <div id="optimizer-options-container" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-              <div style="color:var(--text-subtle); font-size:12px;">Loading optimization metrics...</div>
+            <div id="graph-container"></div>
+            <div class="graph-legend">
+              <div class="legend-item"><span class="leg-dot" style="background:#4da87c;"></span>Flagged Txn</div>
+              <div class="legend-item"><span class="leg-dot" style="background:#528ae4;"></span>Customer</div>
+              <div class="legend-item"><span class="leg-dot" style="background:#c9883a;"></span>Card</div>
+              <div class="legend-item"><span class="leg-dot" style="background:#8a78d4;"></span>Device</div>
+              <div class="legend-item"><span class="leg-dot" style="background:#d95f5f;"></span>Historical Case</div>
             </div>
           </div>
-
-          <!-- Counterfactual Engine -->
+          <!-- Evidence ledger -->
           <div class="panel">
-            <div class="panel-title">
-              <span>Counterfactual Action Engine (Pareto Optimality)</span>
-              <span class="badge" style="background:#1e293b">Decision Theory</span>
+            <div class="panel-head">
+              <span class="panel-title">Evidence Ledger</span>
+              <span id="ev-count" style="font-family:var(--font-mono);font-size:11px;color:var(--txt-tertiary);">0 records</span>
             </div>
-            <p style="font-size:12px; color:var(--text-muted);">
-              Evaluates trade-offs across Loss Prevented vs Customer Friction vs Compliance Risk to find Pareto-optimal interventions.
-            </p>
-            <div id="counterfactual-container" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-              <div style="color:var(--text-subtle); font-size:12px;">Loading counterfactual trade-offs...</div>
+            <div class="panel-body compact" style="overflow:hidden;padding-bottom:0;">
+              <div class="ev-list" id="ev-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT col -->
+        <div class="col">
+          <!-- Summary -->
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Executive Summary &amp; Stop Reason</span>
+              <span class="badge bdg-neutral" id="agent-badge">RAVEL AGENT</span>
+            </div>
+            <div class="panel-body">
+              <p class="summary-text" id="case-summary">Loading executive summary…</p>
+              <div class="stop-block">
+                <span class="stop-lbl">STOP REASON</span>
+                <span class="stop-text" id="stop-reason">Loading…</span>
+              </div>
+            </div>
+          </div>
+          <!-- Uncertainty -->
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Uncertainty &amp; Decision Readiness</span>
+              <span class="badge bdg-neutral" id="readiness-tag">NOT READY</span>
+            </div>
+            <div class="panel-body">
+              <div class="meter-row">
+                <div class="meter-hdr"><span>Fraud Risk Probability</span><strong id="m-risk">—</strong></div>
+                <div class="meter-track"><div class="meter-fill fill-low" id="bar-risk" style="width:0%;"></div></div>
+              </div>
+              <div class="meter-row">
+                <div class="meter-hdr"><span>Bayesian Confidence</span><strong id="m-conf">—</strong></div>
+                <div class="meter-track"><div class="meter-fill fill-conf" id="bar-conf" style="width:0%;"></div></div>
+              </div>
+              <div class="meter-row">
+                <div class="meter-hdr"><span>Graph Completeness</span><strong id="m-comp">—</strong></div>
+                <div class="meter-track"><div class="meter-fill fill-comp" id="bar-comp" style="width:0%;"></div></div>
+              </div>
+              <div class="meta-strip">
+                <span>Contradictions: <strong id="m-contra">0</strong></span>
+                <span>Missing Evidence: <span id="m-missing" style="color:var(--txt-tertiary);">None</span></span>
+              </div>
+            </div>
+          </div>
+          <!-- Actions / NBA -->
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Next Best Actions &amp; Governance</span>
+              <span class="badge bdg-neutral" id="gov-tag">GOVERNED</span>
+            </div>
+            <div class="panel-body">
+              <div class="action-list" id="action-list"></div>
+              <div style="font-size:11.5px;color:var(--txt-tertiary);">
+                <strong style="color:var(--txt-secondary);">Policy shift:</strong>
+                <span id="nba-changed">nothing detected</span>
+              </div>
+              <div class="approval-row" id="approval-row" style="display:none;">
+                <button class="btn btn-reject"  id="btn-reject"  onclick="decide('REJECTED')">Reject Pending</button>
+                <button class="btn btn-approve" id="btn-approve" onclick="decide('APPROVED')">Approve Pending</button>
+              </div>
+            </div>
+          </div>
+          <!-- SAR panel (conditional) -->
+          <div class="panel" id="sar-panel" style="display:none;">
+            <div class="panel-head">
+              <span class="panel-title">FinCEN SAR Regulatory Filing</span>
+              <span class="badge bdg-fraud" id="sar-tag">SAR FILED</span>
+            </div>
+            <div class="panel-body">
+              <div class="sar-box" id="sar-text"></div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Timeline Tab -->
-      <div class="content-viewport" id="tab-timeline" style="display:none;">
-        <div class="panel" style="max-width:1180px; margin:0 auto;">
-          <div class="panel-title">Investigation lifecycle</div>
-          <div class="trace-summary" id="trace-summary">
-            <span>Loading the persisted case workflow…</span>
-          </div>
-          <div class="state-flow" id="state-flow" aria-label="Investigation state machine flow">
-            <!-- State-flow nodes injected via JS -->
-          </div>
-          <div class="trace-detail-title">Transition log</div>
-          <div class="timeline" id="timeline-container">
-            <!-- Timeline items injected via JS -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Benchmark Matrix Tab -->
-      <div class="content-viewport" id="tab-benchmark" style="display:none;">
+    <!-- ── TAB 2: VALUE OPTIMIZER ── -->
+    <div class="pane" id="pane-optimizer" role="tabpanel">
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:900px;margin:0 auto;">
         <div class="panel">
-          <div class="panel-title">20-Case Benchmark Execution Results</div>
-          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;">
-            <thead>
-              <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--text-muted);">
-                <th style="padding:8px;">Case ID</th>
-                <th style="padding:8px;">Verdict</th>
-                <th style="padding:8px;">Pattern</th>
-                <th style="padding:8px;">Probability</th>
-                <th style="padding:8px;">Exposure USD</th>
-                <th style="padding:8px;">SAR Filed</th>
-                <th style="padding:8px;">Latency</th>
-              </tr>
-            </thead>
-            <tbody id="benchmark-tbody"></tbody>
+          <div class="panel-head">
+            <span class="panel-title">Evidence Value Optimizer — EIG &amp; Information Gain</span>
+            <span class="badge bdg-neutral" id="entropy-badge">H(S) = —</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size:12px;color:var(--txt-secondary);line-height:1.55;">Shannon binary entropy reduction: ranks candidate investigation steps by expected information gain (EIG) relative to inquiry cost and customer friction before querying TigerGraph.</p>
+            <div id="opt-container" style="display:flex;flex-direction:column;gap:6px;">
+              <div style="color:var(--txt-tertiary);font-size:12px;">Select a case to load optimization metrics.</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Counterfactual Engine — Pareto Trade-off Analysis</span>
+            <span class="badge bdg-neutral">Decision Theory</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size:12px;color:var(--txt-secondary);line-height:1.55;">Evaluates trade-offs across Loss Prevented vs Customer Friction vs Compliance Risk to find Pareto-optimal interventions.</p>
+            <div id="cf-container" style="display:flex;flex-direction:column;gap:6px;">
+              <div style="color:var(--txt-tertiary);font-size:12px;">Loading counterfactual trade-offs…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 3: STATE MACHINE TRACE ── -->
+    <div class="pane" id="pane-timeline" role="tabpanel">
+      <div style="max-width:1060px;margin:0 auto;">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">14-State Investigation Lifecycle</span>
+            <span class="badge bdg-blue" id="lifecycle-badge">AUTONOMOUS AUDIT TRAIL</span>
+          </div>
+          <div class="panel-body">
+            <div class="trace-summary-bar" id="trace-bar">
+              <span>Run this case to create a persisted investigation trace.</span>
+            </div>
+            <!-- PIPELINE: 14 stages split across rows -->
+            <div id="pipe-row-1" class="pipe-row" style="margin-bottom:6px;"></div>
+            <div class="pipe-row-sep" id="pipe-sep">›</div>
+            <div id="pipe-row-2" class="pipe-row" style="margin-bottom:22px;"></div>
+
+            <!-- Transition log -->
+            <div class="tl-section-label">Lifecycle Transition Log</div>
+            <div class="tl" id="tl-container">
+              <div style="color:var(--txt-tertiary);font-size:12px;padding:8px 0;">Run this case to populate the transition log.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB 4: BENCHMARK ── -->
+    <div class="pane" id="pane-bench" role="tabpanel">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title" id="bench-title">Benchmark Execution Matrix</span>
+          <div style="display:flex;gap:14px;font-size:11px;font-family:var(--font-mono);">
+            <span style="color:var(--green);" id="bench-stat-accuracy">—</span>
+            <span style="color:var(--blue);"  id="bench-stat-latency">—</span>
+            <span style="color:var(--amber);" id="bench-stat-exposure">—</span>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="bench-table">
+            <thead><tr>
+              <th>Case ID</th><th>Verdict</th><th>Pattern</th><th>Probability</th>
+              <th>Exposure</th><th>SAR</th><th>Latency</th><th></th>
+            </tr></thead>
+            <tbody id="bench-tbody"></tbody>
           </table>
         </div>
       </div>
+    </div>
+  </main>
+</div>
 
-    </main>
-  </div>
+<!-- ██ JAVASCRIPT ██████████████████████████████████████████████ -->
+<script>
+"use strict";
 
-  <script>
-    let allCases = [];
-    let currentCaseData = null;
-    let currentApprovals = [];
-    let currentActions = [];
-    let currentTimeline = null;
-    let currentFilter = 'all';
-    let selectedCaseId = null;
-    let caseLoadSequence = 0;
+/* ── REAL state machine stages from InvestigationState enum ── */
+const STAGES = [
+  ['TRIGGERED',         'Intake alert from high-risk transaction or dispute'],
+  ['CASE_CREATED',      'Initialize case record and map initial graph seed'],
+  ['INVESTIGATING',     'Traverse TigerGraph 2-hop neighborhood, fetch card history'],
+  ['EVIDENCE_COLLECTED','Extract multi-hop graph signals and execute pattern detectors'],
+  ['ASSESSING',         'Evaluate Bayesian uncertainty and pattern hypothesis'],
+  ['EVIDENCE_REQUESTED','Dispatch verification request to cardholder (Active Learning)'],
+  ['EVIDENCE_RECEIVED', 'Cardholder response received and indexed'],
+  ['REASSESSING',       'Integrate new evidence, re-run uncertainty estimation'],
+  ['POLICY_EVALUATION', 'Apply compliance rules and compute exposure thresholds'],
+  ['ACTION_PROPOSED',   'Synthesize final next-best-action recommendations'],
+  ['APPROVAL_PENDING',  'Route governance-gated actions for human approval'],
+  ['ACTION_EXECUTED',   'Execute approved actions and write immutable audit entry'],
+  ['CASE_CLOSED',       'Finalize forensic report and archive case dossier'],
+  ['MEMORY_UPDATED',    'Write case memory and discovered edges back to TigerGraph']
+];
+const STAGE_NAMES = new Set(STAGES.map(s=>s[0]));
 
-    async function init() {
-      try {
-        const res = await fetch('/api/cases');
-        allCases = await res.json();
-        renderCaseList();
-        if (allCases.length > 0) {
-          loadCase(allCases[0].case_id);
-        }
-        loadBenchmarkTable();
-      } catch (err) {
-        console.error("Failed to load cases", err);
-      }
+const ROW1_COUNT = 7; /* first 7 stages */
+
+let allCases=[], currentCase=null, currentApprovals=[], currentActions=[], currentTimeline=null;
+let filter='all', searchQ='', selectedId=null, loadSeq=0, cy=null;
+
+const $  = id => document.getElementById(id);
+const pause = ms => new Promise(r => setTimeout(r, ms));
+
+/* ── INIT ── */
+async function init() {
+  try {
+    const res = await fetch('/api/cases');
+    allCases = await res.json();
+    updateHeaderStats();
+    renderSidebar();
+    if (allCases.length) loadCase(allCases[0].case_id);
+    loadBenchmarkTable();
+  } catch(e) { console.error('Init failed', e); }
+}
+
+function updateHeaderStats() {
+  const fraud  = allCases.filter(c=>c.verdict==='fraud').length;
+  const legit  = allCases.filter(c=>c.verdict==='legitimate').length;
+  const sarCnt = allCases.filter(c=>c.sar_file).length;
+  const exp    = allCases.reduce((s,c)=>s+Number(c.exposure_usd||0),0);
+  $('st-cases').textContent   = allCases.length;
+  $('st-fraud').textContent   = fraud;
+  $('st-legit').textContent   = legit;
+  $('st-sar').textContent     = sarCnt;
+  $('st-exposure').textContent = `$${exp.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  $('filt-all').textContent   = `All (${allCases.length})`;
+  $('filt-fraud').textContent = `Fraud (${fraud})`;
+  $('filt-legit').textContent = `Legit (${legit})`;
+  $('filt-sar').textContent   = `SAR (${sarCnt})`;
+}
+
+/* ── SIDEBAR ── */
+function renderSidebar() {
+  const ul  = $('case-list'); ul.innerHTML='';
+  const q   = searchQ.toLowerCase().trim();
+  const vis = allCases.filter(c=>{
+    if (filter==='fraud' && c.verdict!=='fraud') return false;
+    if (filter==='legit' && c.verdict!=='legitimate') return false;
+    if (filter==='sar'   && !c.sar_file) return false;
+    if (q && !c.case_id.toLowerCase().includes(q) && !(c.pattern||'').toLowerCase().includes(q) && !String(c.exposure_usd||'').includes(q)) return false;
+    return true;
+  });
+  vis.forEach(c=>{
+    const li = document.createElement('li');
+    li.className = 'case-item'+(selectedId===c.case_id?' on':'');
+    li.setAttribute('role','option'); li.setAttribute('aria-selected', selectedId===c.case_id);
+    li.onclick = ()=>loadCase(c.case_id);
+    const bc = c.verdict==='fraud'?'bdg-fraud':c.verdict==='legitimate'?'bdg-legit':'bdg-amber';
+    li.innerHTML=`<div class="ci-top"><span class="ci-id">${c.case_id}</span><span class="badge ${bc}">${c.verdict}</span></div>
+      <div class="ci-meta"><span>${c.pattern||'no pattern'}</span><span class="ci-amount">$${Number(c.exposure_usd).toFixed(2)}</span></div>`;
+    ul.appendChild(li);
+  });
+}
+function setFilter(f,btn){
+  filter=f;
+  document.querySelectorAll('.filt-btn').forEach(b=>b.classList.remove('on'));
+  btn?.classList.add('on'); renderSidebar();
+}
+function filterCases(q){ searchQ=q; renderSidebar(); }
+
+/* ── LOAD CASE ── */
+async function loadCase(id) {
+  const seq = ++loadSeq;
+  selectedId=id; currentCase=null; currentApprovals=[]; currentActions=[]; currentTimeline=null;
+  renderSidebar(); renderLoading(id);
+  try {
+    const res = await fetch(`/api/cases/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const [caseData, aRes, acRes, tlRes] = await Promise.all([
+      res.json(),
+      fetch(`/api/cases/${id}/approvals`),
+      fetch(`/api/cases/${id}/actions`),
+      fetch(`/api/cases/${id}/timeline`)
+    ]);
+    if (seq !== loadSeq) return;
+    currentCase      = caseData;
+    currentApprovals = aRes.ok  ? await aRes.json()  : [];
+    currentActions   = acRes.ok ? await acRes.json() : [];
+    currentTimeline  = tlRes.ok ? await tlRes.json() : null;
+    renderCase(); renderSidebar(); buildGraph();
+    if ($('pane-optimizer').classList.contains('on')) loadOptimizer(id);
+  } catch(e) {
+    console.error(e);
+    if (seq===loadSeq) $('stop-reason').textContent='Failed to load case. Select again to retry.';
+  }
+}
+
+function caseNum(id){ const m=String(id||'').match(/(\d+)$/); return m?m[1].padStart(2,'0'):'00'; }
+
+function verdictBadge(v){
+  if (v==='fraud')      return 'bdg-fraud';
+  if (v==='legitimate') return 'bdg-legit';
+  return 'bdg-amber';
+}
+
+function renderLoading(id){
+  $('ws-case-id').textContent = id;
+  $('br-num').textContent     = caseNum(id);
+  $('ws-chips').innerHTML     = '<span class="badge bdg-neutral">LOADING</span>';
+  $('br-headline').textContent= 'Loading case data…';
+  ['br-evidence','br-action','br-gov'].forEach(i=>$(i).textContent='—');
+  $('case-summary').innerHTML = '<span class="shimmer" style="display:block;width:92%;margin:4px 0;"></span><span class="shimmer" style="display:block;width:68%;"></span>';
+  $('stop-reason').textContent='Loading investigation…';
+  $('ev-list').innerHTML='<div style="padding:8px;color:var(--txt-tertiary);font-size:12px;">Loading evidence…</div>';
+  $('ev-count').textContent='0 records';
+  $('action-list').innerHTML='<div style="padding:6px;color:var(--txt-tertiary);font-size:12px;">Loading actions…</div>';
+  ['m-risk','m-conf','m-comp','m-contra'].forEach(i=>$(i).textContent='—');
+  $('m-missing').textContent='—';
+  ['bar-risk','bar-conf','bar-comp'].forEach(i=>$(i).style.width='0%');
+  $('sar-panel').style.display='none';
+  $('approval-row').style.display='none';
+  renderPipeline(new Set(), null);
+  $('trace-bar').innerHTML='<span>Loading workflow…</span>';
+  $('tl-container').innerHTML='<div style="color:var(--txt-tertiary);font-size:12px;padding:8px 0;">Loading transitions…</div>';
+  if (cy) cy.elements().remove();
+}
+
+/* ── RENDER CASE ── */
+function renderCase(){
+  const d=currentCase; if(!d) return;
+  const c=d.case||{};
+  $('ws-case-id').textContent = d.case_id;
+  $('br-num').textContent     = caseNum(d.case_id);
+
+  const vbc = verdictBadge(c.verdict);
+  const pct  = ((c.fraud_probability||0)*100).toFixed(0);
+  $('ws-chips').innerHTML=`
+    <span class="badge ${vbc}">${c.verdict} · ${pct}%</span>
+    <span class="badge bdg-neutral">${(c.pattern||'none').toUpperCase()}</span>
+    <span class="badge bdg-neutral" style="font-family:var(--font-mono);">EXP $${Number(c.exposure_usd).toFixed(2)}</span>`;
+
+  $('case-summary').textContent = c.summary||'No summary available.';
+  $('stop-reason').textContent  = d.stop_reason||'Investigation concluded.';
+
+  /* uncertainty */
+  const u = d.uncertainty?.final||{};
+  const rv = (u.risk||0)*100, cv=(u.confidence||0)*100, ev=(u.evidence_completeness||0)*100;
+  $('m-risk').textContent = `${rv.toFixed(0)}% · ${u.risk_level||'UNKNOWN'}`;
+  $('m-conf').textContent = `${cv.toFixed(0)}%`;
+  $('m-comp').textContent = `${ev.toFixed(0)}%`;
+  $('m-contra').textContent = u.contradictions||0;
+  $('m-missing').textContent = (u.missing_evidence||[]).join(', ')||'None';
+  $('readiness-tag').textContent = u.decision_readiness||'NOT READY';
+  const rBar=$('bar-risk');
+  rBar.style.width=`${rv}%`;
+  rBar.className='meter-fill '+(rv>65?'fill-high':rv>30?'fill-med':'fill-low');
+  $('bar-conf').style.width=`${cv}%`;
+  $('bar-comp').style.width=`${ev}%`;
+
+  /* evidence */
+  const evList=$('ev-list'); evList.innerHTML='';
+  const evidence=c.evidence||[];
+  $('ev-count').textContent=`${evidence.length} record${evidence.length===1?'':'s'}`;
+  let supp=0, cont=0;
+  evidence.forEach(ev=>{
+    if (ev.supports)   supp++;
+    if (ev.contradicts) cont++;
+    const card=document.createElement('div'); card.className='ev-card';
+    card.onclick=()=>highlightEv(ev);
+    const s  = ev.supports   ?`<span class="badge ${ev.supports==='fraud'?'bdg-fraud':'bdg-legit'}">${ev.supports}</span>`:'';
+    const ct = ev.contradicts?`<span class="badge ${ev.contradicts==='fraud'?'bdg-fraud':'bdg-legit'}">contradicts ${ev.contradicts}</span>`:'';
+    card.innerHTML=`
+      <div class="ev-top">
+        <div class="ev-tags"><span class="ev-source">${ev.source}</span>${s}${ct}</div>
+        <span class="ev-ref">${ev.ref}</span>
+      </div>
+      <div class="ev-claim">${ev.claim}</div>
+      ${ev.graph_path?`<div class="ev-path"><strong>Path:</strong> ${ev.graph_path}</div>`:''}
+      ${ev.policy_context?`<div class="ev-policy">⚖ ${ev.policy_context}</div>`:''}`;
+    evList.appendChild(card);
+  });
+
+  /* briefing */
+  const hl=c.verdict==='fraud'
+    ?`Identified ${(c.pattern||'').toUpperCase()} — $${Number(c.exposure_usd).toFixed(2)} exposure mapped across connected entities`
+    :c.verdict==='legitimate'?'Cleared as false alarm — verified legitimate cardholder activity'
+    :'Ambiguous signals — verification inquiry dispatched under Policy R1';
+  $('br-headline').textContent = hl;
+  $('br-evidence').textContent = `${supp||evidence.length} Supporting · ${cont} Contradicting`;
+
+  /* actions */
+  const al=$('action-list'); al.innerHTML='';
+  const nba=d.next_best_actions||{}, finals=nba.final||[];
+  $('br-action').textContent = finals.length?finals[0].action:'MONITOR';
+  finals.forEach(act=>{
+    const persisted=currentApprovals.find(a=>a.approval_id===act.approval_id||(a.action===act.action&&a.route===act.route));
+    const execution=act.approval_id?currentActions.find(a=>a.action_id===`ACT-${act.approval_id}`):null;
+    const st=execution?`${execution.simulated?'SIM ':''}${execution.state}`:(persisted?.state||act.state||(act.route==='auto'?'AUTO':'PENDING'));
+    const row=document.createElement('div'); row.className='action-row';
+    row.innerHTML=`<div>
+      <div class="action-name">${act.action}</div>
+      <div class="action-sub">${act.route!=='auto'?'⚑ Route '+act.route+' approval required (Policy R7/R8)':'⚡ Autonomous — pre-authorized'}</div>
+    </div><span class="route-chip">${act.route} · ${st}</span>`;
+    al.appendChild(row);
+  });
+  $('nba-changed').textContent = nba.what_changed||'nothing';
+
+  const pending=currentApprovals.filter(a=>a.state==='PENDING');
+  $('br-gov').textContent = pending.length?`${pending[0].route} APPROVAL REQUIRED`:'AUTONOMOUS / CLEARED';
+  $('approval-row').style.display = pending.length?'flex':'none';
+  $('btn-approve').disabled=$('btn-reject').disabled=false;
+  $('gov-tag').textContent=pending.length?`${pending.length} PENDING`:(currentApprovals.length?currentApprovals[0].state:'NO APPROVAL NEEDED');
+
+  /* SAR */
+  const sar=d.sar||{};
+  if (sar.file){ $('sar-panel').style.display='flex'; $('sar-text').textContent=sar.narrative; }
+  else $('sar-panel').style.display='none';
+
+  renderTimeline();
+}
+
+/* ── PIPELINE BUILDER (uses real state names) ── */
+function buildPipelineRow(stages, globalOffset, doneSet, activeState){
+  const row=document.createElement('div'); row.className='pipe-row';
+  stages.forEach(([name, desc], j)=>{
+    const idx  = globalOffset+j;
+    const isDone   = doneSet.has(name) && name!==activeState;
+    const isActive = name===activeState;
+    const stepCls  = isDone?'done':isActive?'active':'';
+    const circCls  = isDone?'done':isActive?'active':'';
+    const label    = name.replaceAll('_',' ');
+    const stage    = document.createElement('div');
+    stage.className= `pipe-stage ${stepCls}`;
+    stage.title    = desc;
+    stage.innerHTML= `
+      <div class="pipe-circle ${circCls}">${isDone?'':String(idx+1).padStart(2,'0')}</div>
+      <div class="pipe-label">
+        <span class="pipe-idx">S${idx+1}</span>
+        <span class="pipe-name">${label}</span>
+      </div>`;
+    row.appendChild(stage);
+  });
+  return row;
+}
+
+function renderPipeline(doneSet, activeState){
+  const r1  = $('pipe-row-1'); r1.innerHTML='';
+  const r2  = $('pipe-row-2'); r2.innerHTML='';
+  const sep = $('pipe-sep');
+  const row1Stages = STAGES.slice(0, ROW1_COUNT);
+  const row2Stages = STAGES.slice(ROW1_COUNT);
+  r1.appendChild(buildPipelineRow(row1Stages, 0, doneSet, activeState));
+  if (row2Stages.length) {
+    r2.appendChild(buildPipelineRow(row2Stages, ROW1_COUNT, doneSet, activeState));
+    sep.style.display='flex';
+  } else sep.style.display='none';
+}
+
+function renderTimeline(){
+  const tlCtr=$('tl-container'), tracBar=$('trace-bar');
+  tlCtr.innerHTML='';
+  if (!currentTimeline){
+    tracBar.innerHTML='<span>Run this case to create a persisted investigation trace.</span>';
+    renderPipeline(new Set(),null); return;
+  }
+  const history = currentTimeline.state_history||[];
+  const stateEntries = history.map(([s,r])=>({state:s,reason:r}));
+  const finalState = currentTimeline.state;
+  /* Ensure the last current state appears in the entries if not already */
+  if (finalState && (!stateEntries.length || stateEntries[stateEntries.length-1].state!==finalState))
+    stateEntries.push({state:finalState, reason:currentCase?.stop_reason||'Current persisted workflow state'});
+
+  /* Build done set — ALL states that appear in history INCLUDING the active */
+  const doneSet = new Set(stateEntries.map(e=>e.state));
+  /* Active = the LAST state in history */
+  const activeState = finalState||null;
+  /* For display: done = in history AND not the very last one */
+  const pipelineDone = new Set([...doneSet].filter(s=>s!==activeState));
+
+  renderPipeline(pipelineDone, activeState);
+
+  const toolCnt = (currentTimeline.steps||[]).length;
+  tracBar.innerHTML=`<span><strong>${stateEntries.length} states completed</strong> for ${currentCase?.case_id||'this case'}</span><span>${toolCnt} investigation event${toolCnt===1?'':'s'} recorded</span>`;
+
+  stateEntries.forEach((s,i)=>{
+    const item=document.createElement('div'); item.className='tl-item';
+    item.innerHTML=`
+      <div class="tl-left">
+        <div class="tl-dot" style="background:${s.state===activeState?'var(--blue)':'var(--pipe-done)'}"></div>
+        <div class="tl-line"></div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-state">${s.state}</div>
+        <div class="tl-title">Transition ${i+1}</div>
+        <div class="tl-reason">${s.reason||'State advanced by autonomous workflow engine'}</div>
+      </div>`;
+    tlCtr.appendChild(item);
+  });
+}
+
+/* ── RE-RUN INVESTIGATION ── */
+async function runReplay(){
+  if (!currentCase?.case_id) return;
+  const id=currentCase.case_id;
+  const btn=$('replay-btn'), txt=$('replay-txt');
+  btn.disabled=true; btn.innerHTML='<span class="live-dot"></span> Investigating…';
+  txt.className='replay-status-txt running'; txt.textContent='Executing autonomous investigation workflow…';
+  try {
+    switchTab('timeline', document.querySelectorAll('.tab-btn')[2]);
+    const tracBar=$('trace-bar');
+    tracBar.innerHTML=`<span><strong>Investigating ${id}…</strong> Querying graph neighborhood & evaluating rules</span><span style="color:var(--amber);">● Running</span>`;
+
+    const resp = await fetch(`/api/cases/${id}/replay`, {method:'POST'});
+    const payload = await resp.json();
+    if (!resp.ok) throw new Error(payload.detail || 'Replay failed');
+
+    const [aRes, acRes, tlRes] = await Promise.all([
+      fetch(`/api/cases/${id}/approvals`),
+      fetch(`/api/cases/${id}/actions`),
+      fetch(`/api/cases/${id}/timeline`)
+    ]);
+
+    currentCase = payload;
+    currentApprovals = aRes.ok ? await aRes.json() : [];
+    currentActions = acRes.ok ? await acRes.json() : [];
+    currentTimeline = tlRes.ok ? await tlRes.json() : null;
+
+    /* Animate through the ACTUAL state transitions returned by the engine */
+    const history = currentTimeline?.state_history || [];
+    const tlCtr = $('tl-container');
+    tlCtr.innerHTML = '';
+
+    for (let i = 0; i < history.length; i++) {
+      const [stateName, reason] = history[i];
+      const doneSet = new Set(history.slice(0, i).map(h => h[0]));
+      renderPipeline(doneSet, stateName);
+      tracBar.innerHTML = `<span><strong>Step ${i+1}/${history.length}:</strong> ${stateName}</span><span style="color:var(--amber);">● Processing</span>`;
+
+      const item = document.createElement('div');
+      item.className = 'tl-item';
+      item.innerHTML = `
+        <div class="tl-left">
+          <div class="tl-dot" style="background:var(--pipe-done)"></div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-card">
+          <div class="tl-state">${stateName}</div>
+          <div class="tl-title">Transition ${i+1}</div>
+          <div class="tl-reason">${reason}</div>
+        </div>`;
+      tlCtr.appendChild(item);
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      await pause(140);
     }
 
-    function renderCaseList() {
-      const ul = document.getElementById('case-list-ul');
-      ul.innerHTML = '';
-      const filtered = allCases.filter(c => {
-        if (currentFilter === 'fraud') return c.verdict === 'fraud';
-        if (currentFilter === 'legit') return c.verdict === 'legitimate';
-        if (currentFilter === 'sar') return c.sar_file;
-        return true;
-      });
+    renderCase();
+    renderSidebar();
+    buildGraph();
+    if ($('pane-optimizer').classList.contains('on')) loadOptimizer(id);
+    txt.className='replay-status-txt ok';
+    txt.textContent=`Completed ${id} — ${history.length} states executed.`;
+  } catch(e) {
+    console.error(e);
+    txt.className='replay-status-txt err';
+    txt.textContent=`Error: ${e.message}`;
+  } finally {
+    btn.disabled=false;
+    btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Re-run investigation';
+  }
+}
 
-      filtered.forEach(c => {
-        const li = document.createElement('li');
-        li.className = 'case-item' + (selectedCaseId === c.case_id ? ' active' : '');
-        li.onclick = () => loadCase(c.case_id);
+/* ── BENCHMARK ── */
+async function loadBenchmarkTable(){
+  try {
+    const res=await fetch('/api/benchmark/results');
+    if (!res.ok) return;
+    const data=await res.json();
+    const cases = data.cases || [];
 
-        let badgeClass = 'badge-legit';
-        if (c.verdict === 'fraud') badgeClass = 'badge-fraud';
-        if (c.verdict === 'uncertain') badgeClass = 'badge-uncertain';
+    $('bench-title').textContent = `Benchmark Execution Matrix (${data.cases_run || cases.length} Cases)`;
+    const confRate = data.scorecard?.policy_conformity_rate;
+    $('bench-stat-accuracy').textContent = confRate != null ? `${confRate}% Policy Conformity` : '—';
+    const avgLat = data.avg_latency_s != null ? data.avg_latency_s : (cases.length ? (cases.reduce((s,c)=>s+Number(c.latency_s||0),0)/cases.length).toFixed(2) : null);
+    $('bench-stat-latency').textContent = avgLat != null ? `Avg ${avgLat}s Latency` : '—';
+    const totalExpVal = data.total_exposure_usd != null ? data.total_exposure_usd : cases.reduce((s,c)=>s+Number(c.exposure_usd||0),0);
+    const totalExp = Number(totalExpVal).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    $('bench-stat-exposure').textContent = `$${totalExp} Protected`;
 
-        li.innerHTML = `
-          <div class="case-item-row">
-            <span class="case-cid">${c.case_id}</span>
-            <span class="badge ${badgeClass}">${c.verdict}</span>
+    const tbody=$('bench-tbody'); tbody.innerHTML='';
+    cases.forEach(c=>{
+      const tr=document.createElement('tr'); tr.className='bench-row'+(selectedId===c.case_id?' on':'');
+      tr.onclick=()=>{ loadCase(c.case_id); switchTab('record',document.querySelectorAll('.tab-btn')[0]); };
+      const vc=verdictBadge(c.verdict);
+      tr.innerHTML=`<td style="font-family:var(--font-mono);font-weight:600;">${c.case_id}</td>
+        <td><span class="badge ${vc}">${c.verdict}</span></td>
+        <td style="color:var(--txt-secondary);">${c.pattern}</td>
+        <td style="font-family:var(--font-mono);font-weight:600;">${((c.fraud_probability||0)*100).toFixed(0)}%</td>
+        <td style="font-family:var(--font-mono);font-weight:600;color:var(--amber);">$${Number(c.exposure_usd).toFixed(2)}</td>
+        <td>${c.sar_file?'<span class="badge bdg-fraud" style="font-size:8.5px;">FILED</span>':'<span style="color:var(--txt-tertiary);">No</span>'}</td>
+        <td style="font-family:var(--font-mono);color:var(--txt-tertiary);">${c.latency_s}s</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();loadCase('${c.case_id}');switchTab('record',document.querySelectorAll('.tab-btn')[0])">Inspect ↗</button></td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e){ console.error(e); }
+}
+
+/* ── TAB SWITCH ── */
+function switchTab(tab, el){
+  if (tab === 'benchmark') tab = 'bench';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  if (el) {
+    el.classList.add('on');
+  } else {
+    const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(`'${tab}'`));
+    btn?.classList.add('on');
+  }
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  $(`pane-${tab}`)?.classList?.add('on');
+  if (tab==='optimizer'){ const id=currentCase?.case_id||(allCases[0]?.case_id); if(id) loadOptimizer(id); }
+}
+
+
+/* ── OPTIMIZER ── */
+async function loadOptimizer(id){
+  if (!id) return;
+  const oc=$('opt-container'), cf=$('cf-container'), eb=$('entropy-badge');
+  oc.innerHTML='<div style="color:var(--txt-tertiary);font-size:12px;">Loading…</div>';
+  cf.innerHTML='<div style="color:var(--txt-tertiary);font-size:12px;">Loading…</div>';
+  try {
+    const [optRes,cfRes]=await Promise.all([
+      fetch(`/api/cases/${id}/evidence-optimizer`),
+      fetch(`/api/cases/${id}/counterfactuals`)
+    ]);
+    if (optRes.ok){
+      const raw=await optRes.json(), items=Array.isArray(raw)?raw:(raw.ranked_options||[]);
+      let ent=(!Array.isArray(raw)&&raw.current_entropy_bits!=null)?Number(raw.current_entropy_bits):null;
+      if (ent==null && currentCase?.case?.fraud_probability!=null){
+        const p=Number(currentCase.case.fraud_probability);
+        ent=(p<=0||p>=1)?0:-(p*Math.log2(p)+(1-p)*Math.log2(1-p));
+      }
+      eb.textContent=ent!=null?`H(S) = ${ent.toFixed(3)} bits`:'H(S) = —'; oc.innerHTML='';
+      if (!items.length){ oc.innerHTML='<div style="color:var(--txt-tertiary);font-size:12px;">No candidate inquiry options required.</div>'; }
+      items.forEach((opt,i)=>{
+        const rank=opt.recommended_order||opt.rank||(i+1);
+        const action=opt.inquiry_type||opt.action||'INQUIRY';
+        const mech=opt.channel||opt.mechanism||'TELEMETRY';
+        const eig=Number(opt.expected_info_gain_bits||0).toFixed(3);
+        const voi=Number(opt.value_of_information||0).toFixed(2);
+        const cost=Number(opt.friction_cost_usd||0).toFixed(2);
+        const div=document.createElement('div'); div.className='opt-card';
+        div.innerHTML=`<div class="opt-row">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="badge bdg-blue">RANK #${rank}</span>
+            <span style="font-weight:700;font-family:var(--font-mono);font-size:12px;">${action}</span>
+            <span style="font-size:10.5px;color:var(--txt-tertiary);">${mech}</span>
           </div>
-          <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between;">
-            <span>${c.pattern}</span>
-            <span>$${Number(c.exposure_usd).toFixed(2)}</span>
-          </div>
-        `;
-        ul.appendChild(li);
+          <div class="opt-metrics"><span class="m-eig">+${eig} bits</span><span class="m-voi">VoI ${voi}</span><span class="m-cost">$${cost}</span></div>
+        </div>
+        <div style="font-size:12px;color:var(--txt-secondary);">${opt.rationale||''}</div>
+        <div style="font-size:10.5px;color:var(--txt-tertiary);font-family:var(--font-mono);">Target: ${opt.target_entity||'N/A'} · Loss reduction: $${Number(opt.expected_loss_reduction_usd||0).toFixed(2)}</div>`;
+        oc.appendChild(div);
       });
     }
-
-    function setFilter(filter, button) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      button?.classList.add('active');
-      renderCaseList();
-    }
-
-    async function loadCase(caseId) {
-      const requestId = ++caseLoadSequence;
-      switchTab('record', document.querySelectorAll('.nav-tab')[0]);
-      selectedCaseId = caseId;
-      currentCaseData = null;
-      currentApprovals = [];
-      currentActions = [];
-      currentTimeline = null;
-      renderCaseList();
-      renderCaseLoading(caseId);
-      try {
-        const res = await fetch(`/api/cases/${caseId}`);
-        if (!res.ok) throw new Error(`Case request failed with HTTP ${res.status}`);
-        const caseData = await res.json();
-        const [approvalRes, actionRes, timelineRes] = await Promise.all([
-          fetch(`/api/cases/${caseId}/approvals`),
-          fetch(`/api/cases/${caseId}/actions`),
-          fetch(`/api/cases/${caseId}/timeline`)
-        ]);
-        if (requestId !== caseLoadSequence) return;
-        currentCaseData = caseData;
-        currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
-        currentActions = actionRes.ok ? await actionRes.json() : [];
-        currentTimeline = timelineRes.ok ? await timelineRes.json() : null;
-        renderActiveCase();
-        renderCaseList();
-        renderGraph();
-        if (document.getElementById('tab-optimizer').style.display !== 'none') {
-          loadOptimizerData(caseId);
-        }
-      } catch (err) {
-        console.error("Error loading case", err);
-        if (requestId === caseLoadSequence) renderCaseLoadError(caseId);
-      }
-    }
-
-    function renderCaseLoading(caseId) {
-      document.getElementById('current-case-id').innerText = caseId;
-      document.getElementById('briefing-case-number').innerText = caseNumber(caseId);
-      document.getElementById('current-chips').innerHTML = '<span class="badge" style="background:#e9efeb">LOADING CASE</span>';
-      document.getElementById('case-summary').innerHTML = '<span class="loading-line" style="display:block; width:90%; margin:7px 0;"></span><span class="loading-line" style="display:block; width:68%;"></span>';
-      document.getElementById('case-stop-reason').innerText = 'Loading the selected investigation...';
-      document.getElementById('briefing-headline').innerText = 'Loading case-specific evidence and graph relationships...';
-      document.getElementById('briefing-evidence-stat').innerText = '--';
-      document.getElementById('briefing-action-stat').innerText = '--';
-      document.getElementById('briefing-gov-stat').innerText = '--';
-      document.getElementById('evidence-container').innerHTML = '<div class="case-loading">Loading evidence for this case...</div>';
-      document.getElementById('evidence-count').innerText = 'Loading';
-      document.getElementById('final-actions-list').innerHTML = '<div class="case-loading">Loading policy decision...</div>';
-      document.getElementById('uncertainty-missing').innerText = 'Loading';
-      ['uncertainty-risk', 'uncertainty-confidence', 'uncertainty-completeness', 'uncertainty-contradictions'].forEach(id => document.getElementById(id).innerText = '--');
-      document.getElementById('approval-status-tag').innerText = 'LOADING';
-      document.getElementById('sar-panel').style.display = 'none';
-      document.getElementById('optimizer-options-container').innerHTML = '<div class="case-loading">Loading case-specific evidence options...</div>';
-      document.getElementById('counterfactual-container').innerHTML = '<div class="case-loading">Loading case-specific action trade-offs...</div>';
-      document.getElementById('optimizer-entropy-badge').innerText = 'H(S) = --';
-      document.getElementById('trace-summary').innerHTML = `<span>Loading the persisted workflow for <strong>${caseId}</strong>...</span>`;
-      document.getElementById('state-flow').innerHTML = '';
-      document.getElementById('timeline-container').innerHTML = '<div class="timeline-card">Loading case-specific transitions...</div>';
-      if (cy) cy.elements().remove();
-    }
-
-    function renderCaseLoadError(caseId) {
-      document.getElementById('case-summary').innerText = `Could not load ${caseId}. Select it again to retry.`;
-      document.getElementById('case-stop-reason').innerText = 'Case data was not loaded.';
-      document.getElementById('evidence-container').innerHTML = '<div class="case-loading">No prior case evidence is displayed.</div>';
-      document.getElementById('approval-status-tag').innerText = 'LOAD FAILED';
-    }
-
-    function caseNumber(caseId) {
-      const match = String(caseId || '').match(/(\d+)$/);
-      return match ? match[1].padStart(2, '0') : '--';
-    }
-
-    const workflowStages = [
-      ['TRIGGERED', 'Opening the case and validating the alert'],
-      ['CASE_CREATED', 'Setting the investigation scope'],
-      ['INVESTIGATING', 'Collecting graph and transaction evidence'],
-      ['EVIDENCE_COLLECTED', 'Organising supporting and contradicting evidence'],
-      ['ASSESSING', 'Assessing risk, confidence, and uncertainty'],
-      ['REASSESSING', 'Selecting the next best action'],
-      ['POLICY_EVALUATION', 'Applying policy and approval controls'],
-      ['ACTION_PROPOSED', 'Preparing governed recommendations'],
-      ['CASE_CLOSED', 'Finalising the investigation record'],
-      ['MEMORY_UPDATED', 'Writing the case outcome to graph memory']
-    ];
-
-    const pause = ms => new Promise(resolve => window.setTimeout(resolve, ms));
-
-    function renderInvestigationProgress(caseId, completedIndex) {
-      const flow = document.getElementById('state-flow');
-      const summary = document.getElementById('trace-summary');
-      const timeline = document.getElementById('timeline-container');
-      flow.innerHTML = '';
-      summary.innerHTML = `<span><strong>Investigation in progress</strong> for ${caseId}.</span><span>Stage ${completedIndex + 1} of ${workflowStages.length}</span>`;
-      workflowStages.forEach(([state, detail], index) => {
-        const node = document.createElement('div');
-        const nodeState = index < completedIndex ? ' active' : (index === completedIndex ? ' active current' : ' pending');
-        node.className = `state-node${nodeState}`;
-        node.style.setProperty('--state-order', index);
-        node.title = detail;
-        node.innerHTML = `<span class="state-index">STEP ${index + 1}</span><span class="state-name">${state.replaceAll('_', ' ')}</span>`;
-        flow.appendChild(node);
-      });
-      const [state, detail] = workflowStages[completedIndex];
-      timeline.innerHTML = `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-card"><div style="font-weight:600; font-family:var(--font-mono); font-size:11px; color:var(--accent-blue);">${state}</div><div style="font-weight:600; font-size:13px; color:var(--text-main);">Workflow stage in progress</div><div style="font-size:12px; color:var(--text-muted);">${detail}</div></div></div>`;
-    }
-
-    async function animateInvestigationProgress(caseId) {
-      switchTab('timeline', document.querySelectorAll('.nav-tab')[2]);
-      for (let index = 0; index < workflowStages.length; index++) {
-        renderInvestigationProgress(caseId, index);
-        await pause(index === workflowStages.length - 1 ? 450 : 360);
-      }
-    }
-
-    async function runSingleCase() {
-      if (!currentCaseData?.case_id) return;
-      const button = document.getElementById('replay-btn');
-      const status = document.getElementById('replay-status');
-      const caseId = currentCaseData.case_id;
-      button.disabled = true;
-      button.innerText = 'Investigation running...';
-      status.className = 'replay-status running';
-      status.innerText = 'Refreshing evidence and the case decision...';
-      try {
-        const replayRequest = fetch(`/api/cases/${caseId}/replay`, {method: 'POST'});
-        await animateInvestigationProgress(caseId);
-        const response = await replayRequest;
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.detail || 'Replay failed');
-        currentCaseData = payload;
-        const [approvalRes, actionRes, timelineRes] = await Promise.all([
-          fetch(`/api/cases/${caseId}/approvals`),
-          fetch(`/api/cases/${caseId}/actions`),
-          fetch(`/api/cases/${caseId}/timeline`)
-        ]);
-        currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
-        currentActions = actionRes.ok ? await actionRes.json() : [];
-        currentTimeline = timelineRes.ok ? await timelineRes.json() : null;
-        renderActiveCase();
-        renderCaseList();
-        renderGraph();
-        if (document.getElementById('tab-optimizer').style.display !== 'none') loadOptimizerData(caseId);
-        status.className = 'replay-status success';
-        status.innerText = `Updated ${caseId}: the persisted trace is ready to review.`;
-      } catch (error) {
-        console.error(error);
-        status.className = 'replay-status error';
-        status.innerText = `Could not refresh ${caseId}. Please try again.`;
-      } finally {
-        button.disabled = false;
-        button.innerText = 'Re-run investigation';
-      }
-    }
-
-    function renderActiveCase() {
-      const d = currentCaseData;
-      if (!d) return;
-      document.getElementById('current-case-id').innerText = d.case_id;
-      document.getElementById('briefing-case-number').innerText = caseNumber(d.case_id);
-
-      const c = d.case || {};
-      let verdictBadge = c.verdict === 'fraud' ? 'badge-fraud' : (c.verdict === 'legitimate' ? 'badge-legit' : 'badge-uncertain');
-      document.getElementById('current-chips').innerHTML = `
-        <span class="badge ${verdictBadge}">${c.verdict} (${(c.fraud_probability*100).toFixed(0)}%)</span>
-        <span class="badge" style="background:#334155">${c.pattern.toUpperCase()}</span>
-        <span class="badge" style="background:#1e293b">EXPOSURE: $${Number(c.exposure_usd).toFixed(2)}</span>
-      `;
-
-      document.getElementById('case-summary').innerText = c.summary || 'No summary available.';
-      document.getElementById('case-stop-reason').innerText = d.stop_reason || 'Investigation concluded.';
-
-      const uncertainty = d.uncertainty?.final || {};
-      document.getElementById('uncertainty-risk').innerText = `${((uncertainty.risk || 0) * 100).toFixed(0)}% · ${uncertainty.risk_level || 'UNKNOWN'}`;
-      document.getElementById('uncertainty-confidence').innerText = `${((uncertainty.confidence || 0) * 100).toFixed(0)}%`;
-      document.getElementById('uncertainty-completeness').innerText = `${((uncertainty.evidence_completeness || 0) * 100).toFixed(0)}%`;
-      document.getElementById('uncertainty-contradictions').innerText = uncertainty.contradictions || 0;
-      document.getElementById('uncertainty-missing').innerText = (uncertainty.missing_evidence || []).join(', ') || 'None';
-      document.getElementById('readiness-tag').innerText = uncertainty.decision_readiness || 'NOT READY';
-
-      // Actions
-      const actionsList = document.getElementById('final-actions-list');
-      actionsList.innerHTML = '';
-      const nba = d.next_best_actions || {};
-      const finals = nba.final || [];
-
-      // Evidence
-      const evList = document.getElementById('evidence-container');
-      evList.innerHTML = '';
-      const evidence = c.evidence || [];
-      document.getElementById('evidence-count').innerText = `${evidence.length} Records`;
-
-      let supportingCount = 0;
-      let contradictingCount = 0;
-
-      evidence.forEach(ev => {
-        if (ev.supports === 'fraud') supportingCount++;
-        if (ev.contradicts === 'fraud' || ev.supports === 'legitimate') contradictingCount++;
-
-        const card = document.createElement('div');
-        card.className = 'evidence-card';
-        card.style.cursor = 'pointer';
-        card.title = 'Click to spotlight multi-hop path in Cytoscape';
-        card.onclick = () => highlightEvidencePath(ev);
-        card.innerHTML = `
-          <div class="evidence-header">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span class="source-tag">${ev.source.toUpperCase()}</span>
-              ${ev.supports ? `<span class="badge ${ev.supports === 'fraud' ? 'badge-fraud' : 'badge-legit'}" style="font-size:9.5px; padding:2px 6px;">SUPPORTS ${ev.supports.toUpperCase()}</span>` : ''}
-              ${ev.contradicts ? `<span class="badge ${ev.contradicts === 'fraud' ? 'badge-fraud' : 'badge-legit'}" style="font-size:9.5px; padding:2px 6px;">CONTRADICTS ${ev.contradicts.toUpperCase()}</span>` : ''}
-            </div>
-            <span class="evidence-ref">${ev.ref}</span>
-          </div>
-          <div class="evidence-claim" style="font-size:12.5px; color:#f1f5f9; margin-top:2px;">${ev.claim}</div>
-          ${ev.graph_path ? `<div class="evidence-path" style="font-family:var(--font-mono); font-size:10.5px; color:#38bdf8; background:rgba(56,189,248,0.08); border-left:2px solid #38bdf8; padding:4px 8px; border-radius:3px; margin-top:4px; word-break:break-all;"><strong>Graph Path:</strong> ${ev.graph_path}</div>` : ''}
-          ${ev.policy_context ? `<div style="font-size:11px; color:#94a3b8; margin-top:3px; font-style:italic;">⚖️ <strong>Why it matters:</strong> ${ev.policy_context}</div>` : ''}
-        `;
-        evList.appendChild(card);
-      });
-
-      // Populate Briefing Bar
-      const isFraud = c.verdict === 'fraud';
-      const isLegit = c.verdict === 'legitimate';
-      const headline = isFraud
-        ? `Identified ${c.pattern.toUpperCase()} — $${Number(c.exposure_usd).toFixed(2)} Exposure Across Connected Entities`
-        : (isLegit ? `Cleared As False Alarm — Verified Legitimate Cardholder Activity` : `Ambiguous Signals — Dispatched Verification Inquiry (R1)`);
-      
-      const bHead = document.getElementById('briefing-headline');
-      if (bHead) bHead.innerText = headline;
-      const bEv = document.getElementById('briefing-evidence-stat');
-      if (bEv) bEv.innerText = `${supportingCount || evidence.length} Supporting · ${contradictingCount} Contradicting`;
-      const bAct = document.getElementById('briefing-action-stat');
-      if (bAct) bAct.innerText = finals.length ? finals[0].action : 'MONITOR';
-
-      finals.forEach(act => {
-        const persisted = currentApprovals.find(a =>
-          a.approval_id === act.approval_id ||
-          (!act.approval_id && a.action === act.action && a.route === act.route)
-        );
-        const execution = act.approval_id
-          ? currentActions.find(a => a.action_id === `ACT-${act.approval_id}`)
-          : null;
-        const actionState = execution
-          ? `${execution.simulated ? 'SIMULATED ' : ''}${execution.state}`
-          : (persisted?.state || act.state || (act.route === 'auto' ? 'NOT_REQUIRED' : 'PENDING'));
-        const row = document.createElement('div');
-        row.className = 'action-row';
-        row.innerHTML = `
-          <div>
-            <div class="action-name">${act.action}</div>
-            ${act.route !== 'auto' ? `<div style="font-size:10px; color:#f59e0b; margin-top:2px;">🛡️ Governance Gate: Route ${act.route} approval required under Policy R7/R8</div>` : '<div style="font-size:10px; color:#22c55e; margin-top:2px;">⚡ Autonomous Action: Pre-authorized under Policy</div>'}
-          </div>
-          <span class="route-tag">${act.route} · ${actionState}</span>
-        `;
-        actionsList.appendChild(row);
-      });
-      document.getElementById('nba-what-changed').innerText = nba.what_changed || 'nothing';
-
-      const pendingGov = currentApprovals.filter(a => a.state === 'PENDING');
-      const bGov = document.getElementById('briefing-gov-stat');
-      if (bGov) bGov.innerText = pendingGov.length ? `${pendingGov[0].route} APPROVAL REQUIRED` : 'AUTONOMOUS / CLEARED';
-
-      const pending = currentApprovals.filter(a => a.state === 'PENDING');
-      const approveBtn = document.getElementById('approve-btn');
-      const rejectBtn = document.getElementById('reject-btn');
-      approveBtn.style.display = pending.length ? 'inline-block' : 'none';
-      rejectBtn.style.display = pending.length ? 'inline-block' : 'none';
-      approveBtn.disabled = false;
-      rejectBtn.disabled = false;
-      document.getElementById('approval-status-tag').innerText = pending.length
-        ? `${pending.length} PENDING`
-        : (currentApprovals.length ? currentApprovals[0].state : 'NO APPROVAL REQUIRED');
-
-      // SAR
-      const sar = d.sar || {};
-      const sarPanel = document.getElementById('sar-panel');
-      if (sar.file) {
-        sarPanel.style.display = 'flex';
-        document.getElementById('sar-narrative-text').innerText = sar.narrative;
-      } else {
-        sarPanel.style.display = 'none';
-      }
-
-      // Timeline
-      renderTimeline();
-    }
-
-    function renderTimeline() {
-      const tl = document.getElementById('timeline-container');
-      const flow = document.getElementById('state-flow');
-      const summary = document.getElementById('trace-summary');
-      tl.innerHTML = '';
-      flow.innerHTML = '';
-      if (!currentTimeline) {
-        tl.innerHTML = '<div class="timeline-card">Run this case to create a persisted investigation trace.</div>';
-        summary.innerHTML = '<span>No persisted trace is available yet.</span>';
-        return;
-      }
-      const transitions = currentTimeline.state_history || [];
-      const stateEntries = transitions.map(([state, reason]) => ({ state, reason }));
-      if (!stateEntries.length || stateEntries[stateEntries.length - 1].state !== currentTimeline.state) {
-        stateEntries.push({ state: currentTimeline.state, reason: currentCaseData?.stop_reason || 'Current persisted workflow state' });
-      }
-      const currentIndex = stateEntries.length - 1;
-      const toolEvents = (currentTimeline.steps || []).length;
-      summary.innerHTML = `<span><strong>${stateEntries.length} states completed</strong> for ${currentCaseData?.case_id || 'this case'}.</span><span>${toolEvents} investigation tool event${toolEvents === 1 ? '' : 's'} recorded</span>`;
-      stateEntries.forEach((entry, index) => {
-        const node = document.createElement('div');
-        node.className = `state-node active${index === currentIndex ? ' current' : ''}`;
-        node.style.setProperty('--state-order', index);
-        node.title = entry.reason || entry.state;
-        node.innerHTML = `<span class="state-index">STEP ${index + 1}</span><span class="state-name">${entry.state.replaceAll('_', ' ')}</span>`;
-        flow.appendChild(node);
-      });
-      const steps = stateEntries.map(({state, reason}, index) => ({
-        state,
-        title: `Lifecycle transition ${index + 1}`,
-        desc: reason || 'State advanced by the investigation workflow'
-      }));
-
-      steps.forEach((s, index) => {
-        const item = document.createElement('div');
-        item.className = 'timeline-item';
-        item.innerHTML = `
-          <div class="timeline-dot"></div>
-          <div class="timeline-card">
-            <div style="font-weight:600; font-family:var(--font-mono); font-size:11px; color:var(--accent-blue);">${s.state}</div>
-            <div style="font-weight:600; font-size:13px; color:#fff;">${index === currentIndex ? 'Current persisted state' : s.title}</div>
-            <div style="font-size:12px; color:var(--text-muted);">${s.desc}</div>
-          </div>
-        `;
-        tl.appendChild(item);
+    if (cfRes.ok){
+      const rawCf=await cfRes.json(), inters=Array.isArray(rawCf)?rawCf:(rawCf.evaluated_interventions||[]);
+      cf.innerHTML='';
+      if (!inters.length){ cf.innerHTML='<div style="color:var(--txt-tertiary);font-size:12px;">No counterfactual interventions evaluated.</div>'; }
+      inters.forEach(inter=>{
+        const action=inter.action_type||inter.action||'INTERVENTION';
+        const isPareto=inter.pareto_optimal===true;
+        const lp=Number(inter.loss_prevented_usd||0).toFixed(2);
+        const fr=Number(inter.customer_friction_cost_usd||inter.customer_friction_score||0).toFixed(1);
+        const cp=Number(inter.compliance_risk_penalty_usd||inter.compliance_risk_score||0).toFixed(1);
+        const div=document.createElement('div'); div.className='cf-card';
+        div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:700;font-family:var(--font-mono);font-size:12px;">${action}</span>
+          <span class="badge ${isPareto?'bdg-legit':'bdg-neutral'}">${isPareto?'PARETO OPTIMAL':'SUB-OPTIMAL'}</span>
+        </div>
+        <div class="cf-grid">
+          <div>Loss Prevented<strong style="color:var(--green);">$${lp}</strong></div>
+          <div>Friction<strong style="color:var(--amber);">${fr}</strong></div>
+          <div>Compliance Risk<strong style="color:var(--red);">${cp}</strong></div>
+        </div>
+        <div style="font-size:12px;color:var(--txt-secondary);">${inter.rationale||inter.explanation||inter.target||''}</div>`;
+        cf.appendChild(div);
       });
     }
+  } catch(e){ console.error(e); }
+}
 
-    async function loadBenchmarkTable() {
-      try {
-        const res = await fetch('/api/benchmark/results');
-        const bench = await res.json();
-        const tbody = document.getElementById('benchmark-tbody');
-        tbody.innerHTML = '';
-        if (bench.cases) {
-          bench.cases.forEach(c => {
-            const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-            tr.innerHTML = `
-              <td style="padding:8px; font-family:var(--font-mono); font-weight:600;">${c.case_id}</td>
-              <td style="padding:8px;"><span class="badge ${c.verdict === 'fraud' ? 'badge-fraud' : (c.verdict === 'legitimate' ? 'badge-legit' : 'badge-uncertain')}">${c.verdict}</span></td>
-              <td style="padding:8px; color:var(--text-muted);">${c.pattern}</td>
-              <td style="padding:8px; font-family:var(--font-mono);">${(c.fraud_probability*100).toFixed(0)}%</td>
-              <td style="padding:8px; font-family:var(--font-mono);">$${Number(c.exposure_usd).toFixed(2)}</td>
-              <td style="padding:8px;">${c.sar_file ? '<span style="color:var(--fraud-red)">Yes</span>' : 'No'}</td>
-              <td style="padding:8px; font-family:var(--font-mono); color:var(--text-subtle);">${c.latency_s}s</td>
-            `;
-            tbody.appendChild(tr);
-          });
-        }
-      } catch (err) {
-        console.error("Benchmark load error", err);
-      }
+/* ── APPROVALS ── */
+async function decide(decision){
+  const pending=currentApprovals.filter(a=>a.state==='PENDING'); if (!pending.length) return;
+  $('btn-approve').disabled=$('btn-reject').disabled=true;
+  try {
+    for (const a of pending){
+      const r=await fetch('/api/approvals',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({approval_id:a.approval_id,decision,reason:`${decision.toLowerCase()} in forensic workstation`,approver:a.route==='L2'?'fraud_manager':'fraud_lead',approver_role:a.route})});
+      if (!r.ok){const e=await r.json();throw new Error(e.detail||'Approval failed');}
     }
+    await loadCase(currentCase.case_id);
+  } catch(e){ console.error(e); $('gov-tag').textContent='DECISION FAILED'; $('btn-approve').disabled=$('btn-reject').disabled=false; }
+}
 
-    function switchTab(tab, el) {
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      if (el && el.classList) {
-        el.classList.add('active');
-      } else if (window.event && window.event.target && window.event.target.classList) {
-        window.event.target.classList.add('active');
-      }
-      document.getElementById('tab-record').style.display = tab === 'record' ? 'block' : 'none';
-      document.getElementById('tab-optimizer').style.display = tab === 'optimizer' ? 'block' : 'none';
-      document.getElementById('tab-timeline').style.display = tab === 'timeline' ? 'block' : 'none';
-      document.getElementById('tab-benchmark').style.display = tab === 'benchmark' ? 'block' : 'none';
-      if (tab === 'optimizer') {
-        const cid = currentCaseData?.case_id || (allCases[0] ? allCases[0].case_id : null);
-        loadOptimizerData(cid);
-      }
-    }
+/* ── CYTOSCAPE GRAPH ── */
+function buildEls(caseData){
+  const c=caseData?.case||{}, nodes=[], edges=[], ns=new Set();
+  const addN=(id,label,type)=>{if(!id||ns.has(id))return;ns.add(id);nodes.push({data:{id,label:label||id,type:type||'node'}});};
+  const addE=(s,t,l)=>{if(!s||!t||s===t)return;edges.push({data:{id:`e_${s}_${t}`,source:s,target:t,label:l||''}});};
+  const root=c.case_id||'TXN'; addN(root,root,'txn');
+  (c.connected_card_ids||[]).slice(0,8).forEach(id=>{addN(id,id,'card');addE(root,id,'CARD');});
+  (c.evidence||[]).forEach(ev=>(ev.entity_ids||[]).slice(0,6).forEach(ent=>{
+    let t='device';
+    if(ent.startsWith('C')&&!ent.includes('-'))t='customer';
+    else if(ent.includes('-K'))t='card';
+    else if(ent.startsWith('CC-')||ent.startsWith('HHG-'))t='hist';
+    else if(/^\d+$/.test(ent))t='region';
+    addN(ent,ent,t); addE(root,ent,ev.source||'EV');
+  }));
+  return {nodes,edges};
+}
 
-    async function decidePendingActions(decision) {
-      const pending = currentApprovals.filter(a => a.state === 'PENDING');
-      if (!pending.length) return;
-      const approveBtn = document.getElementById('approve-btn');
-      const rejectBtn = document.getElementById('reject-btn');
-      approveBtn.disabled = true;
-      rejectBtn.disabled = true;
-      try {
-        for (const approval of pending) {
-          const response = await fetch('/api/approvals', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              approval_id: approval.approval_id,
-              decision,
-              reason: `${decision.toLowerCase()} in forensic workstation`,
-              approver: approval.route === 'L2' ? 'fraud_manager' : 'fraud_lead',
-              approver_role: approval.route
-            })
-          });
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Approval update failed');
-          }
-        }
-        await loadCase(currentCaseData.case_id);
-      } catch (error) {
-        console.error(error);
-        document.getElementById('approval-status-tag').innerText = 'DECISION FAILED';
-        approveBtn.disabled = false;
-        rejectBtn.disabled = false;
-      }
-    }
+const CY_STYLE=[
+  {selector:'node',style:{'label':'data(label)','color':'#9ea0a8','font-size':'9px','font-family':'JetBrains Mono,monospace','text-valign':'bottom','text-margin-y':5,'background-color':'#5b82c2','width':22,'height':22,'border-width':1.5,'border-color':'#111114','text-outline-color':'#111114','text-outline-width':2}},
+  {selector:'node[type="txn"]',  style:{'background-color':'#4da87c','width':32,'height':32,'border-color':'#3d7a58','border-width':2,'color':'#f4f4f6'}},
+  {selector:'node[type="card"]', style:{'background-color':'#c9883a','width':24,'height':24}},
+  {selector:'node[type="customer"]',style:{'background-color':'#5b82c2','width':28,'height':28}},
+  {selector:'node[type="device"]',  style:{'background-color':'#8a78d4','width':22,'height':22}},
+  {selector:'node[type="hist"]',    style:{'background-color':'#d95f5f','width':24,'height':24}},
+  {selector:'node[type="region"]',  style:{'background-color':'#4a8bb5','width':20,'height':20}},
+  {selector:'node.hl', style:{'border-color':'#d95f5f','border-width':3,'width':34,'height':34,'color':'#f4f4f6'}},
+  {selector:'edge',style:{'width':1,'line-color':'#323238','target-arrow-color':'#484852','target-arrow-shape':'triangle','curve-style':'bezier','label':'data(label)','font-size':'7.5px','color':'#7a7a85','font-family':'JetBrains Mono,monospace','text-rotation':'autorotate','text-outline-color':'#111114','text-outline-width':1.5}},
+  {selector:'edge.hl',style:{'line-color':'#d95f5f','target-arrow-color':'#d95f5f','width':2}}
+];
 
-    // Cytoscape & Subgraph Visualization
-    let cy = null;
+function buildGraph(){
+  const container=$('graph-container');
+  if (!container||typeof cytoscape==='undefined') return;
+  const els=buildEls(currentCase);
+  if (!cy){
+    cy=cytoscape({container, elements:els, style:CY_STYLE, layout:{name:'cose',animate:false,padding:30}});
+    cy.on('tap','node',evt=>{
+      const node=evt.target; cy.elements().removeClass('hl');
+      node.addClass('hl'); node.neighborhood().addClass('hl');
+      const d=node.data();
+      $('br-headline').innerHTML=`<span style="color:var(--txt-primary);font-weight:600;">Entity:</span> <strong>${d.label}</strong> (${d.type}) — ${node.connectedEdges().length} edges`;
+    });
+    cy.on('tap',evt=>{
+      if(evt.target===cy){ cy.elements().removeClass('hl');
+        if(currentCase?.case?.summary) $('br-headline').textContent=currentCase.case.summary; }
+    });
+  } else {
+    cy.elements().remove(); cy.add(els.nodes); cy.add(els.edges);
+    cy.layout({name:'cose',animate:false,padding:30}).run();
+  }
+}
 
-    function buildElementsFromCase(caseData) {
-      const c = caseData?.case || {};
-      const nodes = [];
-      const edges = [];
-      const nodeSet = new Set();
+function highlightEv(ev){
+  if (!cy) return; cy.elements().removeClass('hl');
+  const ids=new Set(ev.entity_ids||[]);
+  const root=currentCase?.case?.case_id; if(root) ids.add(root);
+  const mn=cy.nodes().filter(n=>ids.has(n.id())); mn.addClass('hl');
+  cy.edges().filter(e=>ids.has(e.source().id())&&ids.has(e.target().id())).addClass('hl');
+  if (mn.length>0) cy.animate({fit:{eles:mn,padding:60},duration:300});
+}
+function resetGraph(){ if(cy){cy.elements().removeClass('hl'); buildGraph();} }
 
-      function addNode(id, label, type) {
-        if (!id || nodeSet.has(id)) return;
-        nodeSet.add(id);
-        nodes.push({ data: { id, label: label || id, type: type || 'node' } });
-      }
+async function loadFraudRing(){
+  const c=currentCase?.case||{}; let cId='';
+  (c.evidence||[]).forEach(ev=>(ev.entity_ids||[]).forEach(id=>{
+    if(/^C\d+$/.test(id) && !cId) cId=id;
+  }));
+  if(!cId){
+    (c.evidence||[]).forEach(ev=>{
+      const m=(ev.graph_path||'').match(/Customer\((C\d+)\)/);
+      if(m && !cId) cId=m[1];
+    });
+  }
+  if(!cId){
+    const m=(c.summary||'').match(/Customer\s+(C\d+)|C(\d{4,})/);
+    if(m) cId=m[1]||('C'+m[2]);
+  }
+  if(!cId && c.connected_card_ids?.[0]){
+    const prefix=c.connected_card_ids[0].split('-')[0];
+    if(/^C\d+$/.test(prefix)) cId=prefix;
+  }
+  if(!cId){
+    $('br-headline').innerHTML='<span style="color:var(--txt-primary);font-weight:600;">Fraud Ring Analysis:</span> No customer entity found in case evidence.';
+    return;
+  }
+  try {
+    const res=await fetch(`/api/fraud-rings/${cId}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const ring=await res.json();
+    if(!cy) return;
+    const nodes = ring.subgraph?.nodes || ring.nodes || [];
+    const edges = ring.subgraph?.edges || ring.edges || [];
+    const els={nodes:[],edges:[]};
+    nodes.forEach(n=>{
+      let t=n.type||'device';
+      if(n.is_seed) t='customer';
+      els.nodes.push({data:{id:n.id,label:n.label||n.id,type:t}});
+    });
+    edges.forEach((e,i)=>{
+      const s = e.source || e.from;
+      const t = e.target || e.to;
+      els.edges.push({data:{id:`re_${i}`,source:s,target:t,label:e.label||e.type||''}});
+    });
+    cy.elements().remove(); cy.add(els.nodes); cy.add(els.edges);
+    cy.layout({name:'cose',animate:false,padding:28}).run();
+    $('br-headline').innerHTML=`<span style="color:var(--txt-primary);font-weight:600;">Fraud Ring Analysis:</span> ${ring.ring_detected ? `<strong>${ring.ring_size} connected entities</strong> detected across shared device profiles` : `Seed customer ${cId} — no extended multi-customer device ring found`}`;
+  } catch(e){
+    console.error('Fraud ring error', e);
+    $('br-headline').textContent='Unable to load fraud ring telemetry for this entity.';
+  }
+}
 
-      function addEdge(source, target, label) {
-        if (!source || !target || source === target) return;
-        const eid = `e_${source}_${target}`;
-        edges.push({ data: { id: eid, source, target, label: label || '' } });
-      }
-
-      const rootId = c.case_id || 'FLAGGED_TXN';
-      addNode(rootId, rootId, 'txn');
-
-      (c.connected_card_ids || []).slice(0, 8).forEach(cardId => {
-        addNode(cardId, cardId, 'card');
-        addEdge(rootId, cardId, 'CARD');
-      });
-
-      (c.evidence || []).forEach(ev => {
-        (ev.entity_ids || []).slice(0, 6).forEach(ent => {
-          let type = 'device';
-          if (ent.startsWith('C') && !ent.includes('-')) type = 'customer';
-          else if (ent.includes('-K')) type = 'card';
-          else if (ent.startsWith('DEV-') || ent.startsWith('dev_')) type = 'device';
-          else if (ent.startsWith('CC-') || ent.startsWith('HHG-')) type = 'historical_case';
-          else if (/^\d+$/.test(ent)) type = 'region';
-          addNode(ent, ent, type);
-          addEdge(rootId, ent, ev.source || 'EVIDENCE');
-        });
-      });
-
-      return { nodes, edges };
-    }
-
-    function renderGraph() {
-      const container = document.getElementById('graph-container');
-      if (!container) return;
-
-      if (typeof cytoscape !== 'undefined') {
-        const canvas = document.getElementById('subgraph-canvas');
-        if (canvas) canvas.style.display = 'none';
-
-        const elements = buildElementsFromCase(currentCaseData);
-        if (!cy) {
-          cy = cytoscape({
-            container: container,
-            elements: elements,
-            style: [
-              {
-                selector: 'node',
-                style: {
-                  'label': 'data(label)',
-                  'color': '#31443b',
-                  'font-size': '10px',
-                  'font-family': 'JetBrains Mono, monospace',
-                  'text-valign': 'bottom',
-                  'text-margin-y': 5,
-                  'background-color': '#4d9183',
-                  'width': 26,
-                  'height': 26,
-                  'border-width': 2,
-                  'border-color': '#ffffff'
-                }
-              },
-              { selector: 'node[type = "txn"]', style: { 'background-color': '#3c9a70', 'width': 32, 'height': 32 } },
-              { selector: 'node[type = "card"]', style: { 'background-color': '#bd842a' } },
-              { selector: 'node[type = "customer"]', style: { 'background-color': '#4b85a6' } },
-              { selector: 'node[type = "device"]', style: { 'background-color': '#7c6fa6' } },
-              { selector: 'node[type = "region"]', style: { 'background-color': '#718078' } },
-              { selector: 'node[type = "historical_case"]', style: { 'background-color': '#b85a67' } },
-              {
-                selector: 'node.highlighted',
-                style: {
-                  'border-color': '#f43f5e',
-                  'border-width': 4,
-                  'background-color': '#f43f5e',
-                  'color': '#f43f5e',
-                  'font-weight': 'bold'
-                }
-              },
-              {
-                selector: 'edge',
-                style: {
-                  'width': 1.5,
-                  'line-color': '#aabbb2',
-                  'target-arrow-color': '#aabbb2',
-                  'target-arrow-shape': 'triangle',
-                  'curve-style': 'bezier',
-                  'label': 'data(label)',
-                  'font-size': '8px',
-                  'color': '#62736b',
-                  'font-family': 'JetBrains Mono, monospace',
-                  'text-rotation': 'autorotate'
-                }
-              },
-              {
-                selector: 'edge.highlighted',
-                style: {
-                  'line-color': '#f43f5e',
-                  'target-arrow-color': '#f43f5e',
-                  'width': 3
-                }
-              }
-            ],
-            layout: {
-              name: 'cose',
-              animate: false,
-              padding: 24
-            }
-          });
-        } else {
-          cy.elements().remove();
-          cy.add(elements.nodes);
-          cy.add(elements.edges);
-          cy.layout({ name: 'cose', animate: false, padding: 24 }).run();
-        }
-        return;
-      }
-
-      renderCanvasFallback();
-    }
-
-    function highlightEvidencePath(ev) {
-      if (!cy) return;
-      cy.elements().removeClass('highlighted');
-      const targetIds = new Set(ev.entity_ids || []);
-      const rootId = currentCaseData?.case?.case_id;
-      if (rootId) targetIds.add(rootId);
-
-      const matchedNodes = cy.nodes().filter(n => targetIds.has(n.id()));
-      matchedNodes.addClass('highlighted');
-
-      const matchedEdges = cy.edges().filter(e => targetIds.has(e.source().id()) && targetIds.has(e.target().id()));
-      matchedEdges.addClass('highlighted');
-
-      if (matchedNodes.length > 0) {
-        cy.animate({
-          fit: { eles: matchedNodes, padding: 60 },
-          duration: 350
-        });
-      }
-    }
-
-    function resetGraphView() {
-      if (cy) {
-        cy.elements().removeClass('highlighted');
-        renderGraph();
-      }
-    }
-
-    async function loadFraudRing() {
-      const c = currentCaseData?.case || {};
-      let customerId = '';
-      (c.evidence || []).forEach(ev => {
-        (ev.entity_ids || []).forEach(id => {
-          if (id.startsWith('C') && !id.includes('-') && !customerId) customerId = id;
-        });
-      });
-      if (!customerId && c.connected_card_ids?.[0]) {
-        customerId = c.connected_card_ids[0].split('-')[0];
-      }
-      if (!customerId) customerId = 'C12382';
-
-      try {
-        const res = await fetch(`/api/fraud-rings/${customerId}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (cy && data.subgraph) {
-          // The API returns portable graph JSON; Cytoscape requires each element
-          // to be nested under `data` and edges to use source/target keys.
-          const nodes = (data.subgraph.nodes || []).map(node => ({
-            data: {
-              id: String(node.id),
-              label: node.label || String(node.id),
-              type: node.type || 'entity'
-            }
-          }));
-          const edges = (data.subgraph.edges || []).map((edge, index) => ({
-            data: {
-              id: `${edge.from}-${edge.to}-${edge.type || 'RELATED'}-${index}`,
-              source: String(edge.from),
-              target: String(edge.to),
-              label: edge.type || 'RELATED'
-            }
-          }));
-          cy.elements().remove();
-          cy.add(nodes);
-          cy.add(edges);
-          cy.layout({ name: 'concentric', animate: true, animationDuration: 400 }).run();
-          document.getElementById('evidence-count').innerText = `Fraud Ring: ${data.ring_size} Connected`;
-        }
-      } catch (err) {
-        console.error('Failed to load fraud ring:', err);
-      }
-    }
-
-    async function loadOptimizerData(caseId) {
-      const optContainer = document.getElementById('optimizer-options-container');
-      const cfContainer = document.getElementById('counterfactual-container');
-      if (!caseId) {
-        optContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Select a case from the left sidebar to inspect optimization metrics.</div>';
-        cfContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Select a case to inspect counterfactual trade-offs.</div>';
-        return;
-      }
-      optContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Calculating expected information gain and entropy reduction...</div>';
-      cfContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">Simulating counterfactual intervention trade-offs...</div>';
-
-      try {
-        const [optRes, cfRes] = await Promise.all([
-          fetch(`/api/cases/${caseId}/evidence-optimizer`),
-          fetch(`/api/cases/${caseId}/counterfactuals`)
-        ]);
-
-        if (optRes.ok) {
-          const options = await optRes.json();
-          if (Array.isArray(options) && options.length > 0) {
-            const topEig = Number(options[0].expected_info_gain_bits ?? 0);
-            document.getElementById('optimizer-entropy-badge').innerText = `Top EIG: +${topEig.toFixed(3)} bits`;
-            optContainer.innerHTML = options.map((opt, i) => `
-              <div style="background:var(--bg-card); border:1px solid ${i === 0 ? 'var(--accent-blue)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="badge" style="background:${i === 0 ? '#0284c7' : '#334155'}; font-size:10px;">RANK #${opt.recommended_order ?? (i + 1)}</span>
-                    <strong style="font-size:13px; color:#f8fafc;">${opt.inquiry_type || 'INQUIRY'}</strong>
-                    <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-subtle);">${opt.channel || ''}</span>
-                  </div>
-                  <div style="display:flex; gap:12px; font-family:var(--font-mono); font-size:11px;">
-                    <span style="color:#38bdf8;">EIG: +${Number(opt.expected_info_gain_bits ?? 0).toFixed(3)} bits</span>
-                    <span style="color:#f59e0b;">VoI: ${Number(opt.value_of_information ?? 0).toFixed(2)}</span>
-                    <span style="color:var(--text-subtle);">Cost: $${Number(opt.friction_cost_usd ?? 0).toFixed(2)}</span>
-                  </div>
-                </div>
-                <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
-                  ${opt.rationale || 'Ranked by information gain.'}
-                </div>
-                <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
-                  <span>Target: ${opt.target_entity || 'Case Transaction'}</span>
-                  <span>Expected Loss Reduction: $${Number(opt.expected_loss_reduction_usd ?? 0).toFixed(2)}</span>
-                </div>
-              </div>
-            `).join('');
-          } else {
-            optContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">No evidence inquiries recommended (sufficient information already established).</div>';
-          }
-        } else {
-          optContainer.innerHTML = '<div style="color:var(--fraud-red); font-size:12px;">Could not retrieve evidence value optimizations.</div>';
-        }
-
-        if (cfRes.ok) {
-          const cfs = await cfRes.json();
-          if (Array.isArray(cfs) && cfs.length > 0) {
-            cfContainer.innerHTML = cfs.map(cf => `
-              <div style="background:var(--bg-card); border:1px solid ${cf.pareto_optimal ? 'var(--legit-green)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <strong style="font-size:13px; font-family:var(--font-mono); color:#f8fafc;">${cf.action_type || 'ACTION'}</strong>
-                    ${cf.pareto_optimal ? '<span class="badge badge-legit" style="font-size:10px;">PARETO OPTIMAL</span>' : '<span class="badge" style="background:#334155; font-size:10px;">SUB-OPTIMAL</span>'}
-                    <span class="badge" style="background:#1e293b; font-size:10px; font-family:var(--font-mono);">${cf.route || 'AUTO'}</span>
-                  </div>
-                  <div style="display:flex; gap:14px; font-family:var(--font-mono); font-size:11.5px;">
-                    <span style="color:#22c55e;">Loss Prev: $${Number(cf.loss_prevented_usd ?? 0).toFixed(2)}</span>
-                    <span style="color:#f59e0b;">Friction: $${Number(cf.customer_friction_cost_usd ?? 0).toFixed(2)}</span>
-                    <span style="color:#38bdf8;">Net Utility: ${Number(cf.net_utility_score ?? 0).toFixed(2)}</span>
-                  </div>
-                </div>
-                <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
-                  ${cf.rationale || 'Evaluated trade-off.'}
-                </div>
-                <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
-                  <span>Target: ${cf.target || 'Entity'}</span>
-                  <span>Compliance Risk: $${Number(cf.compliance_risk_penalty_usd ?? 0).toFixed(2)}</span>
-                </div>
-              </div>
-            `).join('');
-          } else {
-            cfContainer.innerHTML = '<div style="color:var(--text-subtle); font-size:12px;">No counterfactual candidate actions available.</div>';
-          }
-        } else {
-          cfContainer.innerHTML = '<div style="color:var(--fraud-red); font-size:12px;">Could not retrieve counterfactual action models.</div>';
-        }
-      } catch (err) {
-        console.error("Error loading optimizer data", err);
-        optContainer.innerHTML = `<div style="color:var(--fraud-red); font-size:12px;">Error: ${err.message}</div>`;
-        cfContainer.innerHTML = `<div style="color:var(--fraud-red); font-size:12px;">Error: ${err.message}</div>`;
-      }
-    }
-
-    function renderCanvasFallback() {
-      const canvas = document.getElementById('subgraph-canvas');
-      if (!canvas) return;
-      canvas.style.display = 'block';
-      const ctx = canvas.getContext('2d');
-      const w = canvas.offsetWidth;
-      const h = canvas.offsetHeight;
-      canvas.width = w;
-      canvas.height = h;
-
-      ctx.clearRect(0, 0, w, h);
-
-      const nodes = [
-        { x: w * 0.5, y: h * 0.5, label: currentCaseData?.case?.case_id || 'Flagged Txn', color: '#22c55e' },
-        { x: w * 0.25, y: h * 0.35, label: currentCaseData?.case?.connected_card_ids?.[0] || 'Card K1', color: '#f59e0b' },
-        { x: w * 0.75, y: h * 0.35, label: 'Customer', color: '#38bdf8' },
-        { x: w * 0.5, y: h * 0.2, label: 'Device DEV-981', color: '#a855f7' },
-        { x: w * 0.35, y: h * 0.8, label: 'Region 444', color: '#64748b' },
-        { x: w * 0.65, y: h * 0.8, label: 'Prior CC-0141', color: '#e11d48' },
-      ];
-
-      const edges = [[0, 1], [0, 2], [0, 3], [0, 4], [2, 1], [3, 5]];
-
-      ctx.strokeStyle = '#b8c9c0';
-      ctx.lineWidth = 1.5;
-      edges.forEach(([i, j]) => {
-        ctx.beginPath();
-        ctx.moveTo(nodes[i].x, nodes[i].y);
-        ctx.lineTo(nodes[j].x, nodes[j].y);
-        ctx.stroke();
-      });
-
-      nodes.forEach(n => {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, 14, 0, Math.PI * 2);
-        ctx.fillStyle = n.color;
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = '#31443b';
-        ctx.font = '11px JetBrains Mono';
-        ctx.textAlign = 'center';
-        ctx.fillText(n.label, n.x, n.y + 26);
-      });
-    }
-
-    window.onload = init;
-    window.onresize = renderGraph;
-  </script>
+window.onload = init;
+window.onresize = ()=>{ if(cy) cy.resize(); };
+</script>
 </body>
 </html>
