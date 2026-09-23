@@ -10,22 +10,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
   <style>
     :root {
-      --bg-base: #0f1217;
-      --bg-panel: #161b22;
-      --bg-card: #1c222d;
-      --bg-subtle: #242c3a;
-      --border: #2b3545;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-subtle: #64748b;
-      --fraud-red: #ef4444;
-      --fraud-bg: rgba(239, 68, 68, 0.12);
-      --legit-green: #22c55e;
-      --legit-bg: rgba(34, 197, 94, 0.12);
-      --warn-amber: #f59e0b;
-      --warn-bg: rgba(245, 158, 11, 0.12);
-      --accent-blue: #38bdf8;
-      --accent-bg: rgba(56, 189, 248, 0.12);
+      --bg-base: #f6f7f4;
+      --bg-panel: #ffffff;
+      --bg-card: #fbfcfa;
+      --bg-subtle: #eef2ef;
+      --border: #dde4df;
+      --text-main: #1f2a26;
+      --text-muted: #62736b;
+      --text-subtle: #87958e;
+      --fraud-red: #b84a4a;
+      --fraud-bg: #fbeeee;
+      --legit-green: #287b5a;
+      --legit-bg: #eaf6f0;
+      --warn-amber: #9a6914;
+      --warn-bg: #fbf4e4;
+      --accent-blue: #32756a;
+      --accent-bg: #e7f2ef;
       --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
@@ -68,8 +68,8 @@
       gap: 8px;
     }
     .badge-tg {
-      background: #0284c7;
-      color: #fff;
+      background: #32756a;
+      color: var(--text-main);
       font-size: 10px;
       font-weight: 700;
       padding: 2px 6px;
@@ -96,7 +96,7 @@
     .stat-pill span {
       font-family: var(--font-mono);
       font-weight: 600;
-      color: #fff;
+      color: var(--text-main);
     }
 
     /* Layout */
@@ -289,7 +289,7 @@
     #graph-container {
       height: 340px;
       width: 100%;
-      background: #0b0e13;
+      background: #f1f5f2;
       border: 1px solid var(--border);
       border-radius: 6px;
       position: relative;
@@ -332,7 +332,7 @@
     }
     .evidence-claim {
       font-size: 12.5px;
-      color: #e2e8f0;
+      color: var(--text-main);
     }
     .evidence-ref {
       font-family: var(--font-mono);
@@ -362,7 +362,7 @@
     }
     .action-name {
       font-weight: 600;
-      color: #fff;
+      color: var(--text-main);
     }
     .route-tag {
       padding: 2px 6px;
@@ -374,14 +374,14 @@
 
     /* SAR Narrative Box */
     .sar-box {
-      background: #111827;
-      border: 1px solid #1f2937;
+      background: #f7f9f7;
+      border: 1px solid var(--border);
       border-radius: 6px;
       padding: 14px;
       font-family: var(--font-mono);
       font-size: 12px;
       line-height: 1.6;
-      color: #e2e8f0;
+      color: #34423c;
       white-space: pre-wrap;
       max-height: 240px;
       overflow-y: auto;
@@ -390,7 +390,7 @@
     /* Buttons */
     .btn {
       background: var(--bg-subtle);
-      color: #fff;
+      color: var(--text-main);
       border: 1px solid var(--border);
       padding: 6px 12px;
       border-radius: 5px;
@@ -401,11 +401,11 @@
       align-items: center;
       gap: 6px;
     }
-    .btn:hover { background: #2f3a4d; }
-    .btn-primary { background: #0284c7; border-color: #0284c7; }
-    .btn-primary:hover { background: #0369a1; }
-    .btn-approve { background: #15803d; border-color: #15803d; }
-    .btn-approve:hover { background: #166534; }
+    .btn:hover { background: #e3ebe6; }
+    .btn-primary { background: #32756a; border-color: #32756a; color: #fff; }
+    .btn-primary:hover { background: #285f56; }
+    .btn-approve { background: #287b5a; border-color: #287b5a; color: #fff; }
+    .btn-approve:hover { background: #1f6248; }
 
     /* Timeline Stepper */
     .timeline {
@@ -443,6 +443,59 @@
       border-radius: 6px;
       padding: 10px 14px;
     }
+
+    /* Calm light-workspace refinements */
+    header { box-shadow: 0 1px 0 rgba(31, 42, 38, 0.03); }
+    .workspace-header { padding: 16px 28px; }
+    .content-viewport { padding: 24px 28px 32px; }
+    .panel { border-radius: 12px; box-shadow: 0 2px 8px rgba(31, 42, 38, 0.035); }
+    .filter-tabs { background: #f2f5f2; padding: 3px; border-radius: 8px; }
+    .filter-btn { border-radius: 6px; padding: 6px; }
+    .filter-btn.active { background: #fff; color: var(--text-main); box-shadow: 0 1px 3px rgba(31,42,38,.10); }
+    .case-item { border-bottom-color: #edf0ed; }
+    .case-item:hover { background: #f6faf7; }
+    .case-item.active { background: #edf6f2; border-left-color: var(--accent-blue); }
+    .nav-tab.active { color: var(--accent-blue); }
+    .panel-title { border-bottom-color: #edf0ed; }
+    #graph-container { border-color: #d8e3dd; }
+    .evidence-card, .nba-box, .action-row, .timeline-card { background: #fff; border-color: #e1e8e3; }
+    .action-row { background: #f7faf8; }
+    .route-tag { background: #e9efeb; color: #45564e; }
+    .badge-fraud { border-color: #efcaca; }
+    .badge-legit { border-color: #cce6d8; }
+    .badge-uncertain { border-color: #ecd9a6; }
+    .top-stats { color: var(--text-muted); }
+    .top-stats .stat-pill span, .case-cid, .action-name { color: var(--text-main); }
+    .state-flow { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding: 4px 2px 14px; }
+    .state-node { min-width: 138px; flex: 1; position: relative; padding: 12px 12px 10px; background: #f6f8f6; border: 1px solid #dfe7e2; border-radius: 10px; }
+    .state-node + .state-node { margin-left: 28px; }
+    .state-node + .state-node::before { content: ''; position: absolute; top: 50%; right: 100%; width: 28px; height: 2px; background: #c8d7cf; }
+    .state-node + .state-node::after { content: ''; position: absolute; top: calc(50% - 4px); right: calc(100% - 28px); border-left: 7px solid #c8d7cf; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+    .state-node.active { background: #e6f2ed; border-color: #78af9b; }
+    .state-node.active::before { background: #78af9b; }
+    .state-node.active::after { border-left-color: #78af9b; }
+    .state-node.current { background: #32756a; border-color: #32756a; color: #fff; box-shadow: 0 4px 12px rgba(50,117,106,.22); }
+    .state-node.current::before { background: #32756a; }
+    .state-node.current::after { border-left-color: #32756a; }
+    .state-index { display: block; color: var(--text-subtle); font: 600 10px var(--font-mono); margin-bottom: 5px; }
+    .state-name { display: block; font: 600 11px var(--font-mono); line-height: 1.35; word-break: break-word; }
+    .state-node.current .state-index { color: #d7eee7; }
+    .state-node.current .state-name { color: #fff; }
+    .trace-summary { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 14px; background:#f4f8f5; border:1px solid #dce8e1; border-radius:10px; margin-bottom:18px; color:var(--text-muted); }
+    .trace-summary strong { color:var(--text-main); }
+    .trace-detail-title { font-size:12px; color:var(--text-muted); font-weight:600; margin:6px 0 10px; }
+    .timeline-dot { border-color: #fff; }
+    .replay-wrap { display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+    .replay-status { min-height:16px; color:var(--text-muted); font-size:11px; }
+    .replay-status.running { color:#9a6914; }
+    .replay-status.success { color:#287b5a; }
+    .replay-status.error { color:#b84a4a; }
+    .btn:disabled { cursor:wait; opacity:.7; }
+    [style*="color:#fff"], [style*="color:#f8fafc"], [style*="color:#f1f5f9"], [style*="color:#e2e8f0"] { color: var(--text-main) !important; }
+    [style*="background:#334155"], [style*="background:#1e293b"] { background:#e9efeb !important; color:#45564e !important; }
+    [style*="background:linear-gradient(90deg, #1e293b, #0f172a)"] { background:linear-gradient(105deg, #edf6f1, #f7faf8) !important; border-color:#d6e5dc !important; }
+    @media (max-width: 980px) { .dashboard-grid { grid-template-columns: 1fr; } aside { width: 240px; } .top-stats { display:none; } }
+    @media (max-width: 720px) { body { overflow:auto; height:auto; } .app-container { min-height:calc(100vh - 52px); } aside { width: 200px; } .brand-sub { display:none; } .workspace-header { padding:14px; } .content-viewport { padding:16px; } .nav-tabs { overflow-x:auto; padding:0 16px; gap:18px; } }
   </style>
 </head>
 <body>
@@ -488,8 +541,9 @@
             <span class="badge" style="background:#334155">PATTERN: NONE</span>
           </div>
         </div>
-        <div>
-          <button class="btn btn-primary" id="replay-btn" onclick="runSingleCase()">Replay Investigation</button>
+        <div class="replay-wrap">
+          <button class="btn btn-primary" id="replay-btn" onclick="runSingleCase()">Re-run investigation</button>
+          <span class="replay-status" id="replay-status" aria-live="polite">Ready to analyse this case again.</span>
         </div>
       </div>
 
@@ -654,8 +708,15 @@
 
       <!-- Timeline Tab -->
       <div class="content-viewport" id="tab-timeline" style="display:none;">
-        <div class="panel" style="max-width:800px; margin:0 auto;">
-          <div class="panel-title">Investigation Lifecycle State Machine Trace</div>
+        <div class="panel" style="max-width:1180px; margin:0 auto;">
+          <div class="panel-title">Investigation lifecycle</div>
+          <div class="trace-summary" id="trace-summary">
+            <span>Loading the persisted case workflow…</span>
+          </div>
+          <div class="state-flow" id="state-flow" aria-label="Investigation state machine flow">
+            <!-- State-flow nodes injected via JS -->
+          </div>
+          <div class="trace-detail-title">Transition log</div>
           <div class="timeline" id="timeline-container">
             <!-- Timeline items injected via JS -->
           </div>
@@ -774,31 +835,46 @@
     async function runSingleCase() {
       if (!currentCaseData?.case_id) return;
       const button = document.getElementById('replay-btn');
-      const originalLabel = button.innerText;
+      const status = document.getElementById('replay-status');
+      const caseId = currentCaseData.case_id;
+      const stages = ['Opening case context...', 'Reviewing graph evidence and history...', 'Applying risk and policy checks...', 'Saving the refreshed trace...'];
+      let stage = 0;
       button.disabled = true;
-      button.innerText = 'Investigating…';
+      button.innerText = 'Investigation running...';
+      status.className = 'replay-status running';
+      status.innerText = stages[stage];
+      const progressTimer = window.setInterval(() => {
+        stage = Math.min(stage + 1, stages.length - 1);
+        status.innerText = stages[stage];
+      }, 1400);
       try {
-        const response = await fetch(`/api/cases/${currentCaseData.case_id}/replay`, {method: 'POST'});
+        const response = await fetch(`/api/cases/${caseId}/replay`, {method: 'POST'});
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.detail || 'Replay failed');
         currentCaseData = payload;
         const [approvalRes, actionRes, timelineRes] = await Promise.all([
-          fetch(`/api/cases/${currentCaseData.case_id}/approvals`),
-          fetch(`/api/cases/${currentCaseData.case_id}/actions`),
-          fetch(`/api/cases/${currentCaseData.case_id}/timeline`)
+          fetch(`/api/cases/${caseId}/approvals`),
+          fetch(`/api/cases/${caseId}/actions`),
+          fetch(`/api/cases/${caseId}/timeline`)
         ]);
         currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
         currentActions = actionRes.ok ? await actionRes.json() : [];
         currentTimeline = timelineRes.ok ? await timelineRes.json() : null;
         renderActiveCase();
+        renderCaseList();
+        renderGraph();
+        if (document.getElementById('tab-optimizer').style.display !== 'none') loadOptimizerData(caseId);
+        status.className = 'replay-status success';
+        status.innerText = `Updated ${caseId}: evidence, policy decision, and trace are ready.`;
       } catch (error) {
         console.error(error);
-        button.innerText = 'Replay failed — try again';
-        return;
+        status.className = 'replay-status error';
+        status.innerText = `Could not refresh ${caseId}. Please try again.`;
       } finally {
+        window.clearInterval(progressTimer);
         button.disabled = false;
+        button.innerText = 'Re-run investigation';
       }
-      button.innerText = originalLabel;
     }
 
     function renderActiveCase() {
@@ -934,31 +1010,44 @@
 
     function renderTimeline() {
       const tl = document.getElementById('timeline-container');
+      const flow = document.getElementById('state-flow');
+      const summary = document.getElementById('trace-summary');
       tl.innerHTML = '';
+      flow.innerHTML = '';
       if (!currentTimeline) {
         tl.innerHTML = '<div class="timeline-card">Run this case to create a persisted investigation trace.</div>';
+        summary.innerHTML = '<span>No persisted trace is available yet.</span>';
         return;
       }
       const transitions = currentTimeline.state_history || [];
-      const steps = transitions.map(([state, reason], index) => ({
+      const stateEntries = transitions.map(([state, reason]) => ({ state, reason }));
+      if (!stateEntries.length || stateEntries[stateEntries.length - 1].state !== currentTimeline.state) {
+        stateEntries.push({ state: currentTimeline.state, reason: currentCaseData?.stop_reason || 'Current persisted workflow state' });
+      }
+      const currentIndex = stateEntries.length - 1;
+      const toolEvents = (currentTimeline.steps || []).length;
+      summary.innerHTML = `<span><strong>${stateEntries.length} states completed</strong> for ${currentCaseData?.case_id || 'this case'}.</span><span>${toolEvents} investigation tool event${toolEvents === 1 ? '' : 's'} recorded</span>`;
+      stateEntries.forEach((entry, index) => {
+        const node = document.createElement('div');
+        node.className = `state-node active${index === currentIndex ? ' current' : ''}`;
+        node.title = entry.reason || entry.state;
+        node.innerHTML = `<span class="state-index">STEP ${index + 1}</span><span class="state-name">${entry.state.replaceAll('_', ' ')}</span>`;
+        flow.appendChild(node);
+      });
+      const steps = stateEntries.map(({state, reason}, index) => ({
         state,
         title: `Lifecycle transition ${index + 1}`,
         desc: reason || 'State advanced by the investigation workflow'
       }));
-      steps.push({
-        state: currentTimeline.state,
-        title: 'Current persisted state',
-        desc: currentCaseData?.stop_reason || `${(currentTimeline.steps || []).length} tool events recorded`
-      });
 
-      steps.forEach(s => {
+      steps.forEach((s, index) => {
         const item = document.createElement('div');
         item.className = 'timeline-item';
         item.innerHTML = `
           <div class="timeline-dot"></div>
           <div class="timeline-card">
             <div style="font-weight:600; font-family:var(--font-mono); font-size:11px; color:var(--accent-blue);">${s.state}</div>
-            <div style="font-weight:600; font-size:13px; color:#fff;">${s.title}</div>
+            <div style="font-weight:600; font-size:13px; color:#fff;">${index === currentIndex ? 'Current persisted state' : s.title}</div>
             <div style="font-size:12px; color:var(--text-muted);">${s.desc}</div>
           </div>
         `;
