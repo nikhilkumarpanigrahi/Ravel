@@ -149,6 +149,20 @@ def get_investigation_timeline(inv_id: str):
     }
 
 
+@app.get("/api/cases/{case_id}/timeline")
+def get_case_timeline(case_id: str):
+    """Return the persisted trace for the latest investigation of a case."""
+    inv = repo.get_latest_investigation_for_case(case_id)
+    if not inv:
+        raise HTTPException(status_code=404, detail="No persisted investigation found for case")
+    return {
+        "investigation_id": inv.investigation_id,
+        "state": inv.state.value,
+        "state_history": inv.state_history,
+        "steps": [step.model_dump() for step in inv.steps],
+    }
+
+
 @app.get("/api/graph/{root_id}")
 def get_subgraph(root_id: str, depth: int = 2):
     """Extract interactive subgraph for visualization."""

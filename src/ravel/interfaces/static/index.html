@@ -627,6 +627,7 @@
     let currentCaseData = null;
     let currentApprovals = [];
     let currentActions = [];
+    let currentTimeline = null;
     let currentFilter = 'all';
 
     async function init() {
@@ -687,12 +688,14 @@
       try {
         const res = await fetch(`/api/cases/${caseId}`);
         currentCaseData = await res.json();
-        const [approvalRes, actionRes] = await Promise.all([
+        const [approvalRes, actionRes, timelineRes] = await Promise.all([
           fetch(`/api/cases/${caseId}/approvals`),
-          fetch(`/api/cases/${caseId}/actions`)
+          fetch(`/api/cases/${caseId}/actions`),
+          fetch(`/api/cases/${caseId}/timeline`)
         ]);
         currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
         currentActions = actionRes.ok ? await actionRes.json() : [];
+        currentTimeline = timelineRes.ok ? await timelineRes.json() : null;
         renderActiveCase();
         renderCaseList();
         renderGraph();
@@ -712,12 +715,14 @@
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.detail || 'Replay failed');
         currentCaseData = payload;
-        const [approvalRes, actionRes] = await Promise.all([
+        const [approvalRes, actionRes, timelineRes] = await Promise.all([
           fetch(`/api/cases/${currentCaseData.case_id}/approvals`),
-          fetch(`/api/cases/${currentCaseData.case_id}/actions`)
+          fetch(`/api/cases/${currentCaseData.case_id}/actions`),
+          fetch(`/api/cases/${currentCaseData.case_id}/timeline`)
         ]);
         currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
         currentActions = actionRes.ok ? await actionRes.json() : [];
+        currentTimeline = timelineRes.ok ? await timelineRes.json() : null;
         renderActiveCase();
       } catch (error) {
         console.error(error);
@@ -825,16 +830,21 @@
     function renderTimeline() {
       const tl = document.getElementById('timeline-container');
       tl.innerHTML = '';
-      const steps = [
-        { state: 'TRIGGERED', title: 'Case Trigger Received', desc: 'Real-time detection alert recorded' },
-        { state: 'CASE_CREATED', title: 'Internal Case Opened', desc: 'Aggregate state initialized in SQLite' },
-        { state: 'INVESTIGATING', title: 'Graph Traversal & Retrieval', desc: 'Queried transactions, cards, and device neighbors' },
-        { state: 'EVIDENCE_COLLECTED', title: 'Detectors Executed', desc: 'Ran card testing, velocity, and takeover detectors' },
-        { state: 'ASSESSING', title: 'Uncertainty Evaluated', desc: 'Calculated completeness and confidence intervals' },
-        { state: 'POLICY_EVALUATION', title: 'Rules R1-R10 Enforced', desc: 'Mapped actions and approval routes' },
-        { state: 'CASE_CLOSED', title: 'Defensible Decision Finalized', desc: currentCaseData?.stop_reason || 'Closed' },
-        { state: 'MEMORY_UPDATED', title: 'Written to Graph Memory', desc: `Stored vertex: ${currentCaseData?.case?.graph_case_id}` }
-      ];
+      if (!currentTimeline) {
+        tl.innerHTML = '<div class="timeline-card">Run this case to create a persisted investigation trace.</div>';
+        return;
+      }
+      const transitions = currentTimeline.state_history || [];
+      const steps = transitions.map(([state, reason], index) => ({
+        state,
+        title: `Lifecycle transition ${index + 1}`,
+        desc: reason || 'State advanced by the investigation workflow'
+      }));
+      steps.push({
+        state: currentTimeline.state,
+        title: 'Current persisted state',
+        desc: currentCaseData?.stop_reason || `${(currentTimeline.steps || []).length} tool events recorded`
+      });
 
       steps.forEach(s => {
         const item = document.createElement('div');

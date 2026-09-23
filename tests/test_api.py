@@ -51,6 +51,13 @@ def test_replay_case():
     assert data["case_id"] == "HHG-001"
     assert data["case"]["written_to_graph"] is True
 
+    timeline = client.get("/api/cases/HHG-001/timeline")
+    assert timeline.status_code == 200
+    trace = timeline.json()
+    assert trace["investigation_id"].startswith("INV-")
+    assert trace["state_history"]
+    assert trace["steps"]
+
 
 def test_replay_unknown_case():
     res = client.post("/api/cases/HHG-999/replay")

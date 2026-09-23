@@ -192,6 +192,16 @@ class Repository:
             m = s.get(InvestigationModel, investigation_id)
             return self._from_inv_model(m) if m else None
 
+    def get_latest_investigation_for_case(self, case_id: str) -> Investigation | None:
+        with self.session() as s:
+            model = (
+                s.query(InvestigationModel)
+                .filter(InvestigationModel.case_id == case_id)
+                .order_by(InvestigationModel.updated_at.desc())
+                .first()
+            )
+            return self._from_inv_model(model) if model else None
+
     def _to_inv_model(self, inv: Investigation) -> InvestigationModel:
         return InvestigationModel(
             investigation_id=inv.investigation_id,
