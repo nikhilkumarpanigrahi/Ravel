@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ravel.application.policy_retrieval import PolicyRetriever
 from ravel.domain.enums import EvidenceSource, EvidenceType
 from ravel.domain.evidence import EvidenceRecord
 from ravel.infrastructure.graph.base import GraphAdapter
@@ -49,14 +50,18 @@ class GraphRAGContext:
             "Historical Memory (Closed Cases):\n" + "\n".join(hist_lines or ["- None retrieved"]) + "\n\n"
             f"Connected Cards: {', '.join(self.connected_cards) or 'None'}\n"
             f"Device Profiles: {', '.join(self.device_profiles) or 'None'}\n"
+            "Retrieved Fraud Policy:\n"
+            + "\n".join(f"- {snippet}" for snippet in self.policy_snippets)
+            + "\n"
         )
 
 
 class GraphRAGService:
     """Retrieves and synthesizes graph neighborhood, historical memory, and policy rules."""
 
-    def __init__(self, graph: GraphAdapter):
+    def __init__(self, graph: GraphAdapter, policy_retriever: PolicyRetriever | None = None):
         self.graph = graph
+        self.policy_retriever = policy_retriever or PolicyRetriever()
 
     def retrieve(self, customer_id: str, card_id: str, txn_id: str, case_id: str = "") -> GraphRAGContext:
         """Query TigerGraph / GraphAdapter to assemble multi-hop evidence with provenance."""
@@ -137,12 +142,14 @@ class GraphRAGService:
                 )
             )
 
-        policy_snippets = [
-            "R1: Verify before block on single/weak signals (< 0.70)",
-            "R2: Block card and open case if customer denies transaction; file report if > $1,000",
-            "R5: Card testing requires decline and step-up auth; block if > $100 cleared",
-            "R6: Shared devices require case creation, regulatory filing, and connected card monitoring",
-        ]
+        policy_query = " ".join(
+            [
+                *(record.claim for record in evidence),
+                *(str(case.get("summary", "")) for case in history_cases[:3]),
+                str(txn.get("channel", "")),
+            ]
+        )
+        policy_snippets = self.policy_retriever.retrieve(policy_query)
 
         return GraphRAGContext(
             case_id=case_id,
