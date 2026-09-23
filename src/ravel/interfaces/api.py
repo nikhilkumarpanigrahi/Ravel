@@ -92,12 +92,12 @@ def list_cases():
 
 @app.get("/api/cases/{case_id}")
 def get_case(case_id: str):
+    rec = repo.get_case_record(case_id)
+    if rec and "case" in rec:
+        return rec
     p = settings.output_dir / f"{case_id}.json"
     if p.exists():
         return json.loads(p.read_text(encoding="utf-8"))
-    rec = repo.get_case_record(case_id)
-    if rec:
-        return rec
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
 
 

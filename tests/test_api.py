@@ -51,6 +51,10 @@ def test_replay_case():
     assert data["case_id"] == "HHG-001"
     assert data["case"]["written_to_graph"] is True
 
+    persisted = client.get("/api/cases/HHG-001")
+    assert persisted.status_code == 200
+    assert persisted.json() == data
+
     timeline = client.get("/api/cases/HHG-001/timeline")
     assert timeline.status_code == 200
     trace = timeline.json()

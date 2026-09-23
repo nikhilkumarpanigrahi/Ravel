@@ -535,10 +535,9 @@ class AgentWorkflow:
         inv.latency_s = latency_s
         inv.tokens = inv.tokens
         self.repo.save_investigation(inv)
-        self.repo.save_case_record(case_id, inv.investigation_id, case_deliverable.model_dump(mode="json"))
 
         # Construct full AnswerFile
-        return AnswerFile(
+        answer = AnswerFile(
             case_id=case_id,
             case=case_deliverable,
             evidence_requests=evidence_requests_payload,
@@ -550,3 +549,5 @@ class AgentWorkflow:
             tokens=inv.tokens,
             latency_s=latency_s,
         )
+        self.repo.save_case_record(case_id, inv.investigation_id, answer.model_dump(mode="json"))
+        return answer
