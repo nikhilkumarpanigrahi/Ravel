@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from ravel.domain.enums import ActionType, ApprovalRoute, ApprovalState
 
@@ -14,8 +14,19 @@ class RecommendedAction(BaseModel):
     route: ApprovalRoute
     reason: str = ""
     order: int = 0
+    approval_id: str = ""
     requires_approval: bool = False
     state: ApprovalState = ApprovalState.NOT_REQUIRED
+
+    @model_validator(mode="after")
+    def apply_route_controls(self) -> RecommendedAction:
+        """Derive approval metadata from the policy route, never from caller defaults."""
+        self.requires_approval = self.route != ApprovalRoute.AUTO
+        if self.requires_approval and self.state == ApprovalState.NOT_REQUIRED:
+            self.state = ApprovalState.PENDING
+        elif not self.requires_approval:
+            self.state = ApprovalState.NOT_REQUIRED
+        return self
 
 
 class PolicyEvaluation(BaseModel):

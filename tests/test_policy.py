@@ -1,7 +1,7 @@
 """Unit tests for PolicyEngine and approval routing."""
 
 from ravel.application.policy_engine import PolicyEngine
-from ravel.domain.enums import ActionType, ApprovalRoute, FraudPattern, Verdict
+from ravel.domain.enums import ActionType, ApprovalRoute, ApprovalState, FraudPattern, Verdict
 
 
 def test_approval_routing():
@@ -21,6 +21,25 @@ def test_approval_routing():
     # Close case / verify is auto
     assert engine.determine_approval_route(ActionType.CLOSE_NO_FRAUD) == ApprovalRoute.AUTO
     assert engine.determine_approval_route(ActionType.VERIFY_WITH_CUSTOMER) == ApprovalRoute.AUTO
+
+
+def test_recommended_actions_derive_approval_metadata():
+    engine = PolicyEngine()
+    actions = engine.evaluate_final_actions(
+        verdict=Verdict.FRAUD,
+        final_fraud_prob=0.95,
+        pattern=FraudPattern.CARD_NOT_PRESENT_FRAUD,
+        exposure_usd=1500.0,
+        customer_response="Customer denied making this purchase",
+        has_shared_device=False,
+        connected_card_ids=[],
+    )
+    block = next(action for action in actions if action.action == ActionType.BLOCK_CARD)
+    create_case = next(action for action in actions if action.action == ActionType.CREATE_CASE)
+    assert block.requires_approval is True
+    assert block.state == ApprovalState.PENDING
+    assert create_case.requires_approval is False
+    assert create_case.state == ApprovalState.NOT_REQUIRED
 
 
 def test_rule_r1_weak_signal():

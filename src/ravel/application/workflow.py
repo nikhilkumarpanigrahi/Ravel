@@ -12,7 +12,6 @@ from ravel.application.graphrag import GraphRAGService
 from ravel.application.policy_engine import PolicyEngine
 from ravel.domain.case import AnswerFile, Case, CaseMemoryEntry
 from ravel.domain.enums import (
-    ApprovalRoute,
     ApprovalState,
     CaseStatus,
     EvidenceSource,
@@ -323,24 +322,36 @@ class AgentWorkflow:
             except Exception:
                 pass
 
+        # Attach stable approval request identifiers to active, non-auto actions.
+        for act in final_actions:
+            if act.requires_approval and not act.approval_id:
+                act.approval_id = f"APP-{uuid.uuid4().hex[:8].upper()}"
+
         nba = self.policy.assemble_nba(initial_actions, final_actions, what_changed)
 
         # 11. State: ACTION_PROPOSED & APPROVAL_PENDING
         inv.transition(InvestigationState.ACTION_PROPOSED, "Proposed policy actions with approval routing")
-        for act in final_actions:
+        pending_approvals = [act for act in final_actions if act.requires_approval]
+        for act in pending_approvals:
             rec = ApprovalRecord(
-                approval_id=f"APP-{uuid.uuid4().hex[:8]}",
+                approval_id=act.approval_id,
                 action=act.action,
                 case_id=case_id,
                 route=act.route,
-                state=ApprovalState.APPROVED if act.route == ApprovalRoute.AUTO else ApprovalState.PENDING,
+                state=ApprovalState.PENDING,
                 requestor="agent",
                 policy_version="1.0",
             )
             self.repo.add_approval(inv.investigation_id, rec)
 
-        # 12. State: ACTION_EXECUTED (simulated execution of auto actions)
-        inv.transition(InvestigationState.ACTION_EXECUTED, "Executed automated policy actions")
+        # 12. Execute only auto-routed actions; governed actions remain pending.
+        if pending_approvals:
+            inv.transition(
+                InvestigationState.APPROVAL_PENDING,
+                f"Waiting for {len(pending_approvals)} governed action approval(s)",
+            )
+        else:
+            inv.transition(InvestigationState.ACTION_EXECUTED, "Executed automated policy actions")
 
         # 13. State: CASE_CLOSED & SAR generation
         inv.transition(InvestigationState.CASE_CLOSED, "Investigation closed with defensible decision")

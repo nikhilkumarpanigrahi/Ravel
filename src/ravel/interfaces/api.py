@@ -55,7 +55,8 @@ class ApprovalDecision(BaseModel):
     approval_id: str
     decision: str  # APPROVED or REJECTED
     reason: str = ""
-    approver: str = "analyst_l1"
+    approver: str = "fraud_lead"
+    approver_role: str = "L1"
 
 
 @app.get("/health")
@@ -139,12 +140,35 @@ def get_subgraph(root_id: str, depth: int = 2):
 @app.post("/api/approvals")
 def record_approval(decision: ApprovalDecision):
     """Analyst approval endpoint for human-in-the-loop governance."""
-    return {
-        "status": "recorded",
-        "approval_id": decision.approval_id,
-        "decision": decision.decision,
-        "approver": decision.approver,
-    }
+    requested = repo.get_approval(decision.approval_id)
+    if requested is None:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+
+    resolved_decision = decision.decision.upper()
+    resolved_role = decision.approver_role.upper()
+    if resolved_decision not in {"APPROVED", "REJECTED"}:
+        raise HTTPException(status_code=422, detail="Decision must be APPROVED or REJECTED")
+    if resolved_role not in {"L1", "L2"}:
+        raise HTTPException(status_code=403, detail="Approver role must be L1 or L2")
+    if requested["route"] == "L2" and resolved_role != "L2":
+        raise HTTPException(status_code=403, detail="L2 approval requires a fraud manager")
+
+    try:
+        updated = repo.decide_approval(
+            decision.approval_id,
+            resolved_decision,
+            decision.approver,
+            decision.reason,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return {"status": "recorded", **updated}
+
+
+@app.get("/api/cases/{case_id}/approvals")
+def get_case_approvals(case_id: str):
+    """Return persisted approval state for a case's investigation runs."""
+    return repo.list_case_approvals(case_id)
 
 
 @app.get("/api/benchmark/results")

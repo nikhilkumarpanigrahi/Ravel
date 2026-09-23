@@ -553,8 +553,9 @@
                 <div style="margin-top:4px; font-size:11.5px; color:var(--text-subtle);">
                   <strong>What changed:</strong> <span id="nba-what-changed"></span>
                 </div>
-                <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-                  <button class="btn btn-approve" id="approve-btn" onclick="approveAction()">Approve L1/L2 Pending Action</button>
+                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+                  <button class="btn" id="reject-btn" onclick="decidePendingActions('REJECTED')">Reject Pending</button>
+                  <button class="btn btn-approve" id="approve-btn" onclick="decidePendingActions('APPROVED')">Approve Pending</button>
                 </div>
               </div>
             </div>
@@ -608,6 +609,7 @@
   <script>
     let allCases = [];
     let currentCaseData = null;
+    let currentApprovals = [];
     let currentFilter = 'all';
 
     async function init() {
@@ -668,6 +670,8 @@
       try {
         const res = await fetch(`/api/cases/${caseId}`);
         currentCaseData = await res.json();
+        const approvalRes = await fetch(`/api/cases/${caseId}/approvals`);
+        currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
         renderActiveCase();
         renderCaseList();
         renderGraph();
@@ -716,15 +720,31 @@
       const nba = d.next_best_actions || {};
       const finals = nba.final || [];
       finals.forEach(act => {
+        const persisted = currentApprovals.find(a =>
+          a.approval_id === act.approval_id ||
+          (!act.approval_id && a.action === act.action && a.route === act.route)
+        );
+        const actionState = persisted?.state || act.state || (act.route === 'auto' ? 'NOT_REQUIRED' : 'PENDING');
         const row = document.createElement('div');
         row.className = 'action-row';
         row.innerHTML = `
           <span class="action-name">${act.action}</span>
-          <span class="route-tag">Route: ${act.route}</span>
+          <span class="route-tag">${act.route} · ${actionState}</span>
         `;
         actionsList.appendChild(row);
       });
       document.getElementById('nba-what-changed').innerText = nba.what_changed || 'nothing';
+
+      const pending = currentApprovals.filter(a => a.state === 'PENDING');
+      const approveBtn = document.getElementById('approve-btn');
+      const rejectBtn = document.getElementById('reject-btn');
+      approveBtn.style.display = pending.length ? 'inline-block' : 'none';
+      rejectBtn.style.display = pending.length ? 'inline-block' : 'none';
+      approveBtn.disabled = false;
+      rejectBtn.disabled = false;
+      document.getElementById('approval-status-tag').innerText = pending.length
+        ? `${pending.length} PENDING`
+        : (currentApprovals.length ? currentApprovals[0].state : 'NO APPROVAL REQUIRED');
 
       // SAR
       const sar = d.sar || {};
@@ -804,14 +824,38 @@
       document.getElementById('tab-benchmark').style.display = tab === 'benchmark' ? 'block' : 'none';
     }
 
-    function approveAction() {
-      const btn = document.getElementById('approve-btn');
-      btn.innerText = '✓ Approved by Fraud Lead (L1/L2)';
-      btn.className = 'btn';
-      btn.style.background = '#065f46';
-      btn.disabled = true;
-      document.getElementById('approval-status-tag').innerText = 'APPROVED';
-      document.getElementById('approval-status-tag').style.background = '#15803d';
+    async function decidePendingActions(decision) {
+      const pending = currentApprovals.filter(a => a.state === 'PENDING');
+      if (!pending.length) return;
+      const approveBtn = document.getElementById('approve-btn');
+      const rejectBtn = document.getElementById('reject-btn');
+      approveBtn.disabled = true;
+      rejectBtn.disabled = true;
+      try {
+        for (const approval of pending) {
+          const response = await fetch('/api/approvals', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              approval_id: approval.approval_id,
+              decision,
+              reason: `${decision.toLowerCase()} in forensic workstation`,
+              approver: approval.route === 'L2' ? 'fraud_manager' : 'fraud_lead',
+              approver_role: approval.route
+            })
+          });
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Approval update failed');
+          }
+        }
+        await loadCase(currentCaseData.case_id);
+      } catch (error) {
+        console.error(error);
+        document.getElementById('approval-status-tag').innerText = 'DECISION FAILED';
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+      }
     }
 
     // Graph Visualizer Canvas

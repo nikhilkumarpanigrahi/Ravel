@@ -381,6 +381,71 @@ class Repository:
                 for r in rows
             ]
 
+    def get_approval(self, approval_id: str) -> dict[str, Any] | None:
+        with self.session() as s:
+            row = s.get(ApprovalModel, approval_id)
+            if row is None:
+                return None
+            return {
+                "approval_id": row.approval_id,
+                "investigation_id": row.investigation_id,
+                "action": row.action,
+                "route": row.route,
+                "state": row.state,
+                "approver": row.approver,
+                "reason": row.reason,
+                "decided_at": row.decided_at,
+            }
+
+    def list_case_approvals(self, case_id: str) -> list[dict[str, Any]]:
+        with self.session() as s:
+            latest = (
+                s.query(InvestigationModel)
+                .filter(InvestigationModel.case_id == case_id)
+                .order_by(InvestigationModel.updated_at.desc())
+                .first()
+            )
+            if latest is None:
+                return []
+            rows = (
+                s.query(ApprovalModel)
+                .filter(ApprovalModel.investigation_id == latest.investigation_id)
+                .all()
+            )
+            return [
+                {
+                    "approval_id": row.approval_id,
+                    "investigation_id": row.investigation_id,
+                    "action": row.action,
+                    "route": row.route,
+                    "state": row.state,
+                    "approver": row.approver,
+                    "reason": row.reason,
+                    "decided_at": row.decided_at,
+                }
+                for row in rows
+            ]
+
+    def decide_approval(
+        self,
+        approval_id: str,
+        state: str,
+        approver: str,
+        reason: str,
+    ) -> dict[str, Any] | None:
+        with self.session() as s:
+            row = s.get(ApprovalModel, approval_id)
+            if row is None:
+                return None
+            if row.state != "PENDING":
+                raise ValueError(f"approval {approval_id} is already {row.state}")
+            row.state = state
+            row.approver = approver
+            row.reason = reason
+            row.decided_at = utc_now_iso()
+            s.commit()
+        return self.get_approval(approval_id)
+
     def add_action(self, inv_id: str, action: Any) -> None:
         with self.session() as s:
             s.merge(
