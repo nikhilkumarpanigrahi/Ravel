@@ -197,8 +197,7 @@ class TigerGraphAdapter(GraphAdapter):
 
     def is_loaded(self) -> bool:
         try:
-            stats = self.conn.getVertexStats()
-            return stats.get(self.graphname, {}).get("Transaction", {}).get("count", 0) > 0
+            return int(self.conn.getVertexCount("Transaction")) > 0
         except Exception:
             return False
 

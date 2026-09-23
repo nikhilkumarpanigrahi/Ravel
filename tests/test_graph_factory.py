@@ -28,6 +28,15 @@ class EchoOnlyConnection:
         raise RuntimeError("version endpoint unavailable")
 
 
+class VertexCountConnection:
+    def __init__(self, count):
+        self.count = count
+
+    def getVertexCount(self, vertex_type):
+        assert vertex_type == "Transaction"
+        return self.count
+
+
 def _settings():
     root = Path("data/test-output/factory")
     data_dir = root / "HHGOA_IEEE"
@@ -71,3 +80,12 @@ def test_tigergraph_health_uses_echo_and_tolerates_missing_version():
         "echo": "Hello GSQL",
         "version": None,
     }
+
+
+def test_tigergraph_is_loaded_uses_transaction_vertex_count():
+    adapter = object.__new__(TigerGraphAdapter)
+    adapter.conn = VertexCountConnection(590742)
+    assert adapter.is_loaded() is True
+
+    adapter.conn = VertexCountConnection(0)
+    assert adapter.is_loaded() is False
