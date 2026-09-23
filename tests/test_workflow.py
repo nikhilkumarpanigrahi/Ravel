@@ -56,6 +56,7 @@ def test_agent_workflow_single_case():
 
     ans = workflow.run_investigation(case_pack_row)
     assert ans.case_id == "TEST-001"
+    assert ans.case.graph_case_id == "RAVEL-TEST-001"
     assert ans.case.verdict in (Verdict.LEGITIMATE, Verdict.FRAUD, Verdict.UNCERTAIN)
     assert len(ans.case.evidence) > 0
     assert ans.tool_calls > 0

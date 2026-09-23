@@ -561,6 +561,7 @@ class AgentWorkflow:
             InvestigationState.MEMORY_UPDATED, "Case memory recorded into graph and persistence layer"
         )
         graph_case_payload = {
+            "graph_case_id": f"RAVEL-{case_id}",
             "case_id": case_id,
             "customer_id": trigger.customer_id,
             "card_id": trigger.card_id,
