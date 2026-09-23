@@ -15,7 +15,6 @@ from typing import Any, TypedDict
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from ravel.application.counterfactual import CounterfactualActionOptimizer
 from ravel.application.vector_search import get_case_vector_index
 from ravel.application.workflow import AgentWorkflow
 from ravel.domain.case import AnswerFile
@@ -53,7 +52,6 @@ class LangGraphWorkflowRunner:
             llm=llm,
             simulate_customer=simulate_customer,
         )
-        self.counterfactual_optimizer = CounterfactualActionOptimizer()
         self.app = self._build_graph()
 
     def _build_graph(self):
@@ -79,34 +77,7 @@ class LangGraphWorkflowRunner:
 
         def node_counterfactual_optimization(state: InvestigationGraphState) -> dict[str, Any]:
             ans = state["answer_file"]
-            actions_raw = (
-                ans.next_best_actions.get("final", [])
-                if isinstance(ans.next_best_actions, dict)
-                else getattr(ans.next_best_actions, "final", [])
-            )
-            fraud_prob = (
-                ans.case.fraud_probability
-                if hasattr(ans.case, "fraud_probability")
-                else ans.case.get("fraud_probability", 0.5)
-            )
-            exposure = (
-                ans.case.exposure_usd
-                if hasattr(ans.case, "exposure_usd")
-                else ans.case.get("exposure_usd", 0.0)
-            )
-            sar_file = (
-                ans.sar.get("file", False) if isinstance(ans.sar, dict) else getattr(ans.sar, "file", False)
-            )
-
-            candidate_actions = [a.model_dump() if hasattr(a, "model_dump") else a for a in actions_raw]
-            evals = self.counterfactual_optimizer.evaluate_candidates(
-                candidate_actions=candidate_actions,
-                fraud_probability=fraud_prob,
-                exposure_usd=exposure,
-                sar_required=sar_file,
-            )
-            ans.counterfactuals = [e.to_dict() for e in evals]
-            return {"counterfactuals": [e.to_dict() for e in evals]}
+            return {"counterfactuals": ans.counterfactuals}
 
         workflow.add_node("intake", node_intake)
         workflow.add_node("hybrid_retrieval", node_hybrid_retrieval)

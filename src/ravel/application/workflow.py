@@ -8,6 +8,7 @@ import uuid
 from typing import Any
 
 from ravel.application.agentic_engine import AgenticInvestigationEngine
+from ravel.application.counterfactual import CounterfactualActionOptimizer
 from ravel.application.detectors import run_detectors
 from ravel.application.evidence_simulation import simulate_customer_response
 from ravel.application.graphrag import GraphRAGService
@@ -53,6 +54,7 @@ class AgentWorkflow:
         self.simulate_customer = simulate_customer
         self.llm = llm or DeterministicSynthesizer()
         self.agentic_engine = AgenticInvestigationEngine(graph)
+        self.counterfactual_optimizer = CounterfactualActionOptimizer()
 
     def run_investigation(self, trigger_dict: dict[str, Any]) -> AnswerFile:
         """Run complete investigation lifecycle for a trigger, producing the answer file."""
@@ -387,9 +389,7 @@ class AgentWorkflow:
             initial=initial_uncertainty,
             final=final_uncertainty,
             what_reduced_uncertainty=(
-                ["customer validation response"]
-                if customer_response and not customer_unreachable
-                else []
+                ["customer validation response"] if customer_response and not customer_unreachable else []
             ),
         )
 
@@ -625,6 +625,13 @@ class AgentWorkflow:
         inv.tokens = inv.tokens
         self.repo.save_investigation(inv)
 
+        counterfactuals = self.counterfactual_optimizer.evaluate_candidates(
+            candidate_actions=[action.model_dump(mode="json") for action in final_actions],
+            fraud_probability=final_fraud_prob,
+            exposure_usd=exposure,
+            sar_required=sar.file,
+        )
+
         # Construct full AnswerFile
         answer = AnswerFile(
             case_id=case_id,
@@ -638,6 +645,7 @@ class AgentWorkflow:
             tokens=inv.tokens,
             latency_s=latency_s,
             agent_trace=agent_trace,
+            counterfactuals=[result.to_dict() for result in counterfactuals],
         )
         self.repo.save_case_record(case_id, inv.investigation_id, answer.model_dump(mode="json"))
         return answer

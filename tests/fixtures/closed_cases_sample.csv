@@ -1,0 +1,4 @@
+case_id,customer_id,card_id,outcome,pattern,exposure_usd,actions_taken,report_filed,summary
+CC-101,C101,K1,confirmed_fraud,card_testing,120.50,BLOCK_CARD,true,Rapid card testing attack on checkout
+CC-102,C102,K2,confirmed_fraud,account_takeover,4500.00,STEP_UP_AUTH,true,Account takeover after credential stuffing
+CC-103,C103,K3,cleared,none,0.00,ALLOW_TRANSACTION,false,Legitimate holiday shopping confirmed by cardholder

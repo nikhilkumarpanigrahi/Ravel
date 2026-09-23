@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from ravel.application.vector_search import CaseVectorIndex, LightweightTextEmbedder
 
 
@@ -28,16 +30,8 @@ def test_lightweight_embedder_is_stable_across_instances():
     np.testing.assert_array_equal(first, second)
 
 
-def test_case_vector_index(tmp_path):
-    csv_file = tmp_path / "closed_cases_history.csv"
-    csv_file.write_text(
-        "case_id,customer_id,card_id,outcome,pattern,exposure_usd,actions_taken,report_filed,summary\n"
-        "CC-101,C101,K1,confirmed_fraud,card_testing,120.50,BLOCK_CARD,true,Rapid card testing attack on checkout\n"
-        "CC-102,C102,K2,confirmed_fraud,account_takeover,4500.00,STEP_UP_AUTH,true,Account takeover after credential stuffing\n"
-        "CC-103,C103,K3,cleared,none,0.00,ALLOW_TRANSACTION,false,Legitimate holiday shopping confirmed by cardholder\n",
-        encoding="utf-8",
-    )
-
+def test_case_vector_index():
+    csv_file = Path(__file__).parent / "fixtures" / "closed_cases_sample.csv"
     index = CaseVectorIndex()
     indexed_count = index.index_cases_from_csv(csv_file)
     assert indexed_count == 3

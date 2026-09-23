@@ -549,8 +549,7 @@ class TigerGraphAdapter(GraphAdapter):
             case_ids = [
                 str(edge.get("to_id", ""))
                 for edge in customer_edges
-                if edge.get("e_type") == "case_of_customer"
-                and edge.get("to_type") == "FraudCase"
+                if edge.get("e_type") == "case_of_customer" and edge.get("to_type") == "FraudCase"
             ][: limit * 2]
             cases = self.conn.getVerticesById("FraudCase", case_ids) if case_ids else []
         else:
@@ -633,9 +632,7 @@ class TigerGraphAdapter(GraphAdapter):
             )
             customer_id = str(case.get("customer_id", ""))
             if customer_id:
-                self.conn.upsertEdge(
-                    "FraudCase", gid, "case_of_customer", "Customer", customer_id
-                )
+                self.conn.upsertEdge("FraudCase", gid, "case_of_customer", "Customer", customer_id)
             card_ids = {
                 str(card_id)
                 for card_id in [case.get("card_id"), *case.get("connected_card_ids", [])]
