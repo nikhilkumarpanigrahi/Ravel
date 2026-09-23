@@ -22,6 +22,7 @@ PROFILE = "profile"
 class MockGraphAdapter(GraphAdapter):
     def __init__(self, data_dir: Path, rebuild: bool = False, high_degree_threshold: int = 2000):
         self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.data_dir / "ravel_mock.db"
         self.high_degree_threshold = high_degree_threshold
         self._conn: sqlite3.Connection | None = None
@@ -29,6 +30,9 @@ class MockGraphAdapter(GraphAdapter):
             self._build()
         else:
             self._open()
+            if not self._schema_exists():
+                self._conn.close()
+                self._build()
 
     # ------------------------------------------------------------------ setup
     def _open(self) -> None:
@@ -38,6 +42,18 @@ class MockGraphAdapter(GraphAdapter):
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.execute("PRAGMA cache_size=-64000")
         self._conn.execute("PRAGMA temp_store=MEMORY")
+        if self._schema_exists():
+            self._ensure_runtime_indexes()
+
+    def _schema_exists(self) -> bool:
+        """Whether this SQLite database has been initialized with the graph schema."""
+        row = self._conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'transactions'"
+        ).fetchone()
+        return row is not None
+
+    def _ensure_runtime_indexes(self) -> None:
+        """Install indexes added after the initial schema, once tables exist."""
         with self._conn:
             self._conn.execute(
                 "CREATE INDEX IF NOT EXISTS ix_txn_cust_ts ON transactions(customer_id, ts DESC)"
@@ -90,6 +106,7 @@ class MockGraphAdapter(GraphAdapter):
             CREATE INDEX ix_cc_customer ON closed_cases(customer_id);
             """
         )
+        self._ensure_runtime_indexes()
         self._load()
         self._conn.commit()
 
