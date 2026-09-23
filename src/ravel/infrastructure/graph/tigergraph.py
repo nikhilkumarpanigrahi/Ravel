@@ -654,7 +654,7 @@ class TigerGraphAdapter(GraphAdapter):
                     "exposure_usd": float(case.get("exposure_usd", 0.0)),
                     "connected_card_ids": json.dumps(case.get("connected_card_ids", [])),
                     "actions_taken": json.dumps(case.get("actions_taken", [])),
-                    "report_filed": bool(case.get("report_filed", False)),
+                    "report_filed": "true" if case.get("report_filed", False) else "false",
                     "summary": (case.get("summary") or "")[:1000],
                 },
             )

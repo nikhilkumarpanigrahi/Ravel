@@ -181,7 +181,7 @@ def test_native_case_write_persists_live_schema_attributes_and_relationships():
     attributes = adapter.conn.vertex[2]
     assert "case_id" not in attributes
     assert attributes["n_txns"] == 2
-    assert attributes["report_filed"] is True
+    assert attributes["report_filed"] == "true"
     assert (
         "FraudCase",
         "CASE-TEST",
