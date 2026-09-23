@@ -111,7 +111,11 @@ class GraphRAGService:
             if ent.get("type") == "device" and ent.get("label"):
                 device_profiles.append(ent["label"])
 
-        shared_devs = self.graph.shared_devices(customer_id)
+        shared_devs = (
+            self.graph.shared_devices(customer_id)
+            if (txn.get("channel") or "").lower() != "in_person"
+            else []
+        )
         shared_cards = list({r["other_card_id"] for r in shared_devs if r.get("other_card_id")})
         if shared_cards:
             primary_dev = device_profiles[0] if device_profiles else "DEVICE_SHARED"

@@ -44,6 +44,7 @@ class AgenticInvestigationEngine:
         trigger_type: TriggerType,
         risk_score: float | None = None,
         exposure_usd: float = 0.0,
+        has_device: bool = True,
         max_steps: int = 4,
     ) -> tuple[float, list[EvidenceRecord], list[dict[str, Any]]]:
         """Execute the active evidence-acquisition loop.
@@ -91,6 +92,7 @@ class AgenticInvestigationEngine:
                 exposure_usd=exposure_usd,
                 customer_id=customer_id,
                 txn_id=flagged_txn_id,
+                has_device=has_device,
             )
 
             # Execute passive, controlled graph tools only. Customer contact and

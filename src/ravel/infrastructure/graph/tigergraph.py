@@ -82,6 +82,7 @@ class TigerGraphAdapter(GraphAdapter):
         self.data_dir = data_dir
         self.conn = None
         self._installed_cache: set[str] | None = None
+        self._shared_devices_cache: dict[tuple[str, int], list[dict[str, Any]]] = {}
         self._refresh_conn()
         if install_on_start:
             try:
@@ -428,10 +429,14 @@ class TigerGraphAdapter(GraphAdapter):
         return out
 
     def shared_devices(self, customer_id: str, limit: int = 50) -> list[dict[str, Any]]:
+        cache_key = (customer_id, limit)
+        cache = getattr(self, "_shared_devices_cache", {})
+        if cache_key in cache:
+            return [dict(row) for row in cache[cache_key]]
         if self._has_query("shared_devices"):
             with contextlib.suppress(Exception):
                 rows = self._run("shared_devices", customer_id=customer_id, limit=limit)
-                return [
+                rows_out = [
                     {
                         "device_id": r.get("device_id", ""),
                         "device_profile": r.get("device_profile", r.get("dev_profile", "")),
@@ -444,6 +449,9 @@ class TigerGraphAdapter(GraphAdapter):
                     }
                     for r in rows
                 ]
+                cache[cache_key] = rows_out
+                self._shared_devices_cache = cache
+                return [dict(row) for row in rows_out]
 
         # Bounded native traversal for the supplied HHGOA schema:
         # Customer -> Transaction -> Device -> Transaction -> other Customer/Card.
@@ -511,7 +519,11 @@ class TigerGraphAdapter(GraphAdapter):
                     }
                 )
                 if len(shared) >= limit:
+                    cache[cache_key] = shared
+                    self._shared_devices_cache = cache
                     return shared
+        cache[cache_key] = shared
+        self._shared_devices_cache = cache
         return shared
 
     def shared_regions(self, customer_id: str, limit: int = 50) -> list[dict[str, Any]]:

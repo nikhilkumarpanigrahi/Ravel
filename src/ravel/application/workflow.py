@@ -202,6 +202,7 @@ class AgentWorkflow:
             trigger_type=trigger.type,
             risk_score=trigger.risk_score,
             exposure_usd=float(flagged_txn.get("amount", 0.0)),
+            has_device=(flagged_txn.get("channel") or "").lower() != "in_person",
             max_steps=3,
         )
         for a_ev in agent_evs:
