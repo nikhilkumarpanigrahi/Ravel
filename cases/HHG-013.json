@@ -15,36 +15,36 @@
     ],
     "first_suspicious_txn_id": "3526826",
     "connected_card_ids": [
-      "C04125-K1",
-      "C04597-K1",
-      "C00854-K2",
-      "C11509-K2",
-      "C05031-K2",
-      "C05704-K2",
-      "C00294-K2",
-      "C02716-K1",
-      "C08391-K2",
-      "C06744-K2",
-      "C12897-K1",
-      "C00750-K2",
-      "C07562-K2",
-      "C11923-K2",
-      "C11309-K1",
-      "C01155-K2",
-      "C08962-K2",
-      "C13171-K2",
-      "C05560-K2",
-      "C05245-K2",
-      "C05381-K2",
-      "C11000-K2",
-      "C04108-K2",
       "C06224-K2",
-      "C10308-K1",
-      "C09290-K1",
-      "C12028-K2",
+      "C05704-K2",
+      "C11000-K2",
       "C02147-K2",
+      "C00294-K2",
+      "C04597-K1",
+      "C07562-K2",
+      "C06744-K2",
+      "C04108-K2",
       "C07212-K1",
-      "C12942-K2"
+      "C08391-K2",
+      "C05245-K2",
+      "C05560-K2",
+      "C11923-K2",
+      "C11509-K2",
+      "C10308-K1",
+      "C13171-K2",
+      "C08962-K2",
+      "C12942-K2",
+      "C05381-K2",
+      "C09290-K1",
+      "C04125-K1",
+      "C01155-K2",
+      "C12897-K1",
+      "C00854-K2",
+      "C00750-K2",
+      "C05031-K2",
+      "C11309-K1",
+      "C02716-K1",
+      "C12028-K2"
     ],
     "connected_device_profiles": [],
     "exposure_usd": 197.38,
@@ -55,7 +55,10 @@
         "ref": "query:get_transaction(3526826)",
         "entity_ids": [
           "3526826"
-        ]
+        ],
+        "graph_path": "Transaction(3526826) \u2500\u2500[CARD_OF]\u2500\u2500> Customer(C07671) \u2500\u2500[OWNS]\u2500\u2500> Card(C07671-K2)",
+        "supports": "",
+        "contradicts": ""
       },
       {
         "claim": "Customer C07671 holds card C07671-K2 with 1569 total transactions on file, billed in home region 264.0",
@@ -64,44 +67,50 @@
         "entity_ids": [
           "C07671",
           "C07671-K2"
-        ]
+        ],
+        "graph_path": "Customer(C07671) \u2500\u2500[OWNS]\u2500\u2500> Card(C07671-K2) \u2500\u2500[BILLED_IN]\u2500\u2500> Region(264.0)",
+        "supports": "",
+        "contradicts": ""
       },
       {
-        "claim": "Device shared across 30 other card(s): C04125-K1, C04597-K1, C00854-K2",
+        "claim": "Device shared across 30 other card(s): C06224-K2, C05704-K2, C11000-K2",
         "source": "graph",
         "ref": "query:shared_devices(C07671)",
         "entity_ids": [
-          "C04125-K1",
-          "C04597-K1",
-          "C00854-K2",
-          "C11509-K2",
-          "C05031-K2",
-          "C05704-K2",
-          "C00294-K2",
-          "C02716-K1",
-          "C08391-K2",
-          "C06744-K2",
-          "C12897-K1",
-          "C00750-K2",
-          "C07562-K2",
-          "C11923-K2",
-          "C11309-K1",
-          "C01155-K2",
-          "C08962-K2",
-          "C13171-K2",
-          "C05560-K2",
-          "C05245-K2",
-          "C05381-K2",
-          "C11000-K2",
-          "C04108-K2",
           "C06224-K2",
-          "C10308-K1",
-          "C09290-K1",
-          "C12028-K2",
+          "C05704-K2",
+          "C11000-K2",
           "C02147-K2",
+          "C00294-K2",
+          "C04597-K1",
+          "C07562-K2",
+          "C06744-K2",
+          "C04108-K2",
           "C07212-K1",
-          "C12942-K2"
-        ]
+          "C08391-K2",
+          "C05245-K2",
+          "C05560-K2",
+          "C11923-K2",
+          "C11509-K2",
+          "C10308-K1",
+          "C13171-K2",
+          "C08962-K2",
+          "C12942-K2",
+          "C05381-K2",
+          "C09290-K1",
+          "C04125-K1",
+          "C01155-K2",
+          "C12897-K1",
+          "C00854-K2",
+          "C00750-K2",
+          "C05031-K2",
+          "C11309-K1",
+          "C02716-K1",
+          "C12028-K2"
+        ],
+        "graph_path": "Customer(C07671) \u2500\u2500[USED_DEVICE]\u2500\u2500> Device(DEVICE_SHARED) \u2500\u2500[CROSS_CARD_LINK]\u2500\u2500> Card(C06224-K2)",
+        "supports": "",
+        "contradicts": ""
       },
       {
         "claim": "Retrieved 4 similar closed case(s) from case memory: CC-4294, CC-3761, CC-3216",
@@ -111,7 +120,33 @@
           "CC-4294",
           "CC-3761",
           "CC-3216"
-        ]
+        ],
+        "graph_path": "Alert(HHG-013) \u2500\u2500[INVOLVES_TXN]\u2500\u2500> Transaction(3526826) \u2500\u2500[SIMILAR_PATTERN]\u2500\u2500> ClosedCase(CC-4294)",
+        "supports": "",
+        "contradicts": ""
+      },
+      {
+        "claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
+        "source": "customer",
+        "ref": "tool:customer_inquiry(C07671)",
+        "entity_ids": [
+          "C07671",
+          "3526826"
+        ],
+        "graph_path": "Cardholder(C07671) \u2500\u2500[INQUIRY_RESPONSE]\u2500\u2500> Txn(3526826)",
+        "supports": "",
+        "contradicts": ""
+      },
+      {
+        "claim": "Transaction audit: $35.66 via online (Product C)",
+        "source": "graph",
+        "ref": "tigergraph:get_txn(3526826)",
+        "entity_ids": [
+          "3526826"
+        ],
+        "graph_path": "Transaction(3526826) \u2500\u2500[CHANNEL]\u2500\u2500> ONLINE",
+        "supports": "fraud",
+        "contradicts": "legitimate"
       },
       {
         "claim": "Simulated customer verification response: No reply received within 24 hours; ownership remains unverified",
@@ -119,7 +154,10 @@
         "ref": "evidence_request:1",
         "entity_ids": [
           "C07671"
-        ]
+        ],
+        "graph_path": "",
+        "supports": "",
+        "contradicts": ""
       }
     ],
     "similar_prior_cases": [
@@ -128,9 +166,9 @@
     ],
     "summary": "Investigation of HHG-013 (C07671 / C07671-K2): Flagged transaction 3526826 ($35.66) evaluated under account_takeover. Customer reported: No reply received within 24 hours; ownership remains unverified. Identified 4 affected transaction(s) totaling $197.38 USD exposure. Verdict: uncertain (fraud probability: 0.75). Recommended 2 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-A3E93F8D",
-    "opened_at": "2026-09-23 11:47:56.619813+00:00",
-    "updated_at": "2026-09-23 11:47:56.619813+00:00"
+    "graph_case_id": "CASE-2016-2B04E42B",
+    "opened_at": "2026-09-23 17:09:44.717407+00:00",
+    "updated_at": "2026-09-23 17:09:44.717408+00:00"
   },
   "evidence_requests": [
     {
@@ -185,7 +223,7 @@
         "route": "L1",
         "reason": "R4: Decline pending authorization until cardholder responds",
         "order": 2,
-        "approval_id": "APP-7CB9697A",
+        "approval_id": "APP-F6A9DE41",
         "requires_approval": true,
         "state": "PENDING"
       }
@@ -196,7 +234,7 @@
     "initial": {
       "risk": 0.76,
       "confidence": 0.75,
-      "evidence_completeness": 0.81,
+      "evidence_completeness": 0.85,
       "contradictions": 0,
       "decision_readiness": "PARTIALLY_READY",
       "risk_level": "HIGH",
@@ -242,5 +280,33 @@
   "stop_reason": "Further steps unlikely to change verdict; escalated under policy R8.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.9
+  "latency_s": 0.23,
+  "agent_trace": [
+    {
+      "step": 1,
+      "hypothesis": "Model alert on txn 3526826 (Risk score: 0.76): evaluate fraud vs legitimate use",
+      "selected_tool": "CARDHOLDER_TRANSACTION_VERIFICATION",
+      "expected_info_gain": 0.509,
+      "value_of_information": 6.36,
+      "evidence_claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
+      "evidence_supports": "",
+      "evidence_contradicts": "",
+      "prior_belief": 0.76,
+      "posterior_belief": 0.795,
+      "entropy_reduction": 0.062
+    },
+    {
+      "step": 2,
+      "hypothesis": "Model alert on txn 3526826 (Risk score: 0.76): evaluate fraud vs legitimate use",
+      "selected_tool": "MERCHANT_TERMINAL_AUDIT",
+      "expected_info_gain": 0.15,
+      "value_of_information": 5.0,
+      "evidence_claim": "Transaction audit: $35.66 via online (Product C)",
+      "evidence_supports": "fraud",
+      "evidence_contradicts": "legitimate",
+      "prior_belief": 0.795,
+      "posterior_belief": 0.864,
+      "entropy_reduction": 0.16
+    }
+  ]
 }

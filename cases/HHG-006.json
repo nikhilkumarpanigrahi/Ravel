@@ -4,7 +4,7 @@
     "case_id": "HHG-006",
     "status": "closed_fraud",
     "verdict": "fraud",
-    "fraud_probability": 0.98,
+    "fraud_probability": 0.95,
     "pattern": "card_not_present_new_device",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -15,42 +15,42 @@
     ],
     "first_suspicious_txn_id": "3476602",
     "connected_card_ids": [
-      "C04125-K1",
-      "C02250-K2",
-      "C03040-K2",
-      "C07648-K2",
-      "C12166-K2",
-      "C00854-K2",
-      "C03019-K2",
-      "C09666-K2",
-      "C09301-K2",
-      "C08450-K2",
-      "C03066-K1",
+      "C06224-K2",
       "C05704-K2",
+      "C11000-K2",
       "C02114-K1",
-      "C01109-K2",
-      "C02716-K1",
-      "C12961-K2",
       "C09800-K1",
-      "C12897-K1",
-      "C00750-K2",
       "C08943-K2",
-      "C01155-K2",
-      "C02354-K2",
-      "C05560-K2",
+      "C03278-K2",
+      "C02250-K2",
+      "C03218-K2",
+      "C12166-K2",
+      "C07648-K2",
+      "C04108-K2",
+      "C07212-K1",
       "C00941-K1",
       "C05245-K2",
-      "C11000-K2",
-      "C04108-K2",
-      "C06224-K2",
-      "C02231-K1",
-      "C11247-K1",
+      "C05560-K2",
+      "C02354-K2",
       "C10349-K1",
-      "C03278-K2",
-      "C07212-K1",
-      "C03218-K2",
+      "C03066-K1",
+      "C01109-K2",
+      "C09301-K2",
+      "C03040-K2",
+      "C12942-K2",
+      "C04125-K1",
+      "C01155-K2",
+      "C11247-K1",
+      "C12897-K1",
+      "C00854-K2",
+      "C00750-K2",
+      "C08450-K2",
+      "C12961-K2",
+      "C02716-K1",
       "C09241-K2",
-      "C12942-K2"
+      "C03019-K2",
+      "C09666-K2",
+      "C02231-K1"
     ],
     "connected_device_profiles": [],
     "exposure_usd": 1906.07,
@@ -61,7 +61,10 @@
         "ref": "query:get_transaction(3476682)",
         "entity_ids": [
           "3476682"
-        ]
+        ],
+        "graph_path": "Transaction(3476682) \u2500\u2500[CARD_OF]\u2500\u2500> Customer(C07297) \u2500\u2500[OWNS]\u2500\u2500> Card(C07297-K1)",
+        "supports": "",
+        "contradicts": ""
       },
       {
         "claim": "Customer C07297 holds card C07297-K1 with 261 total transactions on file, billed in home region 191.0",
@@ -70,50 +73,56 @@
         "entity_ids": [
           "C07297",
           "C07297-K1"
-        ]
+        ],
+        "graph_path": "Customer(C07297) \u2500\u2500[OWNS]\u2500\u2500> Card(C07297-K1) \u2500\u2500[BILLED_IN]\u2500\u2500> Region(191.0)",
+        "supports": "",
+        "contradicts": ""
       },
       {
-        "claim": "Device shared across 36 other card(s): C04125-K1, C02250-K2, C03040-K2",
+        "claim": "Device shared across 36 other card(s): C06224-K2, C05704-K2, C11000-K2",
         "source": "graph",
         "ref": "query:shared_devices(C07297)",
         "entity_ids": [
-          "C04125-K1",
-          "C02250-K2",
-          "C03040-K2",
-          "C07648-K2",
-          "C12166-K2",
-          "C00854-K2",
-          "C03019-K2",
-          "C09666-K2",
-          "C09301-K2",
-          "C08450-K2",
-          "C03066-K1",
+          "C06224-K2",
           "C05704-K2",
+          "C11000-K2",
           "C02114-K1",
-          "C01109-K2",
-          "C02716-K1",
-          "C12961-K2",
           "C09800-K1",
-          "C12897-K1",
-          "C00750-K2",
           "C08943-K2",
-          "C01155-K2",
-          "C02354-K2",
-          "C05560-K2",
+          "C03278-K2",
+          "C02250-K2",
+          "C03218-K2",
+          "C12166-K2",
+          "C07648-K2",
+          "C04108-K2",
+          "C07212-K1",
           "C00941-K1",
           "C05245-K2",
-          "C11000-K2",
-          "C04108-K2",
-          "C06224-K2",
-          "C02231-K1",
-          "C11247-K1",
+          "C05560-K2",
+          "C02354-K2",
           "C10349-K1",
-          "C03278-K2",
-          "C07212-K1",
-          "C03218-K2",
+          "C03066-K1",
+          "C01109-K2",
+          "C09301-K2",
+          "C03040-K2",
+          "C12942-K2",
+          "C04125-K1",
+          "C01155-K2",
+          "C11247-K1",
+          "C12897-K1",
+          "C00854-K2",
+          "C00750-K2",
+          "C08450-K2",
+          "C12961-K2",
+          "C02716-K1",
           "C09241-K2",
-          "C12942-K2"
-        ]
+          "C03019-K2",
+          "C09666-K2",
+          "C02231-K1"
+        ],
+        "graph_path": "Customer(C07297) \u2500\u2500[USED_DEVICE]\u2500\u2500> Device(DEVICE_SHARED) \u2500\u2500[CROSS_CARD_LINK]\u2500\u2500> Card(C06224-K2)",
+        "supports": "",
+        "contradicts": ""
       },
       {
         "claim": "Retrieved 3 similar closed case(s) from case memory: CC-5559, CC-5558, CC-5556",
@@ -123,7 +132,33 @@
           "CC-5559",
           "CC-5558",
           "CC-5556"
-        ]
+        ],
+        "graph_path": "Alert(HHG-006) \u2500\u2500[INVOLVES_TXN]\u2500\u2500> Transaction(3476682) \u2500\u2500[SIMILAR_PATTERN]\u2500\u2500> ClosedCase(CC-5559)",
+        "supports": "",
+        "contradicts": ""
+      },
+      {
+        "claim": "Transaction audit: $482.12 via online (Product C)",
+        "source": "graph",
+        "ref": "tigergraph:get_txn(3476682)",
+        "entity_ids": [
+          "3476682"
+        ],
+        "graph_path": "Transaction(3476682) \u2500\u2500[CHANNEL]\u2500\u2500> ONLINE",
+        "supports": "fraud",
+        "contradicts": "legitimate"
+      },
+      {
+        "claim": "Cardholder verification inquiry: Customer stated they never made this purchase and retained possession of card.",
+        "source": "customer",
+        "ref": "tool:customer_inquiry(C07297)",
+        "entity_ids": [
+          "C07297",
+          "3476682"
+        ],
+        "graph_path": "Cardholder(C07297) \u2500\u2500[INQUIRY_RESPONSE]\u2500\u2500> Txn(3476682)",
+        "supports": "fraud",
+        "contradicts": "legitimate"
       },
       {
         "claim": "Simulated customer verification response: Customer reaffirmed the original report: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.'",
@@ -131,18 +166,21 @@
         "ref": "evidence_request:1",
         "entity_ids": [
           "C07297"
-        ]
+        ],
+        "graph_path": "",
+        "supports": "",
+        "contradicts": ""
       }
     ],
     "similar_prior_cases": [
       "CC-5559",
       "CC-5558"
     ],
-    "summary": "Investigation of HHG-006 (C07297 / C07297-K1): Flagged transaction 3476682 ($482.12) evaluated under card_not_present_new_device. Customer reported: Customer reaffirmed the original report: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.'. Identified 4 affected transaction(s) totaling $1906.07 USD exposure. Verdict: fraud (fraud probability: 0.98). Recommended 4 action(s) adhering to bank policy.",
+    "summary": "Investigation of HHG-006 (C07297 / C07297-K1): Flagged transaction 3476682 ($482.12) evaluated under card_not_present_new_device. Customer reported: Customer reaffirmed the original report: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.'. Identified 4 affected transaction(s) totaling $1906.07 USD exposure. Verdict: fraud (fraud probability: 0.95). Recommended 4 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-3C3C41F8",
-    "opened_at": "2026-09-23 11:47:38.255099+00:00",
-    "updated_at": "2026-09-23 11:47:38.255099+00:00"
+    "graph_case_id": "CASE-2016-54043F6A",
+    "opened_at": "2026-09-23 17:09:42.340651+00:00",
+    "updated_at": "2026-09-23 17:09:42.340652+00:00"
   },
   "evidence_requests": [
     {
@@ -188,7 +226,7 @@
         "route": "L1",
         "reason": "R2: Customer denied activity; card compromised (exposure $1906.07)",
         "order": 1,
-        "approval_id": "APP-E10E2C17",
+        "approval_id": "APP-E24CFF7C",
         "requires_approval": true,
         "state": "PENDING"
       },
@@ -206,7 +244,7 @@
         "route": "L2",
         "reason": "R2 & R6: Exposure exceeds $1,000, shared device cluster, or coordinated pattern",
         "order": 3,
-        "approval_id": "APP-AC5E726B",
+        "approval_id": "APP-3B2D773F",
         "requires_approval": true,
         "state": "PENDING"
       },
@@ -220,13 +258,13 @@
         "state": "NOT_REQUIRED"
       }
     ],
-    "what_changed": "Customer response confirmed unauthorized use, increasing fraud probability to 0.98. Actions escalated from verification to card block and case creation."
+    "what_changed": "Customer response confirmed unauthorized use, increasing fraud probability to 0.95. Actions escalated from verification to card block and case creation."
   },
   "uncertainty": {
     "initial": {
       "risk": 0.95,
       "confidence": 0.95,
-      "evidence_completeness": 0.81,
+      "evidence_completeness": 0.85,
       "contradictions": 0,
       "decision_readiness": "READY",
       "risk_level": "CRITICAL",
@@ -240,8 +278,8 @@
       ]
     },
     "final": {
-      "risk": 0.98,
-      "confidence": 0.98,
+      "risk": 0.95,
+      "confidence": 0.95,
       "evidence_completeness": 1.0,
       "contradictions": 0,
       "decision_readiness": "READY",
@@ -262,7 +300,7 @@
   "sar": {
     "file": true,
     "reason": "R2/R6: Confirmed unauthorized activity under card_not_present_new_device with exposure of $1906.07 USD linking to 36 other card(s)",
-    "narrative": "Between 2016-11-21 and 2016-11-21, account C07297 on card C07297-K1 was subjected to unauthorized fraudulent activity consistent with card not present new device. A total of 4 transaction(s) were flagged, representing an aggregate exposure of $1906.07 USD. Investigation uncovered common infrastructure links to connected card(s) C04125-K1, C02250-K2, C03040-K2, C07648-K2, C12166-K2, C00854-K2, C03019-K2, C09666-K2, C09301-K2, C08450-K2, C03066-K1, C05704-K2, C02114-K1, C01109-K2, C02716-K1, C12961-K2, C09800-K1, C12897-K1, C00750-K2, C08943-K2, C01155-K2, C02354-K2, C05560-K2, C00941-K1, C05245-K2, C11000-K2, C04108-K2, C06224-K2, C02231-K1, C11247-K1, C10349-K1, C03278-K2, C07212-K1, C03218-K2, C09241-K2, C12942-K2. Customer was contacted and reported: 'Customer reaffirmed the original report: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.''. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Based on regulatory guidelines under FinCEN and bank fraud policy R2/R6, the card has been blocked and reissued, connected entities placed under heightened monitoring, and this report is submitted to document the illicit financial activity.",
+    "narrative": "Between 2016-11-21 and 2016-11-21, account C07297 on card C07297-K1 was subjected to unauthorized fraudulent activity consistent with card not present new device. A total of 4 transaction(s) were flagged, representing an aggregate exposure of $1906.07 USD. Investigation uncovered common infrastructure links to connected card(s) C06224-K2, C05704-K2, C11000-K2, C02114-K1, C09800-K1, C08943-K2, C03278-K2, C02250-K2, C03218-K2, C12166-K2, C07648-K2, C04108-K2, C07212-K1, C00941-K1, C05245-K2, C05560-K2, C02354-K2, C10349-K1, C03066-K1, C01109-K2, C09301-K2, C03040-K2, C12942-K2, C04125-K1, C01155-K2, C11247-K1, C12897-K1, C00854-K2, C00750-K2, C08450-K2, C12961-K2, C02716-K1, C09241-K2, C03019-K2, C09666-K2, C02231-K1. Customer was contacted and reported: 'Customer reaffirmed the original report: 'Customer C07297 message: 'I never made this $482.12 purchase. Please check my card.' Refers to 3476682.''. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Based on regulatory guidelines under FinCEN and bank fraud policy R2/R6, the card has been blocked and reissued, connected entities placed under heightened monitoring, and this report is submitted to document the illicit financial activity.",
     "subjects": [
       "C00750-K2",
       "C00854-K2",
@@ -312,5 +350,39 @@
   "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 1.15
+  "latency_s": 0.13,
+  "agent_trace": [
+    {
+      "step": 1,
+      "hypothesis": "Cardholder C07297 reports unauthorized transaction 3476682 (Presumed CNP fraud)",
+      "selected_tool": "MERCHANT_TERMINAL_AUDIT",
+      "expected_info_gain": 0.15,
+      "value_of_information": 5.0,
+      "evidence_claim": "Transaction audit: $482.12 via online (Product C)",
+      "evidence_supports": "fraud",
+      "evidence_contradicts": "legitimate",
+      "prior_belief": 0.82,
+      "posterior_belief": 0.883,
+      "entropy_reduction": 0.158
+    },
+    {
+      "step": 2,
+      "hypothesis": "Cardholder C07297 reports unauthorized transaction 3476682 (Presumed CNP fraud)",
+      "selected_tool": "CARDHOLDER_TRANSACTION_VERIFICATION",
+      "expected_info_gain": 0.236,
+      "value_of_information": 2.95,
+      "evidence_claim": "Cardholder verification inquiry: Customer stated they never made this purchase and retained possession of card.",
+      "evidence_supports": "fraud",
+      "evidence_contradicts": "legitimate",
+      "prior_belief": 0.883,
+      "posterior_belief": 0.988,
+      "entropy_reduction": 0.429
+    },
+    {
+      "step": 3,
+      "action": "HALT_INVESTIGATION",
+      "reason": "Information entropy H(S)=0.093 below threshold (0.22 bits). Decision readiness achieved.",
+      "final_belief": 0.988
+    }
+  ]
 }

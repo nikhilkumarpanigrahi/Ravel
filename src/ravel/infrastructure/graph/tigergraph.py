@@ -342,26 +342,28 @@ class TigerGraphAdapter(GraphAdapter):
         rows = []
         for v in v_list:
             a = v.get("attributes", {})
-            rows.append({
-                "txn_id": str(a.get("transaction_id", v.get("v_id", ""))),
-                "ts": str(a.get("ts", "")),
-                "amount": float(a.get("transaction_amt", 0.0)),
-                "product_cd": str(a.get("product_cd", "")),
-                "channel": str(a.get("channel", "")),
-                "risk_score": float(a.get("risk_score", 0.0)),
-                "customer_id": customer_id,
-                "card_id": f"{customer_id}-K1",
-                "card6": str(a.get("card6", "")),
-                "addr1": str(a.get("addr1", "")),
-                "addr2": str(a.get("addr2", "")),
-                "p_email_domain": "",
-                "device_id": "",
-                "device_profile": str(a.get("device_profile", "")),
-                "device_new": str(a.get("device_new", "")),
-                "device_type": str(a.get("device_type", "")),
-                "device_proxy": str(a.get("device_proxy", "")),
-                "email_conflict": bool(a.get("email_conflict", 0)),
-            })
+            rows.append(
+                {
+                    "txn_id": str(a.get("transaction_id", v.get("v_id", ""))),
+                    "ts": str(a.get("ts", "")),
+                    "amount": float(a.get("transaction_amt", 0.0)),
+                    "product_cd": str(a.get("product_cd", "")),
+                    "channel": str(a.get("channel", "")),
+                    "risk_score": float(a.get("risk_score", 0.0)),
+                    "customer_id": customer_id,
+                    "card_id": f"{customer_id}-K1",
+                    "card6": str(a.get("card6", "")),
+                    "addr1": str(a.get("addr1", "")),
+                    "addr2": str(a.get("addr2", "")),
+                    "p_email_domain": "",
+                    "device_id": "",
+                    "device_profile": str(a.get("device_profile", "")),
+                    "device_new": str(a.get("device_new", "")),
+                    "device_type": str(a.get("device_type", "")),
+                    "device_proxy": str(a.get("device_proxy", "")),
+                    "email_conflict": bool(a.get("email_conflict", 0)),
+                }
+            )
         rows.sort(key=lambda x: str(x.get("ts", "")), reverse=True)
         return rows[:limit]
 
@@ -381,7 +383,11 @@ class TigerGraphAdapter(GraphAdapter):
         if self._has_query("card_window"):
             with contextlib.suppress(Exception):
                 rows = self._run(
-                    "card_window", customer_id=customer_id, anchor_ts=anchor_str, hours=int(hours), limit=limit
+                    "card_window",
+                    customer_id=customer_id,
+                    anchor_ts=anchor_str,
+                    hours=int(hours),
+                    limit=limit,
                 )
                 return self._txns(rows)
 
@@ -392,11 +398,7 @@ class TigerGraphAdapter(GraphAdapter):
 
             anchor_dt = datetime.fromisoformat(anchor_str[:19])
             start_dt = anchor_dt - timedelta(hours=hours)
-            win = [
-                t
-                for t in all_hist
-                if start_dt <= datetime.fromisoformat(t["ts"][:19]) <= anchor_dt
-            ]
+            win = [t for t in all_hist if start_dt <= datetime.fromisoformat(t["ts"][:19]) <= anchor_dt]
             win.sort(key=lambda x: str(x.get("ts", "")))
             return win[:limit]
         except Exception:
@@ -420,7 +422,9 @@ class TigerGraphAdapter(GraphAdapter):
         edges = self.conn.getEdges("Customer", customer_id) or []
         out = []
         for e in edges[:limit]:
-            out.append({"id": str(e.get("to_id")), "type": str(e.get("to_type")), "label": str(e.get("to_id"))})
+            out.append(
+                {"id": str(e.get("to_id")), "type": str(e.get("to_type")), "label": str(e.get("to_id"))}
+            )
         return out
 
     def shared_devices(self, customer_id: str, limit: int = 50) -> list[dict[str, Any]]:
@@ -512,12 +516,15 @@ class TigerGraphAdapter(GraphAdapter):
                     from datetime import datetime, timedelta
 
                     from_ts = (
-                        datetime.strptime(latest[0]["ts"][:19], "%Y-%m-%d %H:%M:%S") - timedelta(days=window_days)
+                        datetime.strptime(latest[0]["ts"][:19], "%Y-%m-%d %H:%M:%S")
+                        - timedelta(days=window_days)
                     ).strftime("%Y-%m-%d %H:%M:%S")
                 except Exception:  # noqa: BLE001
                     pass
             with contextlib.suppress(Exception):
-                rows = self._run("related_transactions", customer_id=customer_id, from_ts=from_ts, limit=limit)
+                rows = self._run(
+                    "related_transactions", customer_id=customer_id, from_ts=from_ts, limit=limit
+                )
                 return self._txns(rows)
         return self.card_history(customer_id=customer_id, limit=limit)
 
@@ -529,7 +536,10 @@ class TigerGraphAdapter(GraphAdapter):
                 rows = self._run(
                     "historical_cases", customer_id=customer_id, outcome=outcome, pattern=pattern, limit=limit
                 )
-                return [{k: (v if isinstance(v, (str, int, float)) else str(v)) for k, v in r.items()} for r in rows]
+                return [
+                    {k: (v if isinstance(v, (str, int, float)) else str(v)) for k, v in r.items()}
+                    for r in rows
+                ]
 
         # Native REST++ query fallback
         cases = self.conn.getVertices("FraudCase", limit=limit * 2) or []
@@ -540,7 +550,9 @@ class TigerGraphAdapter(GraphAdapter):
                 continue
             if pattern and attrs.get("pattern") != pattern:
                 continue
-            out_cases.append({k: (v if isinstance(v, (str, int, float)) else str(v)) for k, v in attrs.items()})
+            out_cases.append(
+                {k: (v if isinstance(v, (str, int, float)) else str(v)) for k, v in attrs.items()}
+            )
             if len(out_cases) >= limit:
                 break
         return out_cases

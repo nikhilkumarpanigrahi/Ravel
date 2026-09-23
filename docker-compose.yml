@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  ravel-workstation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ravel-forensic-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - RAVEL_ENV=production
+      - RAVEL_STATE_DB_URL=sqlite:////app/data/ravel.db
+      - RAVEL_GRAPH_ADAPTER=mock
+      - RAVEL_WORKFLOW_ORCHESTRATOR=langgraph
+      - RAVEL_AUTH_ENABLED=false
+      - RAVEL_ANALYST_API_KEY=ravel-secret-key
+    volumes:
+      - ./data:/app/data
+      - ./cases:/app/cases
+      - ./benchmark:/app/benchmark
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

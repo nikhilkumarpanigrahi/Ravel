@@ -418,9 +418,7 @@ class Repository:
             if latest is None:
                 return []
             rows = (
-                s.query(ApprovalModel)
-                .filter(ApprovalModel.investigation_id == latest.investigation_id)
-                .all()
+                s.query(ApprovalModel).filter(ApprovalModel.investigation_id == latest.investigation_id).all()
             )
             return [
                 {

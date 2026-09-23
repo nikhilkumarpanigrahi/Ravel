@@ -19,6 +19,9 @@ class CaseEvidence(BaseModel):
     source: str
     ref: str = ""
     entity_ids: list[str] = Field(default_factory=list)
+    graph_path: str = ""
+    supports: str = ""
+    contradicts: str = ""
 
 
 class Case(BaseModel):
@@ -48,6 +51,9 @@ class Case(BaseModel):
             source=ev.source.value,
             ref=ev.ref,
             entity_ids=ev.entity_ids,
+            graph_path=ev.graph_path,
+            supports=ev.supports,
+            contradicts=ev.contradicts,
         )
 
 
@@ -75,6 +81,7 @@ class AnswerFile(BaseModel):
     tool_calls: int = 0
     tokens: int = 0
     latency_s: float = 0.0
+    agent_trace: list[dict] = Field(default_factory=list)
 
 
 class CaseMemoryEntry(BaseModel):

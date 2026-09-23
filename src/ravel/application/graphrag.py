@@ -50,9 +50,7 @@ class GraphRAGContext:
             "Historical Memory (Closed Cases):\n" + "\n".join(hist_lines or ["- None retrieved"]) + "\n\n"
             f"Connected Cards: {', '.join(self.connected_cards) or 'None'}\n"
             f"Device Profiles: {', '.join(self.device_profiles) or 'None'}\n"
-            "Retrieved Fraud Policy:\n"
-            + "\n".join(f"- {snippet}" for snippet in self.policy_snippets)
-            + "\n"
+            "Retrieved Fraud Policy:\n" + "\n".join(f"- {snippet}" for snippet in self.policy_snippets) + "\n"
         )
 
 
@@ -81,6 +79,7 @@ class GraphRAGService:
                 entity_ids=[txn_id],
                 evidence_type=EvidenceType.TRANSACTION,
                 strength=0.7,
+                graph_path=f"Transaction({txn_id}) ──[CARD_OF]──> Customer({customer_id}) ──[OWNS]──> Card({card_id})",
             )
         )
 
@@ -98,6 +97,7 @@ class GraphRAGService:
                 entity_ids=[customer_id, card_id],
                 evidence_type=EvidenceType.RELATIONSHIP,
                 strength=0.5,
+                graph_path=f"Customer({customer_id}) ──[OWNS]──> Card({card_id}) ──[BILLED_IN]──> Region({cust.get('home_region', 'unknown')})",
             )
         )
 
@@ -111,6 +111,7 @@ class GraphRAGService:
         shared_devs = self.graph.shared_devices(customer_id)
         shared_cards = list({r["other_card_id"] for r in shared_devs if r.get("other_card_id")})
         if shared_cards:
+            primary_dev = device_profiles[0] if device_profiles else "DEVICE_SHARED"
             evidence.append(
                 EvidenceRecord(
                     case_id=case_id,
@@ -120,6 +121,7 @@ class GraphRAGService:
                     entity_ids=shared_cards,
                     evidence_type=EvidenceType.DEVICE,
                     strength=0.85,
+                    graph_path=f"Customer({customer_id}) ──[USED_DEVICE]──> Device({primary_dev}) ──[CROSS_CARD_LINK]──> Card({shared_cards[0]})",
                 )
             )
 
@@ -129,6 +131,7 @@ class GraphRAGService:
             history_cases = self.graph.similar_cases(pattern="", limit=3)
 
         if history_cases:
+            top_closed = history_cases[0].get("case_id", "CC-HIST")
             evidence.append(
                 EvidenceRecord(
                     case_id=case_id,
@@ -139,6 +142,7 @@ class GraphRAGService:
                     entity_ids=[c.get("case_id", "") for c in history_cases[:3] if c.get("case_id")],
                     evidence_type=EvidenceType.HISTORICAL_CASE,
                     strength=0.6,
+                    graph_path=f"Alert({case_id}) ──[INVOLVES_TXN]──> Transaction({txn_id}) ──[SIMILAR_PATTERN]──> ClosedCase({top_closed})",
                 )
             )
 

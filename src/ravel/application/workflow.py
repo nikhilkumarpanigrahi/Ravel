@@ -7,6 +7,7 @@ import time
 import uuid
 from typing import Any
 
+from ravel.application.agentic_engine import AgenticInvestigationEngine
 from ravel.application.detectors import run_detectors
 from ravel.application.evidence_simulation import simulate_customer_response
 from ravel.application.graphrag import GraphRAGService
@@ -51,6 +52,7 @@ class AgentWorkflow:
         self.rag = GraphRAGService(graph)
         self.simulate_customer = simulate_customer
         self.llm = llm or DeterministicSynthesizer()
+        self.agentic_engine = AgenticInvestigationEngine(graph)
 
     def run_investigation(self, trigger_dict: dict[str, Any]) -> AnswerFile:
         """Run complete investigation lifecycle for a trigger, producing the answer file."""
@@ -157,10 +159,26 @@ class AgentWorkflow:
         # If trigger is a direct customer report dispute
         is_customer_dispute = trigger.type == TriggerType.CUSTOMER_REPORT
         if is_customer_dispute:
-            candidate_confidence = max(candidate_confidence, 0.75)
+            if top_pattern == FraudPattern.NONE:
+                top_pattern = FraudPattern.CARD_NOT_PRESENT_FRAUD
+            candidate_confidence = max(candidate_confidence, 0.78)
             if trigger.flagged_txn_id not in affected_txn_ids:
                 affected_txn_ids.append(trigger.flagged_txn_id)
             first_suspicious_id = first_suspicious_id or trigger.flagged_txn_id
+
+        # Run principled agentic active-learning loop for autonomous hypothesis testing
+        _, agent_evs, agent_trace = self.agentic_engine.run_agentic_loop(
+            case_id=case_id,
+            customer_id=trigger.customer_id,
+            card_id=trigger.card_id,
+            flagged_txn_id=trigger.flagged_txn_id,
+            trigger_type=trigger.type,
+            risk_score=trigger.risk_score,
+            max_steps=3,
+        )
+        for a_ev in agent_evs:
+            if not any(e.ref == a_ev.ref for e in rag_ctx.evidence):
+                rag_ctx.evidence.append(a_ev)
 
         # Check for recurring legitimate pattern
         is_recurring = False
@@ -268,17 +286,32 @@ class AgentWorkflow:
             or "never made" in customer_response.lower()
             or "stolen" in customer_response.lower()
         ):
-            final_fraud_prob = min(0.98, max(0.86, candidate_confidence + 0.25))
+            base_risk = trigger.risk_score if trigger.risk_score is not None else 0.65
+            final_fraud_prob = round(
+                min(0.985, max(0.88, 0.84 + (candidate_confidence * 0.08) + (base_risk * 0.05))), 3
+            )
             final_verdict = Verdict.FRAUD
+            if top_pattern == FraudPattern.NONE:
+                top_pattern = FraudPattern.CARD_NOT_PRESENT_FRAUD
         elif "confirm" in customer_response.lower() or "legitimate" in customer_response.lower():
-            final_fraud_prob = 0.05
+            base_risk = trigger.risk_score if trigger.risk_score is not None else 0.50
+            final_fraud_prob = round(max(0.025, min(0.085, 0.03 + (base_risk * 0.04))), 3)
             final_verdict = Verdict.LEGITIMATE
+            top_pattern = FraudPattern.NONE
             affected_txn_ids = []
             exposure = 0.0
         elif candidate_confidence >= 0.85:
             final_verdict = Verdict.FRAUD
-        elif candidate_confidence <= 0.15:
+        elif candidate_confidence <= 0.18:
             final_verdict = Verdict.LEGITIMATE
+            top_pattern = FraudPattern.NONE
+            affected_txn_ids = []
+            exposure = 0.0
+        else:
+            final_verdict = Verdict.UNCERTAIN
+
+        if final_verdict == Verdict.LEGITIMATE:
+            top_pattern = FraudPattern.NONE
             affected_txn_ids = []
             exposure = 0.0
 
@@ -548,6 +581,7 @@ class AgentWorkflow:
             tool_calls=tool_calls,
             tokens=inv.tokens,
             latency_s=latency_s,
+            agent_trace=agent_trace,
         )
         self.repo.save_case_record(case_id, inv.investigation_id, answer.model_dump(mode="json"))
         return answer

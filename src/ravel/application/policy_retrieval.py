@@ -10,18 +10,12 @@ class PolicyRetriever:
     """Rank exact policy clauses without replacing them with generated summaries."""
 
     def __init__(self, source_path: Path | None = None):
-        self.source_path = source_path or (
-            Path(__file__).resolve().parents[3] / "HHGOA_IEEE" / "README.md"
-        )
+        self.source_path = source_path or (Path(__file__).resolve().parents[3] / "HHGOA_IEEE" / "README.md")
         self._rules, self._approval = self._load()
 
     @staticmethod
     def _tokens(text: str) -> set[str]:
-        return {
-            token
-            for token in re.findall(r"[a-z0-9_]+", text.lower())
-            if len(token) > 2
-        }
+        return {token for token in re.findall(r"[a-z0-9_]+", text.lower()) if len(token) > 2}
 
     def _load(self) -> tuple[list[str], str]:
         if not self.source_path.exists():

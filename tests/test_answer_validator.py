@@ -12,9 +12,7 @@ def _answer(verdict: Verdict, actions: list[dict]) -> AnswerFile:
         case_id="HHG-TEST",
         case=Case(
             case_id="HHG-TEST",
-            status=CaseStatus.CLOSED_FRAUD
-            if verdict == Verdict.FRAUD
-            else CaseStatus.CLOSED_LEGITIMATE,
+            status=CaseStatus.CLOSED_FRAUD if verdict == Verdict.FRAUD else CaseStatus.CLOSED_LEGITIMATE,
             verdict=verdict,
             pattern=FraudPattern.NONE,
             written_to_graph=True,

@@ -30,6 +30,7 @@ class EvidenceRecord(BaseModel):
     derived_from: str = ""
     tool_used: str = ""
     policy_context: str = ""
+    graph_path: str = ""
 
 
 class EvidenceRequest(BaseModel):

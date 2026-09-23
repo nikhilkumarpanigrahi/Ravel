@@ -175,9 +175,10 @@ class PolicyEngine:
         actions: list[RecommendedAction] = []
         cust_norm = customer_response.lower()
         is_denial = any(term in cust_norm for term in ("deni", "never made", "stolen", "unauthorized"))
-        is_confirmation = any(
-            term in cust_norm for term in ("confirm", "legitimate", "made this purchase")
-        ) and not is_denial
+        is_confirmation = (
+            any(term in cust_norm for term in ("confirm", "legitimate", "made this purchase"))
+            and not is_denial
+        )
 
         # R3: Customer confirms transaction
         if is_confirmation:

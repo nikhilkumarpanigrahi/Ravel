@@ -52,7 +52,7 @@ def test_schema_is_created_from_global_scope():
 def test_queries_use_supported_output_and_datetime_syntax():
     assert "PRETTY_PRINT" not in QUERIES_GSQL
     assert " RETURN " not in QUERIES_GSQL
-    assert 'datetime_add(anchor_ts, INTERVAL -hours HOUR)' in QUERIES_GSQL
+    assert "datetime_add(anchor_ts, INTERVAL -hours HOUR)" in QUERIES_GSQL
     assert QUERIES_GSQL.count("CREATE OR REPLACE QUERY") == 10
 
 

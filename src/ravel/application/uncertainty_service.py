@@ -22,12 +22,7 @@ def assess_uncertainty(
     candidates = [result for result in pattern_results if result.candidate]
     contradictions = sum(len(result.contradictions) for result in candidates)
     missing = sorted(
-        {
-            condition
-            for result in candidates
-            for condition in result.missing_conditions
-            if condition
-        }
+        {condition for result in candidates for condition in result.missing_conditions if condition}
     )
     if not customer_response and verdict == Verdict.UNCERTAIN:
         missing.append("customer ownership confirmation")

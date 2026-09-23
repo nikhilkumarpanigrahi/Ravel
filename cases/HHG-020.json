@@ -12,41 +12,41 @@
     ],
     "first_suspicious_txn_id": "3509359",
     "connected_card_ids": [
-      "C04125-K1",
-      "C03040-K2",
-      "C08605-K1",
-      "C07648-K2",
-      "C08489-K2",
-      "C08945-K2",
-      "C00854-K2",
-      "C06208-K1",
-      "C08450-K2",
-      "C09274-K1",
-      "C05530-K2",
+      "C06224-K2",
       "C05704-K2",
-      "C01138-K2",
-      "C01109-K2",
-      "C02716-K1",
-      "C12961-K2",
-      "C08374-K1",
+      "C11000-K2",
+      "C09274-K1",
       "C09800-K1",
+      "C05530-K2",
+      "C03218-K2",
+      "C07648-K2",
+      "C04108-K2",
+      "C07212-K1",
+      "C08489-K2",
+      "C05245-K2",
+      "C07518-K2",
+      "C01138-K2",
+      "C08605-K1",
+      "C06208-K1",
+      "C08842-K2",
+      "C01109-K2",
+      "C08945-K2",
+      "C03040-K2",
+      "C12942-K2",
+      "C04125-K1",
+      "C01155-K2",
+      "C12690-K2",
       "C12897-K1",
+      "C00854-K2",
+      "C08450-K2",
       "C00750-K2",
       "C12036-K2",
+      "C12961-K2",
       "C11309-K1",
-      "C01155-K2",
-      "C07518-K2",
-      "C11143-K1",
-      "C12690-K2",
-      "C05245-K2",
-      "C08842-K2",
-      "C11000-K2",
-      "C04108-K2",
-      "C06224-K2",
-      "C07212-K1",
-      "C03218-K2",
+      "C08374-K1",
+      "C02716-K1",
       "C09241-K2",
-      "C12942-K2"
+      "C11143-K1"
     ],
     "connected_device_profiles": [],
     "exposure_usd": 125.08,
@@ -57,7 +57,10 @@
         "ref": "query:get_transaction(3509359)",
         "entity_ids": [
           "3509359"
-        ]
+        ],
+        "graph_path": "Transaction(3509359) \u2500\u2500[CARD_OF]\u2500\u2500> Customer(C12265) \u2500\u2500[OWNS]\u2500\u2500> Card(C12265-K2)",
+        "supports": "",
+        "contradicts": ""
       },
       {
         "claim": "Customer C12265 holds card C12265-K2 with 112 total transactions on file, billed in home region 264.0",
@@ -66,49 +69,55 @@
         "entity_ids": [
           "C12265",
           "C12265-K2"
-        ]
+        ],
+        "graph_path": "Customer(C12265) \u2500\u2500[OWNS]\u2500\u2500> Card(C12265-K2) \u2500\u2500[BILLED_IN]\u2500\u2500> Region(264.0)",
+        "supports": "",
+        "contradicts": ""
       },
       {
-        "claim": "Device shared across 35 other card(s): C04125-K1, C03040-K2, C08605-K1",
+        "claim": "Device shared across 35 other card(s): C06224-K2, C05704-K2, C11000-K2",
         "source": "graph",
         "ref": "query:shared_devices(C12265)",
         "entity_ids": [
-          "C04125-K1",
-          "C03040-K2",
-          "C08605-K1",
-          "C07648-K2",
-          "C08489-K2",
-          "C08945-K2",
-          "C00854-K2",
-          "C06208-K1",
-          "C08450-K2",
-          "C09274-K1",
-          "C05530-K2",
+          "C06224-K2",
           "C05704-K2",
-          "C01138-K2",
-          "C01109-K2",
-          "C02716-K1",
-          "C12961-K2",
-          "C08374-K1",
+          "C11000-K2",
+          "C09274-K1",
           "C09800-K1",
+          "C05530-K2",
+          "C03218-K2",
+          "C07648-K2",
+          "C04108-K2",
+          "C07212-K1",
+          "C08489-K2",
+          "C05245-K2",
+          "C07518-K2",
+          "C01138-K2",
+          "C08605-K1",
+          "C06208-K1",
+          "C08842-K2",
+          "C01109-K2",
+          "C08945-K2",
+          "C03040-K2",
+          "C12942-K2",
+          "C04125-K1",
+          "C01155-K2",
+          "C12690-K2",
           "C12897-K1",
+          "C00854-K2",
+          "C08450-K2",
           "C00750-K2",
           "C12036-K2",
+          "C12961-K2",
           "C11309-K1",
-          "C01155-K2",
-          "C07518-K2",
-          "C11143-K1",
-          "C12690-K2",
-          "C05245-K2",
-          "C08842-K2",
-          "C11000-K2",
-          "C04108-K2",
-          "C06224-K2",
-          "C07212-K1",
-          "C03218-K2",
+          "C08374-K1",
+          "C02716-K1",
           "C09241-K2",
-          "C12942-K2"
-        ]
+          "C11143-K1"
+        ],
+        "graph_path": "Customer(C12265) \u2500\u2500[USED_DEVICE]\u2500\u2500> Device(DEVICE_SHARED) \u2500\u2500[CROSS_CARD_LINK]\u2500\u2500> Card(C06224-K2)",
+        "supports": "",
+        "contradicts": ""
       },
       {
         "claim": "Retrieved 2 similar closed case(s) from case memory: CC-2447, CC-2277",
@@ -117,7 +126,48 @@
         "entity_ids": [
           "CC-2447",
           "CC-2277"
-        ]
+        ],
+        "graph_path": "Alert(HHG-020) \u2500\u2500[INVOLVES_TXN]\u2500\u2500> Transaction(3509359) \u2500\u2500[SIMILAR_PATTERN]\u2500\u2500> ClosedCase(CC-2447)",
+        "supports": "",
+        "contradicts": ""
+      },
+      {
+        "claim": "TigerGraph shared-device traversal identified syndicate: device shared across 35 distinct cards",
+        "source": "graph",
+        "ref": "tigergraph:shared_devices(C12265)",
+        "entity_ids": [
+          "C06224-K2",
+          "C05704-K2",
+          "C11000-K2",
+          "C09274-K1",
+          "C09800-K1"
+        ],
+        "graph_path": "Customer(C12265) \u2500\u2500[USES_DEVICE]\u2500\u2500> Device \u2500\u2500[SHARED_WITH]\u2500\u2500> 35 Cards",
+        "supports": "fraud",
+        "contradicts": "legitimate"
+      },
+      {
+        "claim": "Transaction audit: $125.08 via online (Product R)",
+        "source": "graph",
+        "ref": "tigergraph:get_txn(3509359)",
+        "entity_ids": [
+          "3509359"
+        ],
+        "graph_path": "Transaction(3509359) \u2500\u2500[CHANNEL]\u2500\u2500> ONLINE",
+        "supports": "fraud",
+        "contradicts": "legitimate"
+      },
+      {
+        "claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
+        "source": "customer",
+        "ref": "tool:customer_inquiry(C12265)",
+        "entity_ids": [
+          "C12265",
+          "3509359"
+        ],
+        "graph_path": "Cardholder(C12265) \u2500\u2500[INQUIRY_RESPONSE]\u2500\u2500> Txn(3509359)",
+        "supports": "",
+        "contradicts": ""
       },
       {
         "claim": "Simulated customer verification response: No reply received within 24 hours; ownership remains unverified",
@@ -125,7 +175,10 @@
         "ref": "evidence_request:1",
         "entity_ids": [
           "C12265"
-        ]
+        ],
+        "graph_path": "",
+        "supports": "",
+        "contradicts": ""
       }
     ],
     "similar_prior_cases": [
@@ -134,9 +187,9 @@
     ],
     "summary": "Investigation of HHG-020 (C12265 / C12265-K2): Flagged transaction 3509359 ($125.08) evaluated under account_takeover. Customer reported: No reply received within 24 hours; ownership remains unverified. Identified 1 affected transaction(s) totaling $125.08 USD exposure. Verdict: uncertain (fraud probability: 0.75). Recommended 2 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-0317E689",
-    "opened_at": "2026-09-23 11:48:05.891396+00:00",
-    "updated_at": "2026-09-23 11:48:05.891396+00:00"
+    "graph_case_id": "CASE-2016-D7DD90AA",
+    "opened_at": "2026-09-23 17:09:47.479593+00:00",
+    "updated_at": "2026-09-23 17:09:47.479594+00:00"
   },
   "evidence_requests": [
     {
@@ -191,7 +244,7 @@
         "route": "L1",
         "reason": "R4: Decline pending authorization until cardholder responds",
         "order": 2,
-        "approval_id": "APP-9081C44A",
+        "approval_id": "APP-CE5A2E5F",
         "requires_approval": true,
         "state": "PENDING"
       }
@@ -202,7 +255,7 @@
     "initial": {
       "risk": 0.75,
       "confidence": 0.75,
-      "evidence_completeness": 0.81,
+      "evidence_completeness": 0.85,
       "contradictions": 0,
       "decision_readiness": "PARTIALLY_READY",
       "risk_level": "HIGH",
@@ -244,5 +297,46 @@
   "stop_reason": "Further steps unlikely to change verdict; escalated under policy R8.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.46
+  "latency_s": 0.12,
+  "agent_trace": [
+    {
+      "step": 1,
+      "hypothesis": "Model alert on txn 3509359 (Risk score: 0.52): evaluate fraud vs legitimate use",
+      "selected_tool": "DEVICE_REPUTATION_TELEMETRY",
+      "expected_info_gain": 0.243,
+      "value_of_information": 16.17,
+      "evidence_claim": "TigerGraph shared-device traversal identified syndicate: device shared across 35 distinct cards",
+      "evidence_supports": "fraud",
+      "evidence_contradicts": "legitimate",
+      "prior_belief": 0.52,
+      "posterior_belief": 0.843,
+      "entropy_reduction": 0.372
+    },
+    {
+      "step": 2,
+      "hypothesis": "Model alert on txn 3509359 (Risk score: 0.52): evaluate fraud vs legitimate use",
+      "selected_tool": "MERCHANT_TERMINAL_AUDIT",
+      "expected_info_gain": 0.15,
+      "value_of_information": 5.0,
+      "evidence_claim": "Transaction audit: $125.08 via online (Product R)",
+      "evidence_supports": "fraud",
+      "evidence_contradicts": "legitimate",
+      "prior_belief": 0.843,
+      "posterior_belief": 0.898,
+      "entropy_reduction": 0.153
+    },
+    {
+      "step": 3,
+      "hypothesis": "Model alert on txn 3509359 (Risk score: 0.52): evaluate fraud vs legitimate use",
+      "selected_tool": "CARDHOLDER_TRANSACTION_VERIFICATION",
+      "expected_info_gain": 0.188,
+      "value_of_information": 2.34,
+      "evidence_claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
+      "evidence_supports": "",
+      "evidence_contradicts": "",
+      "prior_belief": 0.898,
+      "posterior_belief": 0.915,
+      "entropy_reduction": 0.055
+    }
+  ]
 }

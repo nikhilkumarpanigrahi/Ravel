@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
   <style>
     :root {
       --bg-base: #0f1217;
@@ -494,11 +495,37 @@
 
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('record')">Forensic Case Record</button>
+        <button class="nav-tab" onclick="switchTab('optimizer')">Value Optimizer & Counterfactuals</button>
         <button class="nav-tab" onclick="switchTab('timeline')">State Machine Trace</button>
         <button class="nav-tab" onclick="switchTab('benchmark')">Benchmark Matrix</button>
       </div>
 
       <div class="content-viewport" id="tab-record">
+        <!-- Forensic Discovery Briefing Bar -->
+        <div id="forensic-briefing-bar" style="background:linear-gradient(90deg, #1e293b, #0f172a); border:1px solid #334155; border-radius:8px; padding:12px 18px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="font-size:22px;">🔍</div>
+            <div>
+              <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:600;">Discovery At A Glance</div>
+              <div id="briefing-headline" style="font-size:13.5px; font-weight:700; color:#f8fafc;">Analyzing case topology and multi-hop graph paths...</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:16px; font-size:11.5px;">
+            <div style="text-align:right;">
+              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Evidence Ledger</div>
+              <div id="briefing-evidence-stat" style="font-weight:700; color:#38bdf8;">--</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Decision Rationale</div>
+              <div id="briefing-action-stat" style="font-weight:700; color:#22c55e;">--</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Governance Gate</div>
+              <div id="briefing-gov-stat" style="font-weight:700; color:#f59e0b;">--</div>
+            </div>
+          </div>
+        </div>
+
         <div class="dashboard-grid">
           
           <!-- Left Column -->
@@ -506,7 +533,11 @@
             <div class="panel">
               <div class="panel-title">
                 <span>Relationship Subgraph</span>
-                <span style="font-size:11px; font-weight:normal;">TigerGraph 2-Hop Inspection</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="loadFraudRing()" title="Traverse full TigerGraph fraud ring for this entity">🕸️ Fraud Ring</button>
+                  <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="resetGraphView()" title="Reset graph view">↺ Reset</button>
+                  <span style="font-size:11px; font-weight:normal;">TigerGraph 2-Hop</span>
+                </div>
               </div>
               <div id="graph-container">
                 <canvas id="subgraph-canvas"></canvas>
@@ -585,6 +616,39 @@
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Value Optimizer & Counterfactuals Tab -->
+      <div class="content-viewport" id="tab-optimizer" style="display:none;">
+        <div style="display:flex; flex-direction:column; gap:20px; max-width:960px; margin:0 auto;">
+          <!-- Evidence Value Optimizer -->
+          <div class="panel">
+            <div class="panel-title">
+              <span>Evidence Value Optimizer (EIG & Information Gain)</span>
+              <span id="optimizer-entropy-badge" class="badge" style="background:#334155">H(S) = --</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted);">
+              Shannon binary entropy reduction: Dynamically ranks candidate investigation steps by expected information gain (EIG) relative to inquiry cost and customer friction before querying TigerGraph.
+            </p>
+            <div id="optimizer-options-container" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+              <div style="color:var(--text-subtle); font-size:12px;">Loading optimization metrics...</div>
+            </div>
+          </div>
+
+          <!-- Counterfactual Engine -->
+          <div class="panel">
+            <div class="panel-title">
+              <span>Counterfactual Action Engine (Pareto Optimality)</span>
+              <span class="badge" style="background:#1e293b">Decision Theory</span>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted);">
+              Evaluates trade-offs across Loss Prevented vs Customer Friction vs Compliance Risk to find Pareto-optimal interventions.
+            </p>
+            <div id="counterfactual-container" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+              <div style="color:var(--text-subtle); font-size:12px;">Loading counterfactual trade-offs...</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -758,29 +822,60 @@
       document.getElementById('uncertainty-missing').innerText = (uncertainty.missing_evidence || []).join(', ') || 'None';
       document.getElementById('readiness-tag').innerText = uncertainty.decision_readiness || 'NOT READY';
 
-      // Evidence
-      const evList = document.getElementById('evidence-container');
-      evList.innerHTML = '';
-      const evidence = c.evidence || [];
-      document.getElementById('evidence-count').innerText = `${evidence.length} Records`;
-      evidence.forEach(ev => {
-        const card = document.createElement('div');
-        card.className = 'evidence-card';
-        card.innerHTML = `
-          <div class="evidence-header">
-            <span class="source-tag">${ev.source.toUpperCase()}</span>
-            <span class="evidence-ref">${ev.ref}</span>
-          </div>
-          <div class="evidence-claim">${ev.claim}</div>
-        `;
-        evList.appendChild(card);
-      });
-
       // Actions
       const actionsList = document.getElementById('final-actions-list');
       actionsList.innerHTML = '';
       const nba = d.next_best_actions || {};
       const finals = nba.final || [];
+
+      // Evidence
+      const evList = document.getElementById('evidence-container');
+      evList.innerHTML = '';
+      const evidence = c.evidence || [];
+      document.getElementById('evidence-count').innerText = `${evidence.length} Records`;
+
+      let supportingCount = 0;
+      let contradictingCount = 0;
+
+      evidence.forEach(ev => {
+        if (ev.supports === 'fraud') supportingCount++;
+        if (ev.contradicts === 'fraud' || ev.supports === 'legitimate') contradictingCount++;
+
+        const card = document.createElement('div');
+        card.className = 'evidence-card';
+        card.style.cursor = 'pointer';
+        card.title = 'Click to spotlight multi-hop path in Cytoscape';
+        card.onclick = () => highlightEvidencePath(ev);
+        card.innerHTML = `
+          <div class="evidence-header">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="source-tag">${ev.source.toUpperCase()}</span>
+              ${ev.supports ? `<span class="badge ${ev.supports === 'fraud' ? 'badge-fraud' : 'badge-legit'}" style="font-size:9.5px; padding:2px 6px;">SUPPORTS ${ev.supports.toUpperCase()}</span>` : ''}
+              ${ev.contradicts ? `<span class="badge ${ev.contradicts === 'fraud' ? 'badge-fraud' : 'badge-legit'}" style="font-size:9.5px; padding:2px 6px;">CONTRADICTS ${ev.contradicts.toUpperCase()}</span>` : ''}
+            </div>
+            <span class="evidence-ref">${ev.ref}</span>
+          </div>
+          <div class="evidence-claim" style="font-size:12.5px; color:#f1f5f9; margin-top:2px;">${ev.claim}</div>
+          ${ev.graph_path ? `<div class="evidence-path" style="font-family:var(--font-mono); font-size:10.5px; color:#38bdf8; background:rgba(56,189,248,0.08); border-left:2px solid #38bdf8; padding:4px 8px; border-radius:3px; margin-top:4px; word-break:break-all;"><strong>Graph Path:</strong> ${ev.graph_path}</div>` : ''}
+          ${ev.policy_context ? `<div style="font-size:11px; color:#94a3b8; margin-top:3px; font-style:italic;">⚖️ <strong>Why it matters:</strong> ${ev.policy_context}</div>` : ''}
+        `;
+        evList.appendChild(card);
+      });
+
+      // Populate Briefing Bar
+      const isFraud = c.verdict === 'fraud';
+      const isLegit = c.verdict === 'legitimate';
+      const headline = isFraud
+        ? `Identified ${c.pattern.toUpperCase()} — $${Number(c.exposure_usd).toFixed(2)} Exposure Across Connected Entities`
+        : (isLegit ? `Cleared As False Alarm — Verified Legitimate Cardholder Activity` : `Ambiguous Signals — Dispatched Verification Inquiry (R1)`);
+      
+      const bHead = document.getElementById('briefing-headline');
+      if (bHead) bHead.innerText = headline;
+      const bEv = document.getElementById('briefing-evidence-stat');
+      if (bEv) bEv.innerText = `${supportingCount || evidence.length} Supporting · ${contradictingCount} Contradicting`;
+      const bAct = document.getElementById('briefing-action-stat');
+      if (bAct) bAct.innerText = finals.length ? finals[0].action : 'MONITOR';
+
       finals.forEach(act => {
         const persisted = currentApprovals.find(a =>
           a.approval_id === act.approval_id ||
@@ -795,12 +890,19 @@
         const row = document.createElement('div');
         row.className = 'action-row';
         row.innerHTML = `
-          <span class="action-name">${act.action}</span>
+          <div>
+            <div class="action-name">${act.action}</div>
+            ${act.route !== 'auto' ? `<div style="font-size:10px; color:#f59e0b; margin-top:2px;">🛡️ Governance Gate: Route ${act.route} approval required under Policy R7/R8</div>` : '<div style="font-size:10px; color:#22c55e; margin-top:2px;">⚡ Autonomous Action: Pre-authorized under Policy</div>'}
+          </div>
           <span class="route-tag">${act.route} · ${actionState}</span>
         `;
         actionsList.appendChild(row);
       });
       document.getElementById('nba-what-changed').innerText = nba.what_changed || 'nothing';
+
+      const pendingGov = currentApprovals.filter(a => a.state === 'PENDING');
+      const bGov = document.getElementById('briefing-gov-stat');
+      if (bGov) bGov.innerText = pendingGov.length ? `${pendingGov[0].route} APPROVAL REQUIRED` : 'AUTONOMOUS / CLEARED';
 
       const pending = currentApprovals.filter(a => a.state === 'PENDING');
       const approveBtn = document.getElementById('approve-btn');
@@ -892,8 +994,12 @@
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       event.target.classList.add('active');
       document.getElementById('tab-record').style.display = tab === 'record' ? 'block' : 'none';
+      document.getElementById('tab-optimizer').style.display = tab === 'optimizer' ? 'block' : 'none';
       document.getElementById('tab-timeline').style.display = tab === 'timeline' ? 'block' : 'none';
       document.getElementById('tab-benchmark').style.display = tab === 'benchmark' ? 'block' : 'none';
+      if (tab === 'optimizer' && currentCaseData?.case_id) {
+        loadOptimizerData(currentCaseData.case_id);
+      }
     }
 
     async function decidePendingActions(decision) {
@@ -930,10 +1036,268 @@
       }
     }
 
-    // Graph Visualizer Canvas
+    // Cytoscape & Subgraph Visualization
+    let cy = null;
+
+    function buildElementsFromCase(caseData) {
+      const c = caseData?.case || {};
+      const nodes = [];
+      const edges = [];
+      const nodeSet = new Set();
+
+      function addNode(id, label, type) {
+        if (!id || nodeSet.has(id)) return;
+        nodeSet.add(id);
+        nodes.push({ data: { id, label: label || id, type: type || 'node' } });
+      }
+
+      function addEdge(source, target, label) {
+        if (!source || !target || source === target) return;
+        const eid = `e_${source}_${target}`;
+        edges.push({ data: { id: eid, source, target, label: label || '' } });
+      }
+
+      const rootId = c.case_id || 'FLAGGED_TXN';
+      addNode(rootId, rootId, 'txn');
+
+      (c.connected_card_ids || []).slice(0, 8).forEach(cardId => {
+        addNode(cardId, cardId, 'card');
+        addEdge(rootId, cardId, 'CARD');
+      });
+
+      (c.evidence || []).forEach(ev => {
+        (ev.entity_ids || []).slice(0, 6).forEach(ent => {
+          let type = 'device';
+          if (ent.startsWith('C') && !ent.includes('-')) type = 'customer';
+          else if (ent.includes('-K')) type = 'card';
+          else if (ent.startsWith('DEV-') || ent.startsWith('dev_')) type = 'device';
+          else if (ent.startsWith('CC-') || ent.startsWith('HHG-')) type = 'historical_case';
+          else if (/^\d+$/.test(ent)) type = 'region';
+          addNode(ent, ent, type);
+          addEdge(rootId, ent, ev.source || 'EVIDENCE');
+        });
+      });
+
+      return { nodes, edges };
+    }
+
     function renderGraph() {
+      const container = document.getElementById('graph-container');
+      if (!container) return;
+
+      if (typeof cytoscape !== 'undefined') {
+        const canvas = document.getElementById('subgraph-canvas');
+        if (canvas) canvas.style.display = 'none';
+
+        const elements = buildElementsFromCase(currentCaseData);
+        if (!cy) {
+          cy = cytoscape({
+            container: container,
+            elements: elements,
+            style: [
+              {
+                selector: 'node',
+                style: {
+                  'label': 'data(label)',
+                  'color': '#cbd5e1',
+                  'font-size': '10px',
+                  'font-family': 'JetBrains Mono, monospace',
+                  'text-valign': 'bottom',
+                  'text-margin-y': 5,
+                  'background-color': '#38bdf8',
+                  'width': 26,
+                  'height': 26,
+                  'border-width': 2,
+                  'border-color': '#ffffff'
+                }
+              },
+              { selector: 'node[type = "txn"]', style: { 'background-color': '#22c55e', 'width': 32, 'height': 32 } },
+              { selector: 'node[type = "card"]', style: { 'background-color': '#f59e0b' } },
+              { selector: 'node[type = "customer"]', style: { 'background-color': '#38bdf8' } },
+              { selector: 'node[type = "device"]', style: { 'background-color': '#a855f7' } },
+              { selector: 'node[type = "region"]', style: { 'background-color': '#64748b' } },
+              { selector: 'node[type = "historical_case"]', style: { 'background-color': '#e11d48' } },
+              {
+                selector: 'node.highlighted',
+                style: {
+                  'border-color': '#f43f5e',
+                  'border-width': 4,
+                  'background-color': '#f43f5e',
+                  'color': '#f43f5e',
+                  'font-weight': 'bold'
+                }
+              },
+              {
+                selector: 'edge',
+                style: {
+                  'width': 1.5,
+                  'line-color': '#334155',
+                  'target-arrow-color': '#334155',
+                  'target-arrow-shape': 'triangle',
+                  'curve-style': 'bezier',
+                  'label': 'data(label)',
+                  'font-size': '8px',
+                  'color': '#64748b',
+                  'font-family': 'JetBrains Mono, monospace',
+                  'text-rotation': 'autorotate'
+                }
+              },
+              {
+                selector: 'edge.highlighted',
+                style: {
+                  'line-color': '#f43f5e',
+                  'target-arrow-color': '#f43f5e',
+                  'width': 3
+                }
+              }
+            ],
+            layout: {
+              name: 'cose',
+              animate: false,
+              padding: 24
+            }
+          });
+        } else {
+          cy.elements().remove();
+          cy.add(elements.nodes);
+          cy.add(elements.edges);
+          cy.layout({ name: 'cose', animate: false, padding: 24 }).run();
+        }
+        return;
+      }
+
+      renderCanvasFallback();
+    }
+
+    function highlightEvidencePath(ev) {
+      if (!cy) return;
+      cy.elements().removeClass('highlighted');
+      const targetIds = new Set(ev.entity_ids || []);
+      const rootId = currentCaseData?.case?.case_id;
+      if (rootId) targetIds.add(rootId);
+
+      const matchedNodes = cy.nodes().filter(n => targetIds.has(n.id()));
+      matchedNodes.addClass('highlighted');
+
+      const matchedEdges = cy.edges().filter(e => targetIds.has(e.source().id()) && targetIds.has(e.target().id()));
+      matchedEdges.addClass('highlighted');
+
+      if (matchedNodes.length > 0) {
+        cy.animate({
+          fit: { eles: matchedNodes, padding: 60 },
+          duration: 350
+        });
+      }
+    }
+
+    function resetGraphView() {
+      if (cy) {
+        cy.elements().removeClass('highlighted');
+        renderGraph();
+      }
+    }
+
+    async function loadFraudRing() {
+      const c = currentCaseData?.case || {};
+      let customerId = '';
+      (c.evidence || []).forEach(ev => {
+        (ev.entity_ids || []).forEach(id => {
+          if (id.startsWith('C') && !id.includes('-') && !customerId) customerId = id;
+        });
+      });
+      if (!customerId && c.connected_card_ids?.[0]) {
+        customerId = c.connected_card_ids[0].split('-')[0];
+      }
+      if (!customerId) customerId = 'C12382';
+
+      try {
+        const res = await fetch(`/api/fraud-rings/${customerId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (cy && data.subgraph) {
+          cy.elements().remove();
+          cy.add(data.subgraph.nodes || []);
+          cy.add(data.subgraph.edges || []);
+          cy.layout({ name: 'concentric', animate: true, animationDuration: 400 }).run();
+          document.getElementById('evidence-count').innerText = `Fraud Ring: ${data.ring_size} Connected`;
+        }
+      } catch (err) {
+        console.error('Failed to load fraud ring:', err);
+      }
+    }
+
+    async function loadOptimizerData(caseId) {
+      const optContainer = document.getElementById('optimizer-options-container');
+      const cfContainer = document.getElementById('counterfactual-container');
+      try {
+        const [optRes, cfRes] = await Promise.all([
+          fetch(`/api/cases/${caseId}/evidence-optimizer`),
+          fetch(`/api/cases/${caseId}/counterfactuals`)
+        ]);
+        if (optRes.ok) {
+          const options = await optRes.json();
+          if (options.length > 0) {
+            document.getElementById('optimizer-entropy-badge').innerText = `Prior H(S): ${options[0].prior_entropy.toFixed(3)} bits`;
+          }
+          optContainer.innerHTML = options.map((opt, i) => `
+            <div style="background:var(--bg-card); border:1px solid ${i === 0 ? 'var(--accent-blue)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="badge" style="background:${i === 0 ? '#0284c7' : '#334155'}; font-size:10px;">RANK #${i + 1}</span>
+                  <strong style="font-size:13px; color:#f8fafc;">${opt.step_name}</strong>
+                  <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-subtle);">${opt.target_entity}</span>
+                </div>
+                <div style="display:flex; gap:12px; font-family:var(--font-mono); font-size:11px;">
+                  <span style="color:#38bdf8;">EIG: +${opt.expected_info_gain.toFixed(3)} bits</span>
+                  <span style="color:#f59e0b;">VoI: $${opt.value_of_information.toFixed(2)}</span>
+                  <span style="color:var(--text-subtle);">Cost: $${opt.inquiry_cost_usd.toFixed(2)}</span>
+                </div>
+              </div>
+              <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
+                ${opt.mathematical_rationale}
+              </div>
+              <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
+                <span>Posterior H(S): ${opt.posterior_entropy.toFixed(3)} bits</span>
+                <span>Friction Score: ${(opt.friction_score * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        if (cfRes.ok) {
+          const cfs = await cfRes.json();
+          cfContainer.innerHTML = cfs.map(cf => `
+            <div style="background:var(--bg-card); border:1px solid ${cf.pareto_optimal ? 'var(--legit-green)' : 'var(--border)'}; border-radius:6px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <strong style="font-size:13px; font-family:var(--font-mono); color:#f8fafc;">${cf.action_type}</strong>
+                  ${cf.pareto_optimal ? '<span class="badge badge-legit" style="font-size:10px;">PARETO OPTIMAL</span>' : '<span class="badge" style="background:#334155; font-size:10px;">SUB-OPTIMAL</span>'}
+                </div>
+                <div style="display:flex; gap:14px; font-family:var(--font-mono); font-size:11.5px;">
+                  <span style="color:#22c55e;">Loss Prev: $${cf.expected_loss_prevented_usd.toFixed(2)}</span>
+                  <span style="color:#f59e0b;">Friction: ${(cf.customer_friction_index * 100).toFixed(0)}%</span>
+                  <span style="color:#38bdf8;">Net Val: $${cf.net_expected_value_usd.toFixed(2)}</span>
+                </div>
+              </div>
+              <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
+                ${cf.tradeoff_analysis}
+              </div>
+              <div style="font-size:10.5px; font-family:var(--font-mono); color:var(--text-muted); display:flex; gap:14px; margin-top:2px;">
+                <span>Residual Risk: ${(cf.residual_risk * 100).toFixed(1)}%</span>
+                <span>Compliance Risk: ${(cf.compliance_risk_score * 100).toFixed(1)}%</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error("Error loading optimizer data", err);
+      }
+    }
+
+    function renderCanvasFallback() {
       const canvas = document.getElementById('subgraph-canvas');
       if (!canvas) return;
+      canvas.style.display = 'block';
       const ctx = canvas.getContext('2d');
       const w = canvas.offsetWidth;
       const h = canvas.offsetHeight;
@@ -942,21 +1306,17 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Node coordinates
       const nodes = [
-        { x: w * 0.5, y: h * 0.5, label: currentCaseData?.case?.case_id || 'Flagged Txn', color: '#22c55e', type: 'txn' },
-        { x: w * 0.25, y: h * 0.35, label: currentCaseData?.case?.connected_card_ids?.[0] || 'Card K1', color: '#f59e0b', type: 'card' },
-        { x: w * 0.75, y: h * 0.35, label: 'Customer', color: '#38bdf8', type: 'cust' },
-        { x: w * 0.5, y: h * 0.2, label: 'Device DEV-981', color: '#a855f7', type: 'dev' },
-        { x: w * 0.35, y: h * 0.8, label: 'Region 444', color: '#64748b', type: 'reg' },
-        { x: w * 0.65, y: h * 0.8, label: 'Prior CC-0141', color: '#e11d48', type: 'hist' },
+        { x: w * 0.5, y: h * 0.5, label: currentCaseData?.case?.case_id || 'Flagged Txn', color: '#22c55e' },
+        { x: w * 0.25, y: h * 0.35, label: currentCaseData?.case?.connected_card_ids?.[0] || 'Card K1', color: '#f59e0b' },
+        { x: w * 0.75, y: h * 0.35, label: 'Customer', color: '#38bdf8' },
+        { x: w * 0.5, y: h * 0.2, label: 'Device DEV-981', color: '#a855f7' },
+        { x: w * 0.35, y: h * 0.8, label: 'Region 444', color: '#64748b' },
+        { x: w * 0.65, y: h * 0.8, label: 'Prior CC-0141', color: '#e11d48' },
       ];
 
-      const edges = [
-        [0, 1], [0, 2], [0, 3], [0, 4], [2, 1], [3, 5]
-      ];
+      const edges = [[0, 1], [0, 2], [0, 3], [0, 4], [2, 1], [3, 5]];
 
-      // Draw edges
       ctx.strokeStyle = '#2b3545';
       ctx.lineWidth = 1.5;
       edges.forEach(([i, j]) => {
@@ -966,7 +1326,6 @@
         ctx.stroke();
       });
 
-      // Draw nodes
       nodes.forEach(n => {
         ctx.beginPath();
         ctx.arc(n.x, n.y, 14, 0, Math.PI * 2);

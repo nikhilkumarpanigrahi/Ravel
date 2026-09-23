@@ -50,13 +50,27 @@ class Settings(BaseSettings):
     mcp_command: list[str] = []
     mcp_url: str = ""
 
-    # --- Agent ----------------------------------------------------------------------
+    # --- Orchestration & Agent ---------------------------------------------------
+    workflow_orchestrator: Literal["langgraph", "state_machine"] = "langgraph"
     agent_max_steps: int = 24
     agent_request_timeout_s: float = 12.0
     req_high_risk_threshold: float = 0.7
     req_low_risk_threshold: float = 0.15
     evidence_sufficient_threshold: float = 0.85
     evidence_insufficient_threshold: float = 0.15
+
+    # --- Security & CORS ----------------------------------------------------------
+    auth_enabled: bool = False
+    analyst_api_key: str = "ravel-secret-key"
+    cors_origins: list[str] = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+    # --- Vector Search & Embeddings -----------------------------------------------
+    vector_search_enabled: bool = True
 
     # --- Simulation controls (benchmark/demo determinism) ---------------------------
     simulate_customer_response: bool = True
