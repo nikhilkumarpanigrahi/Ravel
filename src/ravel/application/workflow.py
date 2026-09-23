@@ -93,7 +93,12 @@ class AgentWorkflow:
         flagged_txn = self.graph.get_transaction(trigger.flagged_txn_id)
         customer_rec = self.graph.get_customer(trigger.customer_id)
         card_hist = self.graph.card_history(trigger.customer_id, limit=30)
-        card_window = self.graph.card_window(trigger.customer_id, hours=3.0, limit=50)
+        card_window = self.graph.card_window(
+            trigger.customer_id,
+            anchor_ts=str(flagged_txn.get("ts", "")),
+            hours=3.0,
+            limit=50,
+        )
         tool_calls += 4
 
         ctx = InvestigationContext(

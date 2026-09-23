@@ -21,6 +21,10 @@ def test_mock_graph_adapter():
     assert txn["amount"] > 0
     assert "customer_id" in txn
 
+    window = graph.card_window(txn["customer_id"], anchor_ts=txn["ts"], hours=3, limit=50)
+    assert window
+    assert all(row["ts"] <= txn["ts"] for row in window)
+
     # Customer profile
     cust = graph.get_customer(txn["customer_id"])
     assert cust["customer_id"] == txn["customer_id"]

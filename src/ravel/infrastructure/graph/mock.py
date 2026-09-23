@@ -234,13 +234,24 @@ class MockGraphAdapter(GraphAdapter):
         )
         return [self._tx2dict(r) for r in rows]
 
-    def card_window(self, customer_id: str, hours: float = 2.0, limit: int = 50) -> list[dict[str, Any]]:
-        anchor = self._q1("SELECT MAX(ts) AS tmax FROM transactions WHERE customer_id = ?", (customer_id,))
-        if not anchor or not anchor["tmax"]:
-            return []
+    def card_window(
+        self,
+        customer_id: str,
+        anchor_ts: str = "",
+        hours: float = 2.0,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        if not anchor_ts:
+            anchor = self._q1(
+                "SELECT MAX(ts) AS tmax FROM transactions WHERE customer_id = ?", (customer_id,)
+            )
+            if not anchor or not anchor["tmax"]:
+                return []
+            anchor_ts = anchor["tmax"]
         rows = self._q(
-            "SELECT * FROM transactions WHERE customer_id = ? AND ts >= datetime(?, ?) ORDER BY ts ASC LIMIT ?",
-            (customer_id, anchor["tmax"], f"-{int(hours * 3600)} seconds", limit),
+            "SELECT * FROM transactions WHERE customer_id = ? "
+            "AND ts >= datetime(?, ?) AND ts <= datetime(?) ORDER BY ts ASC LIMIT ?",
+            (customer_id, anchor_ts, f"-{int(hours * 3600)} seconds", anchor_ts, limit),
         )
         return [self._tx2dict(r) for r in rows]
 

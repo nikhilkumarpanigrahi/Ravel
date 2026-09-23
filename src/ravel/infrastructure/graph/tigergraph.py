@@ -147,6 +147,7 @@ class TigerGraphAdapter(GraphAdapter):
     def load_dataset(self) -> dict[str, Any]:
         if not self.data_dir:
             return {"backend": "tigergraph", "loaded": False, "error": "no data_dir configured"}
+        self.data_dir = Path(self.data_dir)
         files = {
             "load_ravel": {
                 "f_customer": "customers.csv",
@@ -161,10 +162,12 @@ class TigerGraphAdapter(GraphAdapter):
             }
         }
         results = {}
+        missing: list[str] = []
         for job, tags in files.items():
             for tag, filename in tags.items():
                 path = self.data_dir / filename
                 if not path.exists():
+                    missing.append(filename)
                     continue
                 try:
                     resp = self.conn.runLoadingJobWithFile(
@@ -173,7 +176,14 @@ class TigerGraphAdapter(GraphAdapter):
                     results[filename] = {"status": "ok", "resp": resp}
                 except Exception as exc_category:  # noqa: BLE001
                     results[filename] = {"status": "error", "error": str(exc_category)}
-        return {"backend": "tigergraph", "loaded": True, "files": results}
+        failed = [name for name, result in results.items() if result["status"] == "error"]
+        return {
+            "backend": "tigergraph",
+            "loaded": not missing and not failed,
+            "files": results,
+            "missing_files": missing,
+            "failed_files": failed,
+        }
 
     def is_loaded(self) -> bool:
         try:
@@ -239,10 +249,10 @@ class TigerGraphAdapter(GraphAdapter):
                 raise KeyError(f"transaction {txn_id} not found")
             attrs = res[0].get("attributes", {})
             edges = self.conn.getEdges("Transaction", tid) or []
-            cust_id = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_of_customer"), "")
-            card_id = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_of_card"), "")
-            dev_id = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_uses_device"), "")
-            p_email = next((e["to_id"] for e in edges if e.get("e_type") == "transaction_has_p_emaildomain"), "")
+            cust_id = next((e["to_id"] for e in edges if e.get("e_type") == "CARD_OF"), "")
+            card_id = next((e["to_id"] for e in edges if e.get("e_type") == "MADE_BY"), "")
+            dev_id = next((e["to_id"] for e in edges if e.get("e_type") == "FROM_DEVICE"), "")
+            p_email = next((e["to_id"] for e in edges if e.get("e_type") == "PURCHASER_EMAIL"), "")
 
             return {
                 "txn_id": str(attrs.get("transaction_id", txn_id)),
@@ -329,11 +339,19 @@ class TigerGraphAdapter(GraphAdapter):
         rows.sort(key=lambda x: str(x.get("ts", "")), reverse=True)
         return rows[:limit]
 
-    def card_window(self, customer_id: str, hours: float = 2.0, limit: int = 50) -> list[dict[str, Any]]:
-        latest = self.card_history(customer_id=customer_id, limit=1)
-        if not latest:
-            return []
-        anchor_str = latest[0]["ts"]
+    def card_window(
+        self,
+        customer_id: str,
+        anchor_ts: str = "",
+        hours: float = 2.0,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        anchor_str = anchor_ts
+        if not anchor_str:
+            latest = self.card_history(customer_id=customer_id, limit=1)
+            if not latest:
+                return []
+            anchor_str = latest[0]["ts"]
         if self._has_query("card_window"):
             with contextlib.suppress(Exception):
                 rows = self._run(
@@ -348,7 +366,11 @@ class TigerGraphAdapter(GraphAdapter):
 
             anchor_dt = datetime.fromisoformat(anchor_str[:19])
             start_dt = anchor_dt - timedelta(hours=hours)
-            win = [t for t in all_hist if start_dt <= datetime.fromisoformat(t["ts"][:19]) <= anchor_dt]
+            win = [
+                t
+                for t in all_hist
+                if start_dt <= datetime.fromisoformat(t["ts"][:19]) <= anchor_dt
+            ]
             win.sort(key=lambda x: str(x.get("ts", "")))
             return win[:limit]
         except Exception:

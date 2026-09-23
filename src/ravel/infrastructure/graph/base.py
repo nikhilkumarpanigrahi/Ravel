@@ -59,8 +59,14 @@ class GraphAdapter(ABC):
         """Recent transactions for a card (chronological)."""
 
     @abstractmethod
-    def card_window(self, customer_id: str, hours: float = 2.0, limit: int = 50) -> list[dict[str, Any]]:
-        """Transactions on one card inside a time window ending at the flagged txn."""
+    def card_window(
+        self,
+        customer_id: str,
+        anchor_ts: str = "",
+        hours: float = 2.0,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Transactions on one card inside a bounded window ending at anchor_ts."""
 
     @abstractmethod
     def connected_entities(self, customer_id: str, depth: int = 2, limit: int = 100) -> list[dict[str, Any]]:
