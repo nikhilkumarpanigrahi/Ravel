@@ -23,13 +23,18 @@ def _norm_list(raw: Any) -> list[dict[str, Any]]:
         raw = [raw]
     out: list[dict[str, Any]] = []
     for packet in raw or []:
-        for key, value in (packet or {}).items():
-            if key in ("results",):
-                continue
+        for _key, value in (packet or {}).items():
             if isinstance(value, list):
                 for row in value:
                     if isinstance(row, dict):
-                        out.append({k: _clean(v) for k, v in row.items()})
+                        attrs = row.get("attributes")
+                        if isinstance(attrs, dict):
+                            flattened = {k: _clean(v) for k, v in attrs.items()}
+                            flattened["v_id"] = str(row.get("v_id", ""))
+                            flattened["v_type"] = str(row.get("v_type", ""))
+                            out.append(flattened)
+                        else:
+                            out.append({k: _clean(v) for k, v in row.items()})
             elif value is not None:
                 out.append({"value": _clean(value)})
     return out
@@ -110,7 +115,7 @@ class TigerGraphAdapter(GraphAdapter):
 
     def _ensure_installed(self) -> None:
         installed = {q["name"] for q in self.conn.queryInstalledQueries()}
-        for name in (
+        required = {
             "get_txn",
             "card_history",
             "card_window",
@@ -121,14 +126,11 @@ class TigerGraphAdapter(GraphAdapter):
             "degree_of",
             "connected_entities",
             "write_fraud_case",
-        ):
-            if name not in installed:
-                script = gsql.SCHEMA_GSQL.replace("@@graphname@@", self.graphname)
-                self.conn.gsql(script)
-                break
-        # queries
-        script = gsql.QUERIES_GSQL.replace("@@graphname@@", self.graphname)
-        self.conn.gsql(script)
+        }
+        if required - installed:
+            script = gsql.QUERIES_GSQL.replace("@@graphname@@", self.graphname)
+            self.conn.gsql(script)
+            self._installed_cache = None
 
     # --------------------------------------------------------------- lifecycle
     def health(self) -> dict[str, Any]:

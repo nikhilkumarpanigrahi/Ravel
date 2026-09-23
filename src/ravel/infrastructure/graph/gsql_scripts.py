@@ -1,13 +1,13 @@
 """GSQL schema, loading jobs, and bounded investigation queries for TigerGraph (Savanna/CE).
 
-Written defensively (explicit accumulators, scalar anchors passed from the adapter) so queries
-install cleanly on first connection. Verified against the live instance when credentials bind.
+Written defensively with explicit accumulators and scalar anchors passed from the adapter.
+The scripts are contract-tested locally and must still be compiled against the target instance.
 """
 
 from __future__ import annotations
 
 SCHEMA_GSQL = r"""
-USE GRAPH @@graphname@@
+USE GLOBAL
 
 CREATE VERTEX Customer(PRIMARY_ID customer_id STRING, card_label STRING, card1 STRING,
     card6 STRING, home_region STRING) WITH primary_id_as_attribute="true"
@@ -87,35 +87,34 @@ QUERIES_GSQL = r"""
 USE GRAPH @@graphname@@
 
 # get_txn: one transaction with full attributes
-CREATE QUERY get_txn(STRING txn_id) FOR GRAPH @@graphname@@ SYNTAX v2 {
+CREATE OR REPLACE QUERY get_txn(STRING txn_id) FOR GRAPH @@graphname@@ SYNTAX v2 {
     T = {Transaction.*};
     T = SELECT s FROM T:s WHERE s.txn_id == txn_id;
-    results = SELECT s FROM T:s RETURN s;
-    PRETTY_PRINT results;
+    PRINT T AS results;
 }
 
 # card_history: recent transactions of a card, newest first
-CREATE QUERY card_history(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
+CREATE OR REPLACE QUERY card_history(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
     T = {Transaction.*};
     T = SELECT s FROM T:s WHERE s.customer_id == customer_id
         ORDER BY s.ts DESC LIMIT limit;
-    results = SELECT s FROM T:s RETURN s;
-    PRETTY_PRINT results;
+    PRINT T AS results;
 }
 
 # card_window: transactions on a card in the N hours before anchor_ts
-CREATE QUERY card_window(STRING customer_id, DATETIME anchor_ts, INT hours, INT limit)
+CREATE OR REPLACE QUERY card_window(STRING customer_id, DATETIME anchor_ts, INT hours, INT limit)
 FOR GRAPH @@graphname@@ SYNTAX v2 {
     T = {Transaction.*};
     T = SELECT s FROM T:s
-        WHERE s.customer_id == customer_id AND s.ts >= datetime_add(anchor_ts, -hours, "HOUR") AND s.ts <= anchor_ts
+        WHERE s.customer_id == customer_id
+          AND s.ts >= datetime_add(anchor_ts, INTERVAL -hours HOUR)
+          AND s.ts <= anchor_ts
         ORDER BY s.ts ASC LIMIT limit;
-    results = SELECT s FROM T:s RETURN s;
-    PRETTY_PRINT results;
+    PRINT T AS results;
 }
 
 # shared_devices: other customers whose cards used the SAME device profile
-CREATE QUERY shared_devices(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
+CREATE OR REPLACE QUERY shared_devices(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
     SetAccum<STRING> @@mydev;
     SumAccum<INT> @cnt;
     T = {Transaction.*};
@@ -126,12 +125,11 @@ CREATE QUERY shared_devices(STRING customer_id, INT limit) FOR GRAPH @@graphname
         WHERE t.device_id IN @@mydev AND t.customer_id != customer_id
         ACCUM t.@cnt += 1
         ORDER BY t.@cnt DESC LIMIT limit;
-    results = SELECT t FROM T2:t RETURN t, t.@cnt AS shared_txns;
-    PRETTY_PRINT results;
+    PRINT T2 [T2.@cnt AS shared_txns] AS results;
 }
 
 # shared_regions: other customers active in the same billing regions
-CREATE QUERY shared_regions(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
+CREATE OR REPLACE QUERY shared_regions(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
     SetAccum<STRING> @@myreg;
     SumAccum<INT> @cnt;
     T = {Transaction.*};
@@ -142,12 +140,11 @@ CREATE QUERY shared_regions(STRING customer_id, INT limit) FOR GRAPH @@graphname
         WHERE t.addr1 IN @@myreg AND t.customer_id != customer_id
         ACCUM t.@cnt += 1
         ORDER BY t.@cnt DESC LIMIT limit;
-    results = SELECT t FROM T2:t RETURN t;
-    PRETTY_PRINT results;
+    PRINT T2 AS results;
 }
 
 # related_transactions: recent activity from devices shared with this customer
-CREATE QUERY related_transactions(STRING customer_id, DATETIME from_ts, INT limit)
+CREATE OR REPLACE QUERY related_transactions(STRING customer_id, DATETIME from_ts, INT limit)
 FOR GRAPH @@graphname@@ SYNTAX v2 {
     SetAccum<STRING> @@mydev;
     T = {Transaction.*};
@@ -157,12 +154,11 @@ FOR GRAPH @@graphname@@ SYNTAX v2 {
     T2 = SELECT t FROM T2:t
         WHERE t.device_id IN @@mydev AND t.customer_id != customer_id AND t.ts >= from_ts
         ORDER BY t.ts DESC LIMIT limit;
-    results = SELECT t FROM T2:t RETURN t;
-    PRETTY_PRINT results;
+    PRINT T2 AS results;
 }
 
 # historical_cases: closed-case memory, filterable
-CREATE QUERY historical_cases(STRING customer_id, STRING outcome, STRING pattern, INT limit)
+CREATE OR REPLACE QUERY historical_cases(STRING customer_id, STRING outcome, STRING pattern, INT limit)
 FOR GRAPH @@graphname@@ SYNTAX v2 {
     C = {ClosedCase.*};
     C = SELECT s FROM C:s
@@ -170,13 +166,12 @@ FOR GRAPH @@graphname@@ SYNTAX v2 {
           AND (outcome == "" OR s.outcome == outcome)
           AND (pattern == "" OR s.pattern == pattern)
         ORDER BY s.closed_at DESC LIMIT limit;
-    results = SELECT s FROM C:s RETURN s;
-    PRETTY_PRINT results;
+    PRINT C AS results;
 }
 
 # high_degree_count: bind degree for an entity id (customer or device)
-CREATE QUERY degree_of(STRING entity_id, INT kind) FOR GRAPH @@graphname@@ SYNTAX v2 {
-    SumAccum<INT> @n;
+CREATE OR REPLACE QUERY degree_of(STRING entity_id, INT kind) FOR GRAPH @@graphname@@ SYNTAX v2 {
+    SumAccum<INT> @@deg;
     IF kind == 0 THEN
         T = {Transaction.*};
         T = SELECT t FROM T:t WHERE t.customer_id == entity_id ACCUM @@deg += 1;
@@ -188,8 +183,10 @@ CREATE QUERY degree_of(STRING entity_id, INT kind) FOR GRAPH @@graphname@@ SYNTA
 }
 
 # connected_entities: devices/regions/emails used by this customer, with counts
-CREATE QUERY connected_entities(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
-    SumAccum<INT> @dev_n;
+CREATE OR REPLACE QUERY connected_entities(STRING customer_id, INT limit) FOR GRAPH @@graphname@@ SYNTAX v2 {
+    SetAccum<STRING> @@devs;
+    SetAccum<STRING> @@regions;
+    SetAccum<STRING> @@emails;
     T = {Transaction.*};
     T = SELECT t FROM T:t WHERE t.customer_id == customer_id
         ACCUM @@devs += t.device_id, @@regions += t.addr1, @@emails += t.p_email;
@@ -197,11 +194,10 @@ CREATE QUERY connected_entities(STRING customer_id, INT limit) FOR GRAPH @@graph
 }
 
 # write_fraud_case: persist a completed case into the graph (case memory)
-CREATE QUERY write_fraud_case(
+CREATE OR REPLACE QUERY write_fraud_case(
     STRING graph_case_id, STRING case_id, STRING customer_id, STRING verdict,
     STRING pattern, DOUBLE exposure_usd, STRING summary,
     SET<STRING> card_ids, SET<STRING> txn_ids) FOR GRAPH @@graphname@@ SYNTAX v2 {
-    F = {FraudCase.*};
     INSERT INTO FraudCase VALUES (graph_case_id, case_id, customer_id, verdict, pattern,
         exposure_usd, summary, now());
     C = {Card.*};
