@@ -55,9 +55,13 @@ flowchart TD
 
 ### 1. Information-Theoretic Active Learning (VoI & EIG)
 Traditional fraud engines blindly run dozens of costly batch queries. RAVEL measures uncertainty using **Shannon Binary Entropy**:
+
 $$H(S) = -p \log_2(p) - (1-p) \log_2(1-p)$$
+
 The **Evidence-Value Optimizer** ranks potential investigation steps (device reputation lookups, multi-hop merchant audits, cardholder transaction verification) by **Value of Information (VoI)**:
-$$\text{VoI} = \text{Expected Loss Reduction} - \text{Inquiry Friction Cost}$$
+
+$$\mathrm{VoI} = \mathbb{E}[\Delta \mathrm{Loss}] - \mathrm{Cost}_{\mathrm{friction}}$$
+
 Investigation concludes as soon as entropy drops below the defensible decision boundary ($H(S) \le 0.22\text{ bits}$) or evidence saturation is reached.
 
 ### 2. Multi-Hop Graph Traversal & Collusion Ring Discovery
@@ -68,12 +72,19 @@ Powered by **TigerGraph**, RAVEL traverses the transaction and identity graph ac
 
 ### 3. Counterfactual Decision Theory (Pareto Frontier)
 High-consequence decisions require balancing competing objectives. RAVEL evaluates candidate interventions across a 3D objective space:
-$$\max (\text{Loss Prevented}) \quad \text{vs.} \quad \min (\text{Customer Friction}) \quad \text{vs.} \quad \min (\text{Compliance Risk})$$
+
+```text
+max(Loss Prevented)  vs.  min(Customer Friction)  vs.  min(Compliance Risk)
+```
+
 Only **Pareto-optimal** actions (interventions where no objective can be improved without degrading another) are submitted to the policy engine.
 
 ### 4. Deterministic 14-State Lifecycle & Dual-Key Governance
 Investigations execute under a formal 14-state machine:
-$$\text{TRIGGERED} \to \text{CASE\_CREATED} \to \text{INVESTIGATING} \to \text{EVIDENCE\_COLLECTED} \to \text{ASSESSING} \to \dots \to \text{CASE\_CLOSED} \to \text{MEMORY\_UPDATED}$$
+
+```text
+TRIGGERED → CASE_CREATED → INVESTIGATING → EVIDENCE_COLLECTED → ASSESSING → ... → CASE_CLOSED → MEMORY_UPDATED
+```
 
 High-impact actions cannot execute autonomously. Under compliance policies **R7** and **R8**, the engine halts at `APPROVAL_PENDING`:
 - **Route L1 (Fraud Lead)**: Transaction declines and card blocks under $2,500.
