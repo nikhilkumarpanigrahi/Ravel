@@ -44,6 +44,19 @@ def test_graph_endpoint():
     assert "edges" in data
 
 
+def test_replay_case():
+    res = client.post("/api/cases/HHG-001/replay")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["case_id"] == "HHG-001"
+    assert data["case"]["written_to_graph"] is True
+
+
+def test_replay_unknown_case():
+    res = client.post("/api/cases/HHG-999/replay")
+    assert res.status_code == 404
+
+
 def test_benchmark_results():
     res = client.get("/api/benchmark/results")
     assert res.status_code == 200

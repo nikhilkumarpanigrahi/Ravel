@@ -488,7 +488,7 @@
           </div>
         </div>
         <div>
-          <button class="btn btn-primary" onclick="runSingleCase()">Replay Investigation</button>
+          <button class="btn btn-primary" id="replay-btn" onclick="runSingleCase()">Replay Investigation</button>
         </div>
       </div>
 
@@ -678,6 +678,30 @@
       } catch (err) {
         console.error("Error loading case", err);
       }
+    }
+
+    async function runSingleCase() {
+      if (!currentCaseData?.case_id) return;
+      const button = document.getElementById('replay-btn');
+      const originalLabel = button.innerText;
+      button.disabled = true;
+      button.innerText = 'Investigating…';
+      try {
+        const response = await fetch(`/api/cases/${currentCaseData.case_id}/replay`, {method: 'POST'});
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'Replay failed');
+        currentCaseData = payload;
+        const approvalRes = await fetch(`/api/cases/${currentCaseData.case_id}/approvals`);
+        currentApprovals = approvalRes.ok ? await approvalRes.json() : [];
+        renderActiveCase();
+      } catch (error) {
+        console.error(error);
+        button.innerText = 'Replay failed — try again';
+        return;
+      } finally {
+        button.disabled = false;
+      }
+      button.innerText = originalLabel;
     }
 
     function renderActiveCase() {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 from pathlib import Path
 
@@ -98,6 +99,23 @@ def get_case(case_id: str):
     if rec:
         return rec
     raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+
+
+@app.post("/api/cases/{case_id}/replay")
+def replay_case(case_id: str):
+    """Run a benchmark case again from its original trigger data."""
+    case_pack = settings.data_dir / "case_pack.csv"
+    if not case_pack.exists():
+        raise HTTPException(status_code=503, detail="Benchmark case pack is unavailable")
+    with case_pack.open(encoding="utf-8", newline="") as source:
+        trigger = next((row for row in csv.DictReader(source) if row.get("case_id") == case_id), None)
+    if trigger is None:
+        raise HTTPException(status_code=404, detail=f"Case {case_id} not found in case pack")
+    try:
+        answer = workflow.run_investigation(trigger)
+        return answer.model_dump(mode="json")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.post("/api/investigations")
