@@ -56,7 +56,12 @@ class OpenAICompatibleClient(LLMProvider):
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/nikhilkumarpanigrahi/Ravel",
+            "X-Title": "RAVEL Fraud Investigator",
+        }
         try:
             resp = self.client.post(f"{self.base_url}/chat/completions", json=payload, headers=headers)
             resp.raise_for_status()

@@ -278,6 +278,13 @@ class TigerGraphAdapter(GraphAdapter):
             raise KeyError(f"transaction {txn_id} not found: {exc}") from exc
 
     def get_customer(self, customer_id: str) -> dict[str, Any]:
+        if not customer_id:
+            return {
+                "customer_id": "",
+                "card_label": "",
+                "n_transactions": 0,
+                "n_online": 0,
+            }
         if self._has_query("degree_of"):
             with contextlib.suppress(Exception):
                 n_txns = self._run("degree_of", entity_id=customer_id, kind=0)
@@ -298,6 +305,8 @@ class TigerGraphAdapter(GraphAdapter):
         }
 
     def card_history(self, customer_id: str, limit: int = 25) -> list[dict[str, Any]]:
+        if not customer_id:
+            return []
         if self._has_query("card_history"):
             with contextlib.suppress(Exception):
                 rows = self._run("card_history", customer_id=customer_id, limit=limit)
@@ -377,6 +386,8 @@ class TigerGraphAdapter(GraphAdapter):
             return all_hist[:limit]
 
     def connected_entities(self, customer_id: str, depth: int = 2, limit: int = 100) -> list[dict[str, Any]]:
+        if not customer_id:
+            return []
         if self._has_query("connected_entities"):
             with contextlib.suppress(Exception):
                 rows = self._run("connected_entities", customer_id=customer_id, limit=limit)
@@ -474,6 +485,8 @@ class TigerGraphAdapter(GraphAdapter):
         return [root]
 
     def high_degree_check(self, entity_id: str) -> bool:
+        if not entity_id:
+            return False
         kind = 1 if entity_id.startswith("DEV-") else 0
         if self._has_query("degree_of"):
             with contextlib.suppress(Exception):
@@ -539,16 +552,17 @@ class TigerGraphAdapter(GraphAdapter):
             }
         ]
         edges: list[dict[str, Any]] = []
-        if txn.get("customer_id"):
-            nodes.append({"id": txn["customer_id"], "type": "customer", "label": txn["customer_id"]})
-            edges.append({"from": root, "to": txn["customer_id"], "type": "MADE_BY"})
-        for r in self.card_history(customer_id=txn.get("customer_id", ""), limit=min(15, limit)):
-            nid = str(r.get("txn_id", ""))
-            if nid:
-                nodes.append(
-                    {"id": nid, "type": "transaction", "label": f"${r.get('amount', 0):.2f}", "risk": 0}
-                )
-                edges.append({"from": nid, "to": txn["customer_id"], "type": "MADE_BY"})
+        cust_id = txn.get("customer_id")
+        if cust_id:
+            nodes.append({"id": cust_id, "type": "customer", "label": cust_id})
+            edges.append({"from": root, "to": cust_id, "type": "MADE_BY"})
+            for r in self.card_history(customer_id=cust_id, limit=min(15, limit)):
+                nid = str(r.get("txn_id", ""))
+                if nid:
+                    nodes.append(
+                        {"id": nid, "type": "transaction", "label": f"${r.get('amount', 0):.2f}", "risk": 0}
+                    )
+                    edges.append({"from": nid, "to": cust_id, "type": "MADE_BY"})
         return {"nodes": nodes, "edges": edges}
 
     def _txns(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
