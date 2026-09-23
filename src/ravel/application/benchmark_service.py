@@ -10,6 +10,7 @@ from typing import Any
 
 from sqlalchemy import create_engine
 
+from ravel.application.answer_validator import validate_answer
 from ravel.application.policy_engine import PolicyEngine
 from ravel.application.workflow import AgentWorkflow
 from ravel.config import Settings
@@ -87,6 +88,7 @@ class BenchmarkService:
                     "[%d/%d] Investigating %s (Trigger: %s)...", idx, len(cases), cid, c.get("trigger_type")
                 )
                 ans: AnswerFile = self.workflow.run_investigation(c)
+                validate_answer(ans)
                 ans_data = ans.model_dump()
                 case_file.write_text(json.dumps(ans_data, indent=2, default=str), encoding="utf-8")
 
@@ -132,7 +134,7 @@ class BenchmarkService:
         }
 
         # Write benchmark reports per PRD Section 35
-        bench_dir = self.settings.data_dir.parent / "benchmark"
+        bench_dir = out_path.parent / "benchmark" if output_dir else self.settings.data_dir.parent / "benchmark"
         bench_dir.mkdir(parents=True, exist_ok=True)
         (bench_dir / "results.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         self._write_markdown_report(bench_dir / "report.md", report)

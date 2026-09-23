@@ -174,9 +174,13 @@ class PolicyEngine:
         """Determine final recommended actions AFTER requested evidence is received."""
         actions: list[RecommendedAction] = []
         cust_norm = customer_response.lower()
+        is_denial = any(term in cust_norm for term in ("deni", "never made", "stolen", "unauthorized"))
+        is_confirmation = any(
+            term in cust_norm for term in ("confirm", "legitimate", "made this purchase")
+        ) and not is_denial
 
         # R3: Customer confirms transaction
-        if "confirm" in cust_norm or "legitimate" in cust_norm or "made this purchase" in cust_norm:
+        if is_confirmation:
             actions.append(
                 RecommendedAction(
                     action=ActionType.CLOSE_NO_FRAUD,
@@ -208,12 +212,7 @@ class PolicyEngine:
             return actions
 
         # R2: Customer denies transaction (or confirmed fraud)
-        if (
-            "deni" in cust_norm
-            or "never made" in cust_norm
-            or "stolen" in cust_norm
-            or verdict == Verdict.FRAUD
-        ):
+        if is_denial or verdict == Verdict.FRAUD:
             route = self.determine_approval_route(ActionType.BLOCK_CARD, exposure_usd)
             actions.append(
                 RecommendedAction(
