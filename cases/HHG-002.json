@@ -4,33 +4,33 @@
     "case_id": "HHG-002",
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.3,
+    "fraud_probability": 0.5,
     "pattern": "card_not_present_fraud",
     "pattern_description": "",
     "affected_txn_ids": [],
     "first_suspicious_txn_id": "",
     "connected_card_ids": [
-      "C06744-K2",
-      "C11509-K2",
-      "C11923-K2",
-      "C05031-K2",
-      "C06663-K2",
-      "C06630-K2",
-      "C13171-K2",
-      "C02147-K2",
-      "C04034-K2",
-      "C08962-K2",
-      "C09657-K2",
-      "C00294-K2",
       "C11919-K2",
-      "C05307-K2",
-      "C05381-K2",
-      "C04597-K1",
+      "C11923-K2",
       "C07562-K2",
-      "C11847-K2"
+      "C13171-K2",
+      "C04597-K1",
+      "C00294-K2",
+      "C09657-K2",
+      "C06663-K2",
+      "C11509-K2",
+      "C05381-K2",
+      "C06744-K2",
+      "C06630-K2",
+      "C11847-K2",
+      "C04034-K2",
+      "C05307-K2",
+      "C05031-K2",
+      "C08962-K2",
+      "C02147-K2"
     ],
     "connected_device_profiles": [],
-    "exposure_usd": 0.0,
+    "exposure_usd": 292.36,
     "evidence": [
       {
         "claim": "Flagged transaction 3478782 for $292.36 via online (ProductCD C) with initial risk score 0.79",
@@ -39,7 +39,7 @@
         "entity_ids": [
           "3478782"
         ],
-        "graph_path": "Transaction(3478782) \u2500\u2500[CARD_OF]\u2500\u2500> Customer(C11891) \u2500\u2500[OWNS]\u2500\u2500> Card(C11891-K1)",
+        "graph_path": "Transaction(3478782) --transaction_of_customer-- Customer(C11891); Transaction(3478782) --transaction_of_card-- Card(C11891-K1)",
         "supports": "",
         "contradicts": ""
       },
@@ -51,35 +51,35 @@
           "C11891",
           "C11891-K1"
         ],
-        "graph_path": "Customer(C11891) \u2500\u2500[OWNS]\u2500\u2500> Card(C11891-K1) \u2500\u2500[BILLED_IN]\u2500\u2500> Region()",
+        "graph_path": "Customer(C11891).home_region=",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Device shared across 18 other card(s): C06744-K2, C11509-K2, C11923-K2",
+        "claim": "Device shared across 18 other card(s): C11919-K2, C11923-K2, C07562-K2",
         "source": "graph",
         "ref": "query:shared_devices(C11891)",
         "entity_ids": [
-          "C06744-K2",
-          "C11509-K2",
-          "C11923-K2",
-          "C05031-K2",
-          "C06663-K2",
-          "C06630-K2",
-          "C13171-K2",
-          "C02147-K2",
-          "C04034-K2",
-          "C08962-K2",
-          "C09657-K2",
-          "C00294-K2",
           "C11919-K2",
-          "C05307-K2",
-          "C05381-K2",
-          "C04597-K1",
+          "C11923-K2",
           "C07562-K2",
-          "C11847-K2"
+          "C13171-K2",
+          "C04597-K1",
+          "C00294-K2",
+          "C09657-K2",
+          "C06663-K2",
+          "C11509-K2",
+          "C05381-K2",
+          "C06744-K2",
+          "C06630-K2",
+          "C11847-K2",
+          "C04034-K2",
+          "C05307-K2",
+          "C05031-K2",
+          "C08962-K2",
+          "C02147-K2"
         ],
-        "graph_path": "Customer(C11891) \u2500\u2500[USED_DEVICE]\u2500\u2500> Device(DEVICE_SHARED) \u2500\u2500[CROSS_CARD_LINK]\u2500\u2500> Card(C06744-K2)",
+        "graph_path": "Customer(C11891) --transaction_of_customer-- Transaction --transaction_uses_device-- Device(DEVICE_SHARED) --transaction_uses_device-- Transaction --transaction_of_card-- Card(C11919-K2)",
         "supports": "",
         "contradicts": ""
       },
@@ -90,19 +90,20 @@
         "entity_ids": [
           "CC-4160"
         ],
-        "graph_path": "Alert(HHG-002) \u2500\u2500[INVOLVES_TXN]\u2500\u2500> Transaction(3478782) \u2500\u2500[SIMILAR_PATTERN]\u2500\u2500> ClosedCase(CC-4160)",
+        "graph_path": "FraudCase(CC-4160) --case_of_customer--> Customer(C11891)",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
-        "source": "customer",
-        "ref": "tool:customer_inquiry(C11891)",
+        "claim": "Semantic case-memory retrieval returned: CC-4672, CC-3055, CC-5026",
+        "source": "document",
+        "ref": "vector:closed_case_similarity",
         "entity_ids": [
-          "C11891",
-          "3478782"
+          "CC-4672",
+          "CC-3055",
+          "CC-5026"
         ],
-        "graph_path": "Cardholder(C11891) \u2500\u2500[INQUIRY_RESPONSE]\u2500\u2500> Txn(3478782)",
+        "graph_path": "",
         "supports": "",
         "contradicts": ""
       },
@@ -114,6 +115,21 @@
           "3478782"
         ],
         "graph_path": "Transaction(3478782) \u2500\u2500[CHANNEL]\u2500\u2500> ONLINE",
+        "supports": "fraud",
+        "contradicts": "legitimate"
+      },
+      {
+        "claim": "TigerGraph shared-device traversal identified syndicate: device shared across 18 distinct cards",
+        "source": "graph",
+        "ref": "tigergraph:shared_devices(C11891)",
+        "entity_ids": [
+          "C11919-K2",
+          "C11923-K2",
+          "C07562-K2",
+          "C13171-K2",
+          "C04597-K1"
+        ],
+        "graph_path": "Customer(C11891) \u2500\u2500[USES_DEVICE]\u2500\u2500> Device \u2500\u2500[SHARED_WITH]\u2500\u2500> 18 Cards",
         "supports": "fraud",
         "contradicts": "legitimate"
       },
@@ -130,13 +146,14 @@
       }
     ],
     "similar_prior_cases": [
-      "CC-4160"
+      "CC-4672",
+      "CC-3055"
     ],
-    "summary": "Investigation of HHG-002 (C11891 / C11891-K1): Flagged transaction 3478782 ($292.36) evaluated under card_not_present_fraud. Customer reported: No reply received within 24 hours; ownership remains unverified. No fraudulent exposure confirmed. Verdict: uncertain (fraud probability: 0.30). Recommended 2 action(s) adhering to bank policy.",
+    "summary": "Investigation of HHG-002 (C11891 / C11891-K1): Flagged transaction 3478782 ($292.36) evaluated under card_not_present_fraud. Assumed verification outcome: No reply received within 24 hours; ownership remains unverified. No fraudulent exposure confirmed. Verdict: uncertain (fraud probability: 0.50). Recommended 2 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-F0A5AAB1",
-    "opened_at": "2026-09-23 17:09:41.045406+00:00",
-    "updated_at": "2026-09-23 17:09:41.045407+00:00"
+    "graph_case_id": "CASE-2016-349B5BD7",
+    "opened_at": "2026-09-23 18:24:56.804256+00:00",
+    "updated_at": "2026-09-23 18:24:56.804256+00:00"
   },
   "evidence_requests": [
     {
@@ -160,7 +177,7 @@
       {
         "action": "VERIFY_WITH_CUSTOMER",
         "route": "auto",
-        "reason": "R1: Single signal / probability 0.30 < 0.70; verify before blocking",
+        "reason": "R1: Single signal with probability 0.50 below 0.70; verify before blocking",
         "order": 2,
         "approval_id": "",
         "requires_approval": false,
@@ -191,17 +208,17 @@
         "route": "L1",
         "reason": "R4: Decline pending authorization until cardholder responds",
         "order": 2,
-        "approval_id": "APP-5B2C631B",
+        "approval_id": "APP-CEAEFCE8",
         "requires_approval": true,
         "state": "PENDING"
       }
     ],
-    "what_changed": "Uncertainty persisted after inquiry; case escalated to analyst for manual review."
+    "what_changed": "The cardholder did not respond, so ownership remains unverified. R4 monitoring and pending-authorization controls replace any customer-denial action."
   },
   "uncertainty": {
     "initial": {
       "risk": 0.79,
-      "confidence": 0.7,
+      "confidence": 0.5,
       "evidence_completeness": 0.7,
       "contradictions": 0,
       "decision_readiness": "PARTIALLY_READY",
@@ -218,7 +235,7 @@
     },
     "final": {
       "risk": 0.79,
-      "confidence": 0.7,
+      "confidence": 0.5,
       "evidence_completeness": 0.85,
       "contradictions": 0,
       "decision_readiness": "PARTIALLY_READY",
@@ -231,9 +248,7 @@
         "card_not_present_new_device: partial (0.30)"
       ]
     },
-    "what_reduced_uncertainty": [
-      "customer validation response"
-    ]
+    "what_reduced_uncertainty": []
   },
   "sar": {
     "file": false,
@@ -246,33 +261,65 @@
   "stop_reason": "Further steps unlikely to change verdict; escalated under policy R8.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.98,
+  "latency_s": 1.34,
   "agent_trace": [
     {
       "step": 1,
       "hypothesis": "Model alert on txn 3478782 (Risk score: 0.79): evaluate fraud vs legitimate use",
-      "selected_tool": "CARDHOLDER_TRANSACTION_VERIFICATION",
-      "expected_info_gain": 0.455,
-      "value_of_information": 5.69,
-      "evidence_claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
-      "evidence_supports": "",
-      "evidence_contradicts": "",
+      "selected_tool": "MERCHANT_TERMINAL_AUDIT",
+      "expected_info_gain": 0.15,
+      "value_of_information": 14.62,
+      "evidence_claim": "Transaction audit: $292.36 via online (Product C)",
+      "evidence_supports": "fraud",
+      "evidence_contradicts": "legitimate",
       "prior_belief": 0.79,
-      "posterior_belief": 0.821,
-      "entropy_reduction": 0.064
+      "posterior_belief": 0.861,
+      "entropy_reduction": 0.16
     },
     {
       "step": 2,
       "hypothesis": "Model alert on txn 3478782 (Risk score: 0.79): evaluate fraud vs legitimate use",
-      "selected_tool": "MERCHANT_TERMINAL_AUDIT",
-      "expected_info_gain": 0.15,
-      "value_of_information": 5.0,
-      "evidence_claim": "Transaction audit: $292.36 via online (Product C)",
+      "selected_tool": "DEVICE_REPUTATION_TELEMETRY",
+      "expected_info_gain": 0.0,
+      "value_of_information": 0.0,
+      "evidence_claim": "TigerGraph shared-device traversal identified syndicate: device shared across 18 distinct cards",
       "evidence_supports": "fraud",
       "evidence_contradicts": "legitimate",
-      "prior_belief": 0.821,
-      "posterior_belief": 0.883,
-      "entropy_reduction": 0.158
+      "prior_belief": 0.861,
+      "posterior_belief": 0.968,
+      "entropy_reduction": 0.379
+    },
+    {
+      "step": 3,
+      "action": "HALT_INVESTIGATION",
+      "reason": "Information entropy H(S)=0.202 below threshold (0.22 bits). Decision readiness achieved.",
+      "final_belief": 0.968
+    }
+  ],
+  "counterfactuals": [
+    {
+      "action_type": "DECLINE_TRANSACTION",
+      "action_id": "APP-CEAEFCE8",
+      "target": "R4: Decline pending authorization until cardholder responds",
+      "route": "L1",
+      "loss_prevented_usd": 138.87,
+      "customer_friction_cost_usd": 10.0,
+      "compliance_risk_penalty_usd": 0.0,
+      "net_utility_score": 128.87,
+      "pareto_optimal": true,
+      "rationale": "Moderate uncertainty (0.50): Balanced trade-off yields net utility 128.87."
+    },
+    {
+      "action_type": "MONITOR_CARD",
+      "action_id": "ACT-MONITOR_CARD",
+      "target": "R4: Customer uncontactable, heighten card monitoring for 72 hours",
+      "route": "auto",
+      "loss_prevented_usd": 29.24,
+      "customer_friction_cost_usd": 0.0,
+      "compliance_risk_penalty_usd": 0.0,
+      "net_utility_score": 29.24,
+      "pareto_optimal": false,
+      "rationale": "Moderate uncertainty (0.50): Balanced trade-off yields net utility 29.24."
     }
   ]
 }

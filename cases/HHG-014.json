@@ -4,7 +4,7 @@
     "case_id": "HHG-014",
     "status": "closed_fraud",
     "verdict": "fraud",
-    "fraud_probability": 0.9,
+    "fraud_probability": 0.92,
     "pattern": "account_takeover",
     "pattern_description": "",
     "affected_txn_ids": [
@@ -12,56 +12,56 @@
     ],
     "first_suspicious_txn_id": "3478561",
     "connected_card_ids": [
-      "C06224-K2",
-      "C05704-K2",
-      "C11000-K2",
-      "C03528-K1",
-      "C03318-K1",
-      "C07987-K2",
-      "C03278-K2",
-      "C02910-K1",
-      "C06220-K1",
-      "C11539-K2",
-      "C04108-K2",
+      "C02480-K1",
+      "C00952-K1",
+      "C06617-K1",
+      "C12578-K1",
+      "C03999-K1",
+      "C07409-K1",
       "C01935-K1",
+      "C02975-K1",
+      "C04274-K1",
+      "C03040-K2",
+      "C06198-K1",
+      "C01155-K2",
+      "C04105-K2",
+      "C06224-K2",
+      "C06220-K1",
       "C01982-K2",
       "C07212-K1",
-      "C07409-K1",
-      "C09165-K2",
-      "C01751-K1",
-      "C03551-K1",
-      "C08918-K2",
-      "C10861-K1",
-      "C07612-K1",
-      "C00952-K1",
-      "C12578-K1",
-      "C06890-K1",
+      "C04108-K2",
       "C08217-K1",
-      "C06617-K1",
-      "C08033-K1",
-      "C03040-K2",
-      "C02975-K1",
-      "C02902-K2",
-      "C06198-K1",
       "C04125-K1",
-      "C01155-K2",
+      "C05704-K2",
+      "C11000-K2",
+      "C02902-K2",
+      "C06890-K1",
+      "C01751-K1",
       "C04311-K1",
-      "C03999-K1",
       "C12897-K1",
-      "C00854-K2",
-      "C00750-K2",
-      "C02480-K1",
-      "C08450-K2",
-      "C11309-K1",
-      "C10675-K1",
-      "C06197-K1",
+      "C09165-K2",
       "C03422-K1",
-      "C02716-K1",
-      "C04105-K2",
+      "C02910-K1",
+      "C00854-K2",
+      "C10675-K1",
+      "C03278-K2",
+      "C06197-K1",
       "C09241-K2",
+      "C10861-K1",
+      "C11309-K1",
+      "C08918-K2",
+      "C00750-K2",
+      "C03551-K1",
+      "C03318-K1",
+      "C08033-K1",
+      "C08450-K2",
+      "C11539-K2",
+      "C07987-K2",
       "C10390-K1",
       "C07185-K2",
-      "C04274-K1"
+      "C07612-K1",
+      "C02716-K1",
+      "C03528-K1"
     ],
     "connected_device_profiles": [
       "SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for androi"
@@ -75,7 +75,7 @@
         "entity_ids": [
           "3478561"
         ],
-        "graph_path": "Transaction(3478561) \u2500\u2500[CARD_OF]\u2500\u2500> Customer(C13487) \u2500\u2500[OWNS]\u2500\u2500> Card(C13487-K1)",
+        "graph_path": "Transaction(3478561) --transaction_of_customer-- Customer(C13487); Transaction(3478561) --transaction_of_card-- Card(C13487-K1)",
         "supports": "",
         "contradicts": ""
       },
@@ -87,67 +87,67 @@
           "C13487",
           "C13487-K1"
         ],
-        "graph_path": "Customer(C13487) \u2500\u2500[OWNS]\u2500\u2500> Card(C13487-K1) \u2500\u2500[BILLED_IN]\u2500\u2500> Region(191.0)",
+        "graph_path": "Customer(C13487).home_region=191.0",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Device shared across 50 other card(s): C06224-K2, C05704-K2, C11000-K2",
+        "claim": "Device shared across 50 other card(s): C02480-K1, C00952-K1, C06617-K1",
         "source": "graph",
         "ref": "query:shared_devices(C13487)",
         "entity_ids": [
-          "C06224-K2",
-          "C05704-K2",
-          "C11000-K2",
-          "C03528-K1",
-          "C03318-K1",
-          "C07987-K2",
-          "C03278-K2",
-          "C02910-K1",
-          "C06220-K1",
-          "C11539-K2",
-          "C04108-K2",
+          "C02480-K1",
+          "C00952-K1",
+          "C06617-K1",
+          "C12578-K1",
+          "C03999-K1",
+          "C07409-K1",
           "C01935-K1",
+          "C02975-K1",
+          "C04274-K1",
+          "C03040-K2",
+          "C06198-K1",
+          "C01155-K2",
+          "C04105-K2",
+          "C06224-K2",
+          "C06220-K1",
           "C01982-K2",
           "C07212-K1",
-          "C07409-K1",
-          "C09165-K2",
-          "C01751-K1",
-          "C03551-K1",
-          "C08918-K2",
-          "C10861-K1",
-          "C07612-K1",
-          "C00952-K1",
-          "C12578-K1",
-          "C06890-K1",
+          "C04108-K2",
           "C08217-K1",
-          "C06617-K1",
-          "C08033-K1",
-          "C03040-K2",
-          "C02975-K1",
-          "C02902-K2",
-          "C06198-K1",
           "C04125-K1",
-          "C01155-K2",
+          "C05704-K2",
+          "C11000-K2",
+          "C02902-K2",
+          "C06890-K1",
+          "C01751-K1",
           "C04311-K1",
-          "C03999-K1",
           "C12897-K1",
-          "C00854-K2",
-          "C00750-K2",
-          "C02480-K1",
-          "C08450-K2",
-          "C11309-K1",
-          "C10675-K1",
-          "C06197-K1",
+          "C09165-K2",
           "C03422-K1",
-          "C02716-K1",
-          "C04105-K2",
+          "C02910-K1",
+          "C00854-K2",
+          "C10675-K1",
+          "C03278-K2",
+          "C06197-K1",
           "C09241-K2",
+          "C10861-K1",
+          "C11309-K1",
+          "C08918-K2",
+          "C00750-K2",
+          "C03551-K1",
+          "C03318-K1",
+          "C08033-K1",
+          "C08450-K2",
+          "C11539-K2",
+          "C07987-K2",
           "C10390-K1",
           "C07185-K2",
-          "C04274-K1"
+          "C07612-K1",
+          "C02716-K1",
+          "C03528-K1"
         ],
-        "graph_path": "Customer(C13487) \u2500\u2500[USED_DEVICE]\u2500\u2500> Device(SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for androi) \u2500\u2500[CROSS_CARD_LINK]\u2500\u2500> Card(C06224-K2)",
+        "graph_path": "Customer(C13487) --transaction_of_customer-- Transaction --transaction_uses_device-- Device(SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for androi) --transaction_uses_device-- Transaction --transaction_of_card-- Card(C02480-K1)",
         "supports": "",
         "contradicts": ""
       },
@@ -160,19 +160,20 @@
           "CC-5558",
           "CC-5556"
         ],
-        "graph_path": "Alert(HHG-014) \u2500\u2500[INVOLVES_TXN]\u2500\u2500> Transaction(3478561) \u2500\u2500[SIMILAR_PATTERN]\u2500\u2500> ClosedCase(CC-5559)",
+        "graph_path": "FraudCase(CC-5559) --case_of_customer--> Customer(C13487)",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
-        "source": "customer",
-        "ref": "tool:customer_inquiry(C13487)",
+        "claim": "Semantic case-memory retrieval returned: CC-2600, CC-3840, CC-3224",
+        "source": "document",
+        "ref": "vector:closed_case_similarity",
         "entity_ids": [
-          "C13487",
-          "3478561"
+          "CC-2600",
+          "CC-3840",
+          "CC-3224"
         ],
-        "graph_path": "Cardholder(C13487) \u2500\u2500[INQUIRY_RESPONSE]\u2500\u2500> Txn(3478561)",
+        "graph_path": "",
         "supports": "",
         "contradicts": ""
       },
@@ -188,79 +189,47 @@
         "contradicts": "legitimate"
       },
       {
-        "claim": "Simulated customer verification response: No reply received within 24 hours; ownership remains unverified",
-        "source": "customer",
-        "ref": "evidence_request:1",
+        "claim": "TigerGraph shared-device traversal identified syndicate: device shared across 50 distinct cards",
+        "source": "graph",
+        "ref": "tigergraph:shared_devices(C13487)",
         "entity_ids": [
-          "C13487"
+          "C02480-K1",
+          "C00952-K1",
+          "C06617-K1",
+          "C12578-K1",
+          "C03999-K1"
         ],
-        "graph_path": "",
-        "supports": "",
-        "contradicts": ""
+        "graph_path": "Customer(C13487) \u2500\u2500[USES_DEVICE]\u2500\u2500> Device \u2500\u2500[SHARED_WITH]\u2500\u2500> 50 Cards",
+        "supports": "fraud",
+        "contradicts": "legitimate"
       }
     ],
     "similar_prior_cases": [
-      "CC-5559",
-      "CC-5558"
+      "CC-2600",
+      "CC-3840"
     ],
-    "summary": "Investigation of HHG-014 (C13487 / C13487-K1): Flagged transaction 3478561 ($74.96) evaluated under account_takeover. Customer reported: No reply received within 24 hours; ownership remains unverified. Identified 1 affected transaction(s) totaling $74.96 USD exposure. Verdict: fraud (fraud probability: 0.90). Recommended 4 action(s) adhering to bank policy.",
+    "summary": "Investigation of HHG-014 (C13487 / C13487-K1): Flagged transaction 3478561 ($74.96) evaluated under account_takeover. Identified 1 affected transaction(s) totaling $74.96 USD exposure. Verdict: fraud (fraud probability: 0.92). Recommended 4 action(s) adhering to bank policy.",
     "written_to_graph": true,
-    "graph_case_id": "CASE-2016-591945FB",
-    "opened_at": "2026-09-23 17:09:44.788645+00:00",
-    "updated_at": "2026-09-23 17:09:44.788645+00:00"
+    "graph_case_id": "CASE-2016-0C440A5E",
+    "opened_at": "2026-09-23 18:25:12.652189+00:00",
+    "updated_at": "2026-09-23 18:25:12.652189+00:00"
   },
-  "evidence_requests": [
-    {
-      "type": "customer_validation",
-      "asked_after_step": 3,
-      "assumed_response": "No reply received within 24 hours; ownership remains unverified",
-      "simulation_disclosure": "Synthetic response for benchmark/demo; not ground truth"
-    }
-  ],
+  "evidence_requests": [],
   "next_best_actions": {
     "initial": [
       {
-        "action": "CREATE_CASE",
-        "route": "auto",
-        "reason": "Section 3a: Open internal fraud case as probability reaches threshold",
-        "order": 1,
-        "approval_id": "",
-        "requires_approval": false,
-        "state": "NOT_REQUIRED"
-      },
-      {
-        "action": "VERIFY_WITH_CUSTOMER",
-        "route": "auto",
-        "reason": "R1: Single signal / probability 0.90 < 0.70; verify before blocking",
-        "order": 2,
-        "approval_id": "",
-        "requires_approval": false,
-        "state": "NOT_REQUIRED"
-      },
-      {
-        "action": "MONITOR_CARD",
-        "route": "auto",
-        "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
-        "order": 3,
-        "approval_id": "",
-        "requires_approval": false,
-        "state": "NOT_REQUIRED"
-      }
-    ],
-    "final": [
-      {
         "action": "BLOCK_CARD",
         "route": "L1",
-        "reason": "R2: Customer denied activity; card compromised (exposure $74.96)",
+        "reason": "Policy 1: High fraud probability 0.92 on pattern account_takeover",
         "order": 1,
-        "approval_id": "APP-49F393BB",
+        "approval_id": "",
         "requires_approval": true,
         "state": "PENDING"
       },
       {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "R2 and Section 3a: Internal fraud case record with graph persistence",
+        "reason": "Section 3a: Internal fraud case record",
         "order": 2,
         "approval_id": "",
         "requires_approval": false,
@@ -269,9 +238,38 @@
       {
         "action": "FILE_REPORT",
         "route": "L2",
-        "reason": "R2 & R6: Exposure exceeds $1,000, shared device cluster, or coordinated pattern",
+        "reason": "Section 3a & R6: Exposure $74.96 > $1,000 or shared infrastructure",
         "order": 3,
-        "approval_id": "APP-2E47F352",
+        "approval_id": "",
+        "requires_approval": true,
+        "state": "PENDING"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "Policy 1: Independent evidence supports fraud at probability 0.92",
+        "order": 1,
+        "approval_id": "APP-CAA6D3B1",
+        "requires_approval": true,
+        "state": "PENDING"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "Section 3a: Preserve the evidence-supported fraud investigation",
+        "order": 2,
+        "approval_id": "",
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "R6: Evidence indicates coordinated activity through shared infrastructure",
+        "order": 3,
+        "approval_id": "APP-A9D13FDC",
         "requires_approval": true,
         "state": "PENDING"
       },
@@ -285,16 +283,16 @@
         "state": "NOT_REQUIRED"
       }
     ],
-    "what_changed": "Customer response confirmed unauthorized use, increasing fraud probability to 0.90. Actions escalated from verification to card block and case creation."
+    "what_changed": "nothing"
   },
   "uncertainty": {
     "initial": {
-      "risk": 0.9,
-      "confidence": 0.9,
+      "risk": 0.92,
+      "confidence": 0.92,
       "evidence_completeness": 0.85,
       "contradictions": 0,
       "decision_readiness": "READY",
-      "risk_level": "HIGH",
+      "risk_level": "CRITICAL",
       "missing_evidence": [],
       "stale_evidence": 0,
       "weak_evidence": 0,
@@ -303,12 +301,12 @@
       ]
     },
     "final": {
-      "risk": 0.9,
-      "confidence": 0.9,
-      "evidence_completeness": 1.0,
+      "risk": 0.92,
+      "confidence": 0.92,
+      "evidence_completeness": 0.85,
       "contradictions": 0,
       "decision_readiness": "READY",
-      "risk_level": "HIGH",
+      "risk_level": "CRITICAL",
       "missing_evidence": [],
       "stale_evidence": 0,
       "weak_evidence": 0,
@@ -316,14 +314,12 @@
         "account_takeover: detected (0.90)"
       ]
     },
-    "what_reduced_uncertainty": [
-      "customer validation response"
-    ]
+    "what_reduced_uncertainty": []
   },
   "sar": {
     "file": true,
-    "reason": "R2/R6: Confirmed unauthorized activity under account_takeover with exposure of $74.96 USD linking to 50 other card(s)",
-    "narrative": "Between 2016-11-22 and 2016-11-22, account C13487 on card C13487-K1 was subjected to unauthorized fraudulent activity consistent with account takeover. A total of 1 transaction(s) were flagged, representing an aggregate exposure of $74.96 USD. Activity originated from device profile (SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for androi). Investigation uncovered common infrastructure links to connected card(s) C06224-K2, C05704-K2, C11000-K2, C03528-K1, C03318-K1, C07987-K2, C03278-K2, C02910-K1, C06220-K1, C11539-K2, C04108-K2, C01935-K1, C01982-K2, C07212-K1, C07409-K1, C09165-K2, C01751-K1, C03551-K1, C08918-K2, C10861-K1, C07612-K1, C00952-K1, C12578-K1, C06890-K1, C08217-K1, C06617-K1, C08033-K1, C03040-K2, C02975-K1, C02902-K2, C06198-K1, C04125-K1, C01155-K2, C04311-K1, C03999-K1, C12897-K1, C00854-K2, C00750-K2, C02480-K1, C08450-K2, C11309-K1, C10675-K1, C06197-K1, C03422-K1, C02716-K1, C04105-K2, C09241-K2, C10390-K1, C07185-K2, C04274-K1. Customer was contacted and reported: 'No reply received within 24 hours; ownership remains unverified'. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Based on regulatory guidelines under FinCEN and bank fraud policy R2/R6, the card has been blocked and reissued, connected entities placed under heightened monitoring, and this report is submitted to document the illicit financial activity.",
+    "reason": "R6: Suspicious activity under account_takeover with exposure of $74.96 USD linking to 50 other card(s)",
+    "narrative": "Between 2016-11-22 and 2016-11-22, account C13487 on card C13487-K1 was subjected to unauthorized fraudulent activity consistent with account takeover. A total of 1 transaction(s) were flagged, representing an aggregate exposure of $74.96 USD. Activity originated from device profile (SM-G935F Build/NRD90M | Android 7.0 | chrome 62.0 for androi). Investigation uncovered common infrastructure links to connected card(s) C02480-K1, C00952-K1, C06617-K1, C12578-K1, C03999-K1, C07409-K1, C01935-K1, C02975-K1, C04274-K1, C03040-K2, C06198-K1, C01155-K2, C04105-K2, C06224-K2, C06220-K1, C01982-K2, C07212-K1, C04108-K2, C08217-K1, C04125-K1, C05704-K2, C11000-K2, C02902-K2, C06890-K1, C01751-K1, C04311-K1, C12897-K1, C09165-K2, C03422-K1, C02910-K1, C00854-K2, C10675-K1, C03278-K2, C06197-K1, C09241-K2, C10861-K1, C11309-K1, C08918-K2, C00750-K2, C03551-K1, C03318-K1, C08033-K1, C08450-K2, C11539-K2, C07987-K2, C10390-K1, C07185-K2, C07612-K1, C02716-K1, C03528-K1. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Under the applicable fraud policy, blocking or reissuing the subject card remains subject to the stated approval route; connected entities are recommended for heightened monitoring, and this report documents the suspicious activity.",
     "subjects": [
       "C00750-K2",
       "C00854-K2",
@@ -384,36 +380,86 @@
       "2016-11-22"
     ]
   },
-  "stop_reason": "Verification and graph evidence settled the decision; policy actions proposed and recorded.",
+  "stop_reason": "Available graph and verification evidence support the recorded decision; policy actions remain recommendations until any required approval is recorded.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.07,
+  "latency_s": 0.6,
   "agent_trace": [
     {
       "step": 1,
       "hypothesis": "Analyst inquiry: syndicated device profile suspected on txn 3478561",
-      "selected_tool": "CARDHOLDER_TRANSACTION_VERIFICATION",
-      "expected_info_gain": 0.595,
-      "value_of_information": 7.44,
-      "evidence_claim": "Cardholder verification inquiry: Cardholder unreached / pending response; initial alert stands.",
-      "evidence_supports": "",
-      "evidence_contradicts": "",
+      "selected_tool": "MERCHANT_TERMINAL_AUDIT",
+      "expected_info_gain": 0.15,
+      "value_of_information": 3.75,
+      "evidence_claim": "Transaction audit: $74.96 via online (Product C)",
+      "evidence_supports": "fraud",
+      "evidence_contradicts": "legitimate",
       "prior_belief": 0.7,
-      "posterior_belief": 0.74,
-      "entropy_reduction": 0.055
+      "posterior_belief": 0.794,
+      "entropy_reduction": 0.147
     },
     {
       "step": 2,
       "hypothesis": "Analyst inquiry: syndicated device profile suspected on txn 3478561",
-      "selected_tool": "MERCHANT_TERMINAL_AUDIT",
-      "expected_info_gain": 0.15,
-      "value_of_information": 5.0,
-      "evidence_claim": "Transaction audit: $74.96 via online (Product C)",
+      "selected_tool": "DEVICE_REPUTATION_TELEMETRY",
+      "expected_info_gain": 0.0,
+      "value_of_information": 0.0,
+      "evidence_claim": "TigerGraph shared-device traversal identified syndicate: device shared across 50 distinct cards",
       "evidence_supports": "fraud",
       "evidence_contradicts": "legitimate",
-      "prior_belief": 0.74,
-      "posterior_belief": 0.825,
-      "entropy_reduction": 0.156
+      "prior_belief": 0.794,
+      "posterior_belief": 0.95,
+      "entropy_reduction": 0.449
+    }
+  ],
+  "counterfactuals": [
+    {
+      "action_type": "BLOCK_CARD",
+      "action_id": "APP-CAA6D3B1",
+      "target": "Policy 1: Independent evidence supports fraud at probability 0.92",
+      "route": "L1",
+      "loss_prevented_usd": 68.59,
+      "customer_friction_cost_usd": 3.82,
+      "compliance_risk_penalty_usd": 50.0,
+      "net_utility_score": 14.76,
+      "pareto_optimal": true,
+      "rationale": "High fraud risk (0.92): BLOCK_CARD prevents estimated $68.59 with acceptable friction ($3.82)."
+    },
+    {
+      "action_type": "FILE_REPORT",
+      "action_id": "APP-A9D13FDC",
+      "target": "R6: Evidence indicates coordinated activity through shared infrastructure",
+      "route": "L2",
+      "loss_prevented_usd": 0.0,
+      "customer_friction_cost_usd": 1.27,
+      "compliance_risk_penalty_usd": 0.0,
+      "net_utility_score": -1.27,
+      "pareto_optimal": false,
+      "rationale": "High fraud risk (0.92): FILE_REPORT prevents estimated $0.00 with acceptable friction ($1.27)."
+    },
+    {
+      "action_type": "MONITOR_CONNECTED_CARDS",
+      "action_id": "ACT-MONITOR_CONNECTED_CARDS",
+      "target": "R6: Monitor 50 connected card(s) linked via shared infrastructure",
+      "route": "auto",
+      "loss_prevented_usd": 17.15,
+      "customer_friction_cost_usd": 0.0,
+      "compliance_risk_penalty_usd": 50.0,
+      "net_utility_score": -32.85,
+      "pareto_optimal": false,
+      "rationale": "High fraud risk (0.92): MONITOR_CONNECTED_CARDS prevents estimated $17.15 with acceptable friction ($0.00)."
+    },
+    {
+      "action_type": "CREATE_CASE",
+      "action_id": "ACT-CREATE_CASE",
+      "target": "Section 3a: Preserve the evidence-supported fraud investigation",
+      "route": "auto",
+      "loss_prevented_usd": 6.86,
+      "customer_friction_cost_usd": 0.85,
+      "compliance_risk_penalty_usd": 50.0,
+      "net_utility_score": -43.99,
+      "pareto_optimal": false,
+      "rationale": "High fraud risk (0.92): CREATE_CASE prevents estimated $6.86 with acceptable friction ($0.85)."
     }
   ]
 }

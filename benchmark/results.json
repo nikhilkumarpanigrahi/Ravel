@@ -1,15 +1,16 @@
 {
   "cases_run": 20,
   "scorecard": {
-    "ground_truth_accuracy": 100.0,
+    "answer_key_accuracy": null,
+    "answer_key_status": "unavailable_by_challenge_design",
     "policy_conformity_rate": 100.0,
     "pattern_consistency_rate": 100.0,
-    "graph_lineage_completeness": 100.0
+    "evidence_reference_coverage": 100.0
   },
   "verdicts": {
-    "legitimate": 4,
-    "uncertain": 7,
-    "fraud": 9
+    "uncertain": 10,
+    "fraud": 9,
+    "legitimate": 1
   },
   "patterns": {
     "none": 4,
@@ -17,37 +18,37 @@
     "account_takeover": 6,
     "card_not_present_new_device": 1
   },
-  "sar_filed": 9,
-  "total_exposure_usd": 2996.56,
-  "avg_latency_s": 0.38,
+  "sar_filed": 7,
+  "total_exposure_usd": 4888.89,
+  "avg_latency_s": 1.09,
   "avg_tool_calls": 14.0,
   "cases": [
     {
       "case_id": "HHG-001",
-      "verdict": "legitimate",
+      "verdict": "uncertain",
       "pattern": "none",
-      "fraud_probability": 0.15,
+      "fraud_probability": 0.26,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 0.19
+      "latency_s": 0.71
     },
     {
       "case_id": "HHG-002",
       "verdict": "uncertain",
       "pattern": "card_not_present_fraud",
-      "fraud_probability": 0.3,
-      "exposure_usd": 0.0,
+      "fraud_probability": 0.5,
+      "exposure_usd": 292.36,
       "sar_file": false,
-      "latency_s": 0.98
+      "latency_s": 1.34
     },
     {
       "case_id": "HHG-003",
       "verdict": "fraud",
       "pattern": "card_not_present_fraud",
-      "fraud_probability": 0.94,
+      "fraud_probability": 0.93,
       "exposure_usd": 49.0,
-      "sar_file": true,
-      "latency_s": 0.57
+      "sar_file": false,
+      "latency_s": 0.53
     },
     {
       "case_id": "HHG-004",
@@ -56,16 +57,16 @@
       "fraud_probability": 0.94,
       "exposure_usd": 128.33,
       "sar_file": true,
-      "latency_s": 0.48
+      "latency_s": 1.83
     },
     {
       "case_id": "HHG-005",
       "verdict": "uncertain",
       "pattern": "account_takeover",
-      "fraud_probability": 0.75,
+      "fraud_probability": 0.8,
       "exposure_usd": 100.07,
       "sar_file": false,
-      "latency_s": 0.1
+      "latency_s": 0.42
     },
     {
       "case_id": "HHG-006",
@@ -74,16 +75,16 @@
       "fraud_probability": 0.95,
       "exposure_usd": 1906.07,
       "sar_file": true,
-      "latency_s": 0.13
+      "latency_s": 0.95
     },
     {
       "case_id": "HHG-007",
-      "verdict": "legitimate",
+      "verdict": "uncertain",
       "pattern": "none",
-      "fraud_probability": 0.15,
+      "fraud_probability": 0.34,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 0.39
+      "latency_s": 0.84
     },
     {
       "case_id": "HHG-008",
@@ -92,7 +93,7 @@
       "fraud_probability": 0.94,
       "exposure_usd": 55.68,
       "sar_file": true,
-      "latency_s": 0.46
+      "latency_s": 1.83
     },
     {
       "case_id": "HHG-009",
@@ -101,16 +102,16 @@
       "fraud_probability": 0.94,
       "exposure_usd": 30.02,
       "sar_file": true,
-      "latency_s": 0.22
+      "latency_s": 1.3
     },
     {
       "case_id": "HHG-010",
       "verdict": "uncertain",
       "pattern": "card_not_present_fraud",
-      "fraud_probability": 0.3,
-      "exposure_usd": 0.0,
+      "fraud_probability": 0.5,
+      "exposure_usd": 1000.03,
       "sar_file": false,
-      "latency_s": 0.09
+      "latency_s": 0.62
     },
     {
       "case_id": "HHG-011",
@@ -119,43 +120,43 @@
       "fraud_probability": 0.94,
       "exposure_usd": 131.3,
       "sar_file": true,
-      "latency_s": 0.57
+      "latency_s": 2.18
     },
     {
       "case_id": "HHG-012",
-      "verdict": "legitimate",
+      "verdict": "uncertain",
       "pattern": "none",
-      "fraud_probability": 0.15,
+      "fraud_probability": 0.24,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 0.38
+      "latency_s": 0.49
     },
     {
       "case_id": "HHG-013",
       "verdict": "uncertain",
       "pattern": "account_takeover",
-      "fraud_probability": 0.75,
+      "fraud_probability": 0.81,
       "exposure_usd": 197.38,
       "sar_file": false,
-      "latency_s": 0.23
+      "latency_s": 1.16
     },
     {
       "case_id": "HHG-014",
       "verdict": "fraud",
       "pattern": "account_takeover",
-      "fraud_probability": 0.9,
+      "fraud_probability": 0.92,
       "exposure_usd": 74.96,
       "sar_file": true,
-      "latency_s": 0.07
+      "latency_s": 0.6
     },
     {
       "case_id": "HHG-015",
       "verdict": "uncertain",
       "pattern": "card_not_present_fraud",
-      "fraud_probability": 0.3,
-      "exposure_usd": 0.0,
+      "fraud_probability": 0.5,
+      "exposure_usd": 599.94,
       "sar_file": false,
-      "latency_s": 0.27
+      "latency_s": 1.57
     },
     {
       "case_id": "HHG-016",
@@ -164,7 +165,7 @@
       "fraud_probability": 0.94,
       "exposure_usd": 59.67,
       "sar_file": true,
-      "latency_s": 0.42
+      "latency_s": 1.74
     },
     {
       "case_id": "HHG-017",
@@ -173,34 +174,34 @@
       "fraud_probability": 0.05,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 0.46
+      "latency_s": 1.28
     },
     {
       "case_id": "HHG-018",
       "verdict": "fraud",
       "pattern": "card_not_present_fraud",
-      "fraud_probability": 0.94,
+      "fraud_probability": 0.93,
       "exposure_usd": 39.08,
-      "sar_file": true,
-      "latency_s": 1.17
+      "sar_file": false,
+      "latency_s": 1.02
     },
     {
       "case_id": "HHG-019",
       "verdict": "uncertain",
       "pattern": "account_takeover",
-      "fraud_probability": 0.75,
+      "fraud_probability": 0.82,
       "exposure_usd": 99.92,
       "sar_file": false,
-      "latency_s": 0.23
+      "latency_s": 0.99
     },
     {
       "case_id": "HHG-020",
       "verdict": "uncertain",
       "pattern": "account_takeover",
-      "fraud_probability": 0.75,
+      "fraud_probability": 0.79,
       "exposure_usd": 125.08,
       "sar_file": false,
-      "latency_s": 0.12
+      "latency_s": 0.47
     }
   ]
 }

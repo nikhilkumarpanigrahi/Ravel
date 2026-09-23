@@ -279,6 +279,8 @@ See [benchmark/report.md](benchmark/report.md), [benchmark/results.json](benchma
 
 These figures describe pipeline output; they are not accuracy scores because the challenge case pack does not provide a complete expected-answer key.
 
+The committed artifacts were generated through the deterministic local adapter and then synchronized to the configured TigerGraph using the same `graph_case_id` values. A live read-back of `HHG-014` verified its `FraudCase` vertex plus `case_of_customer`, `case_of_card`, and `case_first_fraud_transaction` lineage edges.
+
 ## Answer-file structure
 
 Every `cases/HHG-XXX.json` file contains:
