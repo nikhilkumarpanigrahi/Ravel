@@ -20,7 +20,7 @@
   },
   "sar_filed": 7,
   "total_exposure_usd": 4888.89,
-  "avg_latency_s": 1.09,
+  "avg_latency_s": 1.11,
   "avg_tool_calls": 14.0,
   "cases": [
     {
@@ -30,7 +30,7 @@
       "fraud_probability": 0.26,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 0.71
+      "latency_s": 0.57
     },
     {
       "case_id": "HHG-002",
@@ -39,7 +39,7 @@
       "fraud_probability": 0.5,
       "exposure_usd": 292.36,
       "sar_file": false,
-      "latency_s": 1.34
+      "latency_s": 1.41
     },
     {
       "case_id": "HHG-003",
@@ -48,7 +48,7 @@
       "fraud_probability": 0.93,
       "exposure_usd": 49.0,
       "sar_file": false,
-      "latency_s": 0.53
+      "latency_s": 0.54
     },
     {
       "case_id": "HHG-004",
@@ -57,7 +57,7 @@
       "fraud_probability": 0.94,
       "exposure_usd": 128.33,
       "sar_file": true,
-      "latency_s": 1.83
+      "latency_s": 1.74
     },
     {
       "case_id": "HHG-005",
@@ -66,7 +66,7 @@
       "fraud_probability": 0.8,
       "exposure_usd": 100.07,
       "sar_file": false,
-      "latency_s": 0.42
+      "latency_s": 0.46
     },
     {
       "case_id": "HHG-006",
@@ -75,7 +75,7 @@
       "fraud_probability": 0.95,
       "exposure_usd": 1906.07,
       "sar_file": true,
-      "latency_s": 0.95
+      "latency_s": 0.74
     },
     {
       "case_id": "HHG-007",
@@ -84,7 +84,7 @@
       "fraud_probability": 0.34,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 0.84
+      "latency_s": 0.88
     },
     {
       "case_id": "HHG-008",
@@ -93,7 +93,7 @@
       "fraud_probability": 0.94,
       "exposure_usd": 55.68,
       "sar_file": true,
-      "latency_s": 1.83
+      "latency_s": 1.87
     },
     {
       "case_id": "HHG-009",
@@ -102,7 +102,7 @@
       "fraud_probability": 0.94,
       "exposure_usd": 30.02,
       "sar_file": true,
-      "latency_s": 1.3
+      "latency_s": 1.42
     },
     {
       "case_id": "HHG-010",
@@ -111,7 +111,7 @@
       "fraud_probability": 0.5,
       "exposure_usd": 1000.03,
       "sar_file": false,
-      "latency_s": 0.62
+      "latency_s": 0.64
     },
     {
       "case_id": "HHG-011",
@@ -120,7 +120,7 @@
       "fraud_probability": 0.94,
       "exposure_usd": 131.3,
       "sar_file": true,
-      "latency_s": 2.18
+      "latency_s": 2.2
     },
     {
       "case_id": "HHG-012",
@@ -129,7 +129,7 @@
       "fraud_probability": 0.24,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 0.49
+      "latency_s": 0.56
     },
     {
       "case_id": "HHG-013",
@@ -138,7 +138,7 @@
       "fraud_probability": 0.81,
       "exposure_usd": 197.38,
       "sar_file": false,
-      "latency_s": 1.16
+      "latency_s": 1.15
     },
     {
       "case_id": "HHG-014",
@@ -147,7 +147,7 @@
       "fraud_probability": 0.92,
       "exposure_usd": 74.96,
       "sar_file": true,
-      "latency_s": 0.6
+      "latency_s": 0.65
     },
     {
       "case_id": "HHG-015",
@@ -156,7 +156,7 @@
       "fraud_probability": 0.5,
       "exposure_usd": 599.94,
       "sar_file": false,
-      "latency_s": 1.57
+      "latency_s": 1.61
     },
     {
       "case_id": "HHG-016",
@@ -165,7 +165,7 @@
       "fraud_probability": 0.94,
       "exposure_usd": 59.67,
       "sar_file": true,
-      "latency_s": 1.74
+      "latency_s": 1.85
     },
     {
       "case_id": "HHG-017",
@@ -174,7 +174,7 @@
       "fraud_probability": 0.05,
       "exposure_usd": 0.0,
       "sar_file": false,
-      "latency_s": 1.28
+      "latency_s": 1.31
     },
     {
       "case_id": "HHG-018",
@@ -183,7 +183,7 @@
       "fraud_probability": 0.93,
       "exposure_usd": 39.08,
       "sar_file": false,
-      "latency_s": 1.02
+      "latency_s": 1.14
     },
     {
       "case_id": "HHG-019",
@@ -192,7 +192,7 @@
       "fraud_probability": 0.82,
       "exposure_usd": 99.92,
       "sar_file": false,
-      "latency_s": 0.99
+      "latency_s": 1.09
     },
     {
       "case_id": "HHG-020",
@@ -201,7 +201,7 @@
       "fraud_probability": 0.79,
       "exposure_usd": 125.08,
       "sar_file": false,
-      "latency_s": 0.47
+      "latency_s": 0.46
     }
   ]
 }
