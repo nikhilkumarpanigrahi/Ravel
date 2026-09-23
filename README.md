@@ -20,30 +20,33 @@ Rather than following rigid linear pipelines, RAVEL dynamically acquires evidenc
 
 ```mermaid
 flowchart TD
-    subgraph Intake ["ALERT INTAKE & TRIAGE"]
-        A["Payment Alert / Risk Score Event"] --> B["Initialize Case Dossier & Seed Entity"]
-        B --> C["Establish Prior Belief P(Fraud)"]
+    %% Row 1: Intake & Case Dossier
+    subgraph Intake [" "]
+        direction LR
+        Alert["<b>Payment Alert Event</b><br/>Ingest transaction & risk signals"] --> Dossier["<b>Case Dossier Seeder</b><br/>Extract target & entity IDs"] --> Prior["<b>Prior Belief</b><br/>Establish baseline P0(Fraud)"]
     end
 
-    subgraph ActiveLearning ["ACTIVE EVIDENCE-ACQUISITION LOOP"]
-        C --> D["Calculate Shannon Binary Entropy H(S)"]
-        D --> E["Evidence-Value Optimizer (EIG & VoI)<br/>Rank Graph Queries by Loss vs Friction"]
-        E --> F["Execute High-Gain Tool<br/>TigerGraph 2-Hop · Shared Devices · Precedents"]
-        F --> G["Extract Multi-Hop Signals<br/>Compile Structured Evidence Ledger"]
-        G --> H["Bayesian Belief Updating<br/>Compute Log-Likelihood Ratio"]
-        H --> I{"Decision Readiness?<br/>Entropy ≤ 0.22 bits OR Evidence Saturated"}
-        I -- "Ambiguity Persists" --> D
+    %% Row 2: Active Graph Intelligence Core
+    subgraph ActiveCore [" "]
+        direction LR
+        Entropy["<b>Shannon Entropy H(S)</b><br/>Quantify hypothesis uncertainty"] --> VoI["<b>Value Optimizer (VoI)</b><br/>Rank queries by EIG vs friction"] --> TG[("<b>TigerGraph Multi-Hop</b><br/>2-Hop & shared-device rings")] --> Bayes["<b>Bayesian Belief Update</b><br/>Posterior log-likelihood ratio"]
     end
 
-    subgraph DecisionGovernance ["GOVERNANCE & DEFENSE"]
-        I -- "Sufficient Evidence" --> J["Counterfactual Action Engine<br/>Pareto Frontier Optimization"]
-        J --> K["Compliance Rule Evaluation (R1–R8)<br/>Synthesize FinCEN SAR Narrative"]
-        K --> L{"Dual-Key Governance Gate<br/>Action Impact Routing"}
-        L -- "L1 Lead / L2 Manager" --> M["Human-in-the-Loop Decision Queue<br/>Two-Person Approval Required"]
-        L -- "Pre-Authorized" --> N["Automated Execution & Audit Trail"]
-        M --> N
-        N --> O["Case Memory Write-Back<br/>Persist Vertices & Edges to TigerGraph"]
+    %% Row 3: Governance & Resolution
+    subgraph Governance [" "]
+        direction LR
+        Pareto["<b>Pareto Counterfactuals</b><br/>Loss vs friction trade-off frontier"] --> Policy["<b>Policy Compliance (R1–R8)</b><br/>Synthesize FinCEN SAR narrative"] --> Gate{"<b>Dual-Key Gate</b><br/>L1 Lead / L2 Risk Mgr"} --> Audit["<b>TigerGraph Memory</b><br/>Persist vertex & audit lineage"]
     end
+
+    %% Cross-Row Downward Progression
+    Prior --> Entropy
+    Bayes -- "H ≤ 0.22 bits (Converged)" --> Pareto
+    Bayes -. "H > 0.22 bits (Ambiguous Loop)" .-> Entropy
+
+    %% Completely Borderless & Transparent
+    style Intake fill:none,stroke:none
+    style ActiveCore fill:none,stroke:none
+    style Governance fill:none,stroke:none
 ```
 
 ---
