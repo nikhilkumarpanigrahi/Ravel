@@ -466,25 +466,18 @@
     .badge-uncertain { border-color: #ecd9a6; }
     .top-stats { color: var(--text-muted); }
     .top-stats .stat-pill span, .case-cid, .action-name { color: var(--text-main); }
-    .state-flow { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding: 4px 2px 14px; }
-    .state-node { min-width: 138px; flex: 1; position: relative; padding: 12px 12px 10px; background: #f6f8f6; border: 1px solid #dfe7e2; border-radius: 10px; }
-    .state-node + .state-node { margin-left: 28px; }
-    .state-node + .state-node::before { content: ''; position: absolute; top: 50%; right: 100%; width: 28px; height: 2px; background: #c8d7cf; }
-    .state-node + .state-node::after { content: ''; position: absolute; top: calc(50% - 4px); right: calc(100% - 28px); border-left: 7px solid #c8d7cf; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+    .state-flow { display:grid; grid-template-columns:repeat(auto-fit, minmax(145px, 1fr)); gap:10px; padding:2px 0 16px; }
+    .state-node { min-height:86px; position:relative; padding:13px 14px 12px; background:#f6f8f6; border:1px solid #dfe7e2; border-radius:10px; transition:background .28s ease, border-color .28s ease, box-shadow .28s ease, transform .28s ease; animation:state-enter .46s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--state-order, 0) * 52ms); }
+    .state-node:hover { transform:translateY(-2px); box-shadow:0 5px 12px rgba(34,57,47,.08); }
     .state-node.active { background: #e6f2ed; border-color: #78af9b; }
-    .state-node.active::before { background: #78af9b; }
-    .state-node.active::after { border-left-color: #78af9b; }
     .state-node.current { background: #32756a; border-color: #32756a; color: #fff; box-shadow: 0 4px 12px rgba(50,117,106,.22); }
-    .state-node.current::before { background: #32756a; }
-    .state-node.current::after { border-left-color: #32756a; }
     .state-index { display: block; color: var(--text-subtle); font: 600 10px var(--font-mono); margin-bottom: 5px; }
     .state-name { display: block; font: 600 11px var(--font-mono); line-height: 1.35; word-break: break-word; }
     .state-node.current .state-index { color: #d7eee7; }
     .state-node.current .state-name { color: #fff; }
     .state-node.pending { background:#fafbf9; border-style:dashed; border-color:#dfe6e1; }
     .state-node.pending .state-name, .state-node.pending .state-index { color:#93a099; }
-    .state-node.pending::before { background:#dfe6e1; }
-    .state-node.pending::after { border-left-color:#dfe6e1; }
+    @keyframes state-enter { from { opacity:0; transform:translateY(10px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
     .trace-summary { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 14px; background:#f4f8f5; border:1px solid #dce8e1; border-radius:10px; margin-bottom:18px; color:var(--text-muted); }
     .trace-summary strong { color:var(--text-main); }
     .trace-detail-title { font-size:12px; color:var(--text-muted); font-weight:600; margin:6px 0 10px; }
@@ -519,6 +512,7 @@
     .briefing-headline { font-size:14px; font-weight:700; color:var(--text-main); margin-top:2px; }
     .briefing-stat-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
     .briefing-stat-value { font-weight:700; color:var(--text-main); margin-top:2px; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
     @media (max-width: 980px) { .dashboard-grid { grid-template-columns: 1fr; } aside { width: 240px; } .top-stats { display:none; } }
     @media (max-width: 720px) { body { overflow:auto; height:auto; } .app-container { min-height:calc(100vh - 52px); } aside { width: 200px; } .brand-sub { display:none; } .workspace-header { padding:14px; } .content-viewport { padding:16px; } .nav-tabs { overflow-x:auto; padding:0 16px; gap:18px; } }
   </style>
@@ -583,7 +577,7 @@
         <!-- Forensic Discovery Briefing Bar -->
         <div id="forensic-briefing-bar" class="briefing-bar">
           <div style="display:flex; align-items:center; gap:14px;">
-            <div class="briefing-icon">01</div>
+            <div class="briefing-icon" id="briefing-case-number">--</div>
             <div>
               <div class="briefing-label">Investigation summary</div>
               <div id="briefing-headline" class="briefing-headline">Loading case evidence and graph relationships...</div>
@@ -838,6 +832,7 @@
 
     async function loadCase(caseId) {
       const requestId = ++caseLoadSequence;
+      switchTab('record', document.querySelectorAll('.nav-tab')[0]);
       selectedCaseId = caseId;
       currentCaseData = null;
       currentApprovals = [];
@@ -873,6 +868,7 @@
 
     function renderCaseLoading(caseId) {
       document.getElementById('current-case-id').innerText = caseId;
+      document.getElementById('briefing-case-number').innerText = caseNumber(caseId);
       document.getElementById('current-chips').innerHTML = '<span class="badge" style="background:#e9efeb">LOADING CASE</span>';
       document.getElementById('case-summary').innerHTML = '<span class="loading-line" style="display:block; width:90%; margin:7px 0;"></span><span class="loading-line" style="display:block; width:68%;"></span>';
       document.getElementById('case-stop-reason').innerText = 'Loading the selected investigation...';
@@ -903,6 +899,11 @@
       document.getElementById('approval-status-tag').innerText = 'LOAD FAILED';
     }
 
+    function caseNumber(caseId) {
+      const match = String(caseId || '').match(/(\d+)$/);
+      return match ? match[1].padStart(2, '0') : '--';
+    }
+
     const workflowStages = [
       ['TRIGGERED', 'Opening the case and validating the alert'],
       ['CASE_CREATED', 'Setting the investigation scope'],
@@ -928,6 +929,7 @@
         const node = document.createElement('div');
         const nodeState = index < completedIndex ? ' active' : (index === completedIndex ? ' active current' : ' pending');
         node.className = `state-node${nodeState}`;
+        node.style.setProperty('--state-order', index);
         node.title = detail;
         node.innerHTML = `<span class="state-index">STEP ${index + 1}</span><span class="state-name">${state.replaceAll('_', ' ')}</span>`;
         flow.appendChild(node);
@@ -988,6 +990,7 @@
       const d = currentCaseData;
       if (!d) return;
       document.getElementById('current-case-id').innerText = d.case_id;
+      document.getElementById('briefing-case-number').innerText = caseNumber(d.case_id);
 
       const c = d.case || {};
       let verdictBadge = c.verdict === 'fraud' ? 'badge-fraud' : (c.verdict === 'legitimate' ? 'badge-legit' : 'badge-uncertain');
@@ -1137,6 +1140,7 @@
       stateEntries.forEach((entry, index) => {
         const node = document.createElement('div');
         node.className = `state-node active${index === currentIndex ? ' current' : ''}`;
+        node.style.setProperty('--state-order', index);
         node.title = entry.reason || entry.state;
         node.innerHTML = `<span class="state-index">STEP ${index + 1}</span><span class="state-name">${entry.state.replaceAll('_', ' ')}</span>`;
         flow.appendChild(node);
