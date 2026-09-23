@@ -113,38 +113,7 @@ class AgenticInvestigationEngine:
             log_lr = 0.0
             new_evidence: EvidenceRecord | None = None
 
-            if chosen_tool.inquiry_type == "CARDHOLDER_TRANSACTION_VERIFICATION":
-                # Simulated inquiry based on trigger context
-                if trigger_type == TriggerType.CUSTOMER_REPORT:
-                    resp = "Customer stated they never made this purchase and retained possession of card."
-                    supports, contradicts = "fraud", "legitimate"
-                    log_lr = 2.4  # strong evidence for fraud
-                elif prior_belief < 0.40:
-                    resp = "Cardholder confirmed transaction as authorized recurring purchase."
-                    supports, contradicts = "legitimate", "fraud"
-                    log_lr = -2.8  # strong evidence for legitimate
-                else:
-                    resp = "Cardholder unreached / pending response; initial alert stands."
-                    supports, contradicts = "", ""
-                    log_lr = 0.2
-
-                new_evidence = EvidenceRecord(
-                    case_id=case_id,
-                    claim=f"Cardholder verification inquiry: {resp}",
-                    source=EvidenceSource.CUSTOMER,
-                    ref=f"tool:customer_inquiry({customer_id})",
-                    entity_ids=[customer_id, flagged_txn_id],
-                    evidence_type=EvidenceType.CUSTOMER_RESPONSE,
-                    strength=0.90,
-                    confidence=0.85,
-                    supports=supports,
-                    contradicts=contradicts,
-                    tool_used="customer_inquiry",
-                    policy_context="Policy R1: Customer transaction verification",
-                    graph_path=f"Cardholder({customer_id}) ──[INQUIRY_RESPONSE]──> Txn({flagged_txn_id})",
-                )
-
-            elif chosen_tool.inquiry_type == "DEVICE_REPUTATION_TELEMETRY":
+            if chosen_tool.inquiry_type == "DEVICE_REPUTATION_TELEMETRY":
                 # Query TigerGraph shared devices
                 shared_devs = self.graph.shared_devices(customer_id)
                 shared_cards = list({r["other_card_id"] for r in shared_devs if r.get("other_card_id")})
@@ -170,7 +139,11 @@ class AgenticInvestigationEngine:
                     contradicts=contradicts,
                     tool_used="tigergraph:shared_devices",
                     policy_context="Policy R2: Shared device syndicate inspection",
-                    graph_path=f"Customer({customer_id}) ──[USES_DEVICE]──> Device ──[SHARED_WITH]──> {len(shared_cards)} Cards",
+                    graph_path=(
+                        f"Customer({customer_id}) --transaction_of_customer-- Transaction "
+                        f"--transaction_uses_device-- Device --transaction_uses_device-- Transaction "
+                        f"--transaction_of_card-- {len(shared_cards)} Card vertices"
+                    ),
                 )
 
             elif chosen_tool.inquiry_type == "MERCHANT_TERMINAL_AUDIT":
@@ -198,7 +171,7 @@ class AgenticInvestigationEngine:
                     contradicts=contradicts,
                     tool_used="tigergraph:get_txn",
                     policy_context="Policy R3: Channel & transaction telemetry",
-                    graph_path=f"Transaction({flagged_txn_id}) ──[CHANNEL]──> {channel.upper()}",
+                    graph_path=f"Transaction({flagged_txn_id}).channel={channel}",
                 )
 
             if new_evidence:
