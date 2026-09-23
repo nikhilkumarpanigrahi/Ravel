@@ -19,6 +19,15 @@ def test_lightweight_embedder():
     assert sim_testing > sim_ato
 
 
+def test_lightweight_embedder_is_stable_across_instances():
+    first = LightweightTextEmbedder(dim=128).embed("shared proxy device fraud ring")
+    second = LightweightTextEmbedder(dim=128).embed("shared proxy device fraud ring")
+
+    import numpy as np
+
+    np.testing.assert_array_equal(first, second)
+
+
 def test_case_vector_index(tmp_path):
     csv_file = tmp_path / "closed_cases_history.csv"
     csv_file.write_text(

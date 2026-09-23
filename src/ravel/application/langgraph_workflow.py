@@ -72,7 +72,9 @@ class LangGraphWorkflowRunner:
 
         def node_execute_investigation(state: InvestigationGraphState) -> dict[str, Any]:
             # Run the deterministic, policy-governed investigation workflow
-            ans = self.base_workflow.run_investigation(state["trigger_dict"])
+            enhanced_trigger = dict(state["trigger_dict"])
+            enhanced_trigger["_vector_matches"] = state.get("vector_matches", [])
+            ans = self.base_workflow.run_investigation(enhanced_trigger)
             return {"answer_file": ans}
 
         def node_counterfactual_optimization(state: InvestigationGraphState) -> dict[str, Any]:
@@ -103,6 +105,7 @@ class LangGraphWorkflowRunner:
                 exposure_usd=exposure,
                 sar_required=sar_file,
             )
+            ans.counterfactuals = [e.to_dict() for e in evals]
             return {"counterfactuals": [e.to_dict() for e in evals]}
 
         workflow.add_node("intake", node_intake)

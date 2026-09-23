@@ -92,6 +92,31 @@ class AgentWorkflow:
             txn_id=trigger.flagged_txn_id,
             case_id=case_id,
         )
+        vector_matches = trigger_dict.get("_vector_matches", [])
+        if vector_matches:
+            known_case_ids = {str(case.get("case_id", "")) for case in rag_ctx.historical_cases}
+            unique_matches: list[dict[str, Any]] = []
+            for match in vector_matches:
+                match_id = str(match.get("case_id", ""))
+                if match_id and match_id not in known_case_ids:
+                    unique_matches.append(match)
+                    known_case_ids.add(match_id)
+            rag_ctx.historical_cases = unique_matches + rag_ctx.historical_cases
+            match_ids = [str(match.get("case_id")) for match in vector_matches if match.get("case_id")]
+            rag_ctx.evidence.append(
+                EvidenceRecord(
+                    case_id=case_id,
+                    claim=f"Semantic case-memory retrieval returned: {', '.join(match_ids)}",
+                    source=EvidenceSource.DOCUMENT,
+                    ref="vector:closed_case_similarity",
+                    entity_ids=match_ids,
+                    evidence_type=EvidenceType.HISTORICAL_CASE,
+                    strength=0.55,
+                    confidence=0.70,
+                    tool_used="vector:closed_case_similarity",
+                    policy_context="Retrieved context only; not treated as proof of the current case",
+                )
+            )
         tool_calls += 3
 
         # Assemble InvestigationContext for detectors

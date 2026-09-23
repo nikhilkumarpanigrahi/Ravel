@@ -7,6 +7,7 @@ combining graph/categorical filters with embedding-based cosine similarity.
 from __future__ import annotations
 
 import csv
+import hashlib
 import math
 import re
 from collections import Counter
@@ -41,7 +42,7 @@ class LightweightTextEmbedder:
 
         for token, count in counts.items():
             # Hash token and character n-grams to distribute semantics across dimensions
-            h = hash(token) % self.dim
+            h = self._stable_bucket(token)
             weight = (count / total) * math.log(1.0 + len(token))
             vec[h] += weight
 
@@ -49,13 +50,17 @@ class LightweightTextEmbedder:
             if len(token) >= 4:
                 for i in range(len(token) - 2):
                     sub = token[i : i + 3]
-                    sub_h = hash(sub) % self.dim
+                    sub_h = self._stable_bucket(sub)
                     vec[sub_h] += weight * 0.3
 
         norm = np.linalg.norm(vec)
         if norm > 1e-8:
             vec /= norm
         return vec
+
+    def _stable_bucket(self, token: str) -> int:
+        digest = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+        return int.from_bytes(digest, "big") % self.dim
 
 
 class CaseVectorIndex:
@@ -148,7 +153,10 @@ def get_case_vector_index(data_dir: Path | None = None) -> CaseVectorIndex:
     global _default_index
     if _default_index is None:
         _default_index = CaseVectorIndex()
-        if data_dir:
-            csv_path = data_dir / "closed_cases_history.csv"
-            _default_index.index_cases_from_csv(csv_path)
+        if data_dir is None:
+            from ravel.config import settings
+
+            data_dir = settings.data_dir
+        csv_path = data_dir / "closed_cases_history.csv"
+        _default_index.index_cases_from_csv(csv_path)
     return _default_index

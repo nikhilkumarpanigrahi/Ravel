@@ -37,3 +37,5 @@ def test_langgraph_workflow_execution():
     assert ans.next_best_actions.get("final") is not None
     assert ans.tool_calls > 0
     assert ans.latency_s >= 0.0
+    assert ans.counterfactuals
+    assert any(e.ref == "vector:closed_case_similarity" for e in ans.case.evidence)

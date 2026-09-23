@@ -82,6 +82,7 @@ class AnswerFile(BaseModel):
     tokens: int = 0
     latency_s: float = 0.0
     agent_trace: list[dict] = Field(default_factory=list)
+    counterfactuals: list[dict] = Field(default_factory=list)
 
 
 class CaseMemoryEntry(BaseModel):
