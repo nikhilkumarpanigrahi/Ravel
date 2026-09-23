@@ -110,43 +110,16 @@ class BenchmarkService:
             total_latency += ans_data.get("latency_s", 0.0)
             total_tool_calls += ans_data.get("tool_calls", 0)
 
-        # Accuracy & Policy Scorecard validation
-        ground_truth_matches = 0
+        # Internal consistency scorecard. The challenge answer key is intentionally
+        # unavailable, so these metrics must never be presented as accuracy.
         policy_compliant_cases = 0
         pattern_consistent_cases = 0
-        graph_lineage_complete_cases = 0
-
-        expected_verdicts = {
-            "HHG-001": "legitimate",
-            "HHG-002": "uncertain",
-            "HHG-003": "fraud",
-            "HHG-004": "fraud",
-            "HHG-005": "uncertain",
-            "HHG-006": "fraud",
-            "HHG-007": "legitimate",
-            "HHG-008": "fraud",
-            "HHG-009": "fraud",
-            "HHG-010": "uncertain",
-            "HHG-011": "fraud",
-            "HHG-012": "legitimate",
-            "HHG-013": "uncertain",
-            "HHG-014": "fraud",
-            "HHG-015": "uncertain",
-            "HHG-016": "fraud",
-            "HHG-017": "legitimate",
-            "HHG-018": "fraud",
-            "HHG-019": "uncertain",
-            "HHG-020": "uncertain",
-        }
+        evidence_reference_complete_cases = 0
 
         n_cases = len(cases)
         for r in results:
-            cid = r["case_id"]
             actual_v = r["case"]["verdict"]
             actual_p = r["case"]["pattern"]
-
-            if expected_verdicts.get(cid) == actual_v:
-                ground_truth_matches += 1
 
             final_actions = [a.get("action") for a in r.get("next_best_actions", {}).get("final", [])]
             is_compliant = (
@@ -170,13 +143,16 @@ class BenchmarkService:
 
             evs = r.get("case", {}).get("evidence", [])
             if all(bool(e.get("graph_path") or e.get("ref")) for e in evs):
-                graph_lineage_complete_cases += 1
+                evidence_reference_complete_cases += 1
 
         scorecard = {
-            "ground_truth_accuracy": round(ground_truth_matches / max(1, n_cases) * 100, 1),
+            "answer_key_accuracy": None,
+            "answer_key_status": "unavailable_by_challenge_design",
             "policy_conformity_rate": round(policy_compliant_cases / max(1, n_cases) * 100, 1),
             "pattern_consistency_rate": round(pattern_consistent_cases / max(1, n_cases) * 100, 1),
-            "graph_lineage_completeness": round(graph_lineage_complete_cases / max(1, n_cases) * 100, 1),
+            "evidence_reference_coverage": round(
+                evidence_reference_complete_cases / max(1, n_cases) * 100, 1
+            ),
         }
 
         report = {
@@ -216,14 +192,14 @@ class BenchmarkService:
     def _write_markdown_report(path: Path, report: dict[str, Any]) -> None:
         scorecard = report.get("scorecard", {})
         md = [
-            "# RAVEL 20-Case Benchmark Evaluation & Governance Scorecard",
+            "# RAVEL 20-Case Execution & Consistency Report",
             "",
-            "## Accuracy & Policy Governance Summary",
+            "## Internal Consistency Summary",
             "",
-            f"- **Ground-Truth Verdict Accuracy**: **{scorecard.get('ground_truth_accuracy', 100.0)}%** ({report['cases_run']}/{report['cases_run']} cases aligned with exam answer key)",
+            "- **Answer-key accuracy**: not reported; the challenge answer key is unavailable.",
             f"- **Policy Conformity Rate**: **{scorecard.get('policy_conformity_rate', 100.0)}%** (100% adherence to Rules R1–R8)",
-            f"- **Pattern Consistency Rate**: **{scorecard.get('pattern_consistency_rate', 100.0)}%** (Zero fraud cases with pattern none; zero false patterns on legit cases)",
-            f"- **Graph Lineage Completeness**: **{scorecard.get('graph_lineage_completeness', 100.0)}%** (100% of claims verified with canonical graph paths)",
+            f"- **Verdict/Pattern Consistency**: **{scorecard.get('pattern_consistency_rate', 0.0)}%**",
+            f"- **Evidence Reference Coverage**: **{scorecard.get('evidence_reference_coverage', 0.0)}%** (claims include a source reference or explanatory path; this does not assert that every path is a stored graph edge)",
             "",
             f"**Cases Evaluated**: {report['cases_run']}  ",
             f"**Total Exposure Identified**: ${report['total_exposure_usd']:,.2f} USD  ",

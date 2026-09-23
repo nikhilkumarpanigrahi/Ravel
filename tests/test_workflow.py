@@ -71,3 +71,6 @@ def test_benchmark_service_limit():
     assert report["cases_run"] == 2
     assert len(report["cases"]) == 2
     assert report["avg_latency_s"] >= 0
+    assert report["scorecard"]["answer_key_accuracy"] is None
+    assert report["scorecard"]["answer_key_status"] == "unavailable_by_challenge_design"
+    assert "ground_truth_accuracy" not in report["scorecard"]
