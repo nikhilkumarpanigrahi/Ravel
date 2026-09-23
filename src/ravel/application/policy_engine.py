@@ -287,7 +287,11 @@ class PolicyEngine:
                 RecommendedAction(
                     action=ActionType.CREATE_CASE,
                     route=ApprovalRoute.AUTO,
-                    reason="R2 and Section 3a: Internal fraud case record with graph persistence",
+                    reason=(
+                        "R2 and Section 3a: Internal fraud case record with graph persistence"
+                        if is_denial
+                        else "Section 3a: Preserve the evidence-supported fraud investigation"
+                    ),
                     order=2,
                 )
             )
@@ -296,7 +300,11 @@ class PolicyEngine:
                     RecommendedAction(
                         action=ActionType.FILE_REPORT,
                         route=ApprovalRoute.L2,
-                        reason="R2 & R6: Exposure exceeds $1,000, shared device cluster, or coordinated pattern",
+                        reason=(
+                            "R2 and R6: Customer denial plus reportable exposure or shared origin"
+                            if is_denial
+                            else "R6: Evidence indicates coordinated activity through shared infrastructure"
+                        ),
                         order=3,
                     )
                 )
@@ -404,12 +412,13 @@ class PolicyEngine:
             f"A total of {len(affected_txn_ids)} transaction(s) were flagged, representing an aggregate exposure of "
             f"${exposure_usd:.2f} USD.{dev_text}{conn_text}{cust_text} "
             f"The pattern of unauthorized transactions diverges significantly from cardholder historical profile. "
-            f"Under bank policy R2/R6, blocking or reissuing the subject card remains subject to the stated approval route; "
+            f"Under the applicable fraud policy, blocking or reissuing the subject card remains subject to the stated approval route; "
             f"connected entities are recommended for heightened monitoring, and this report documents the suspicious activity."
         )
 
+        policy_rule = "R6" if connected_cards else "R2"
         reason = (
-            f"R2/R6: Suspicious activity under {pattern.value} with exposure of ${exposure_usd:.2f} USD"
+            f"{policy_rule}: Suspicious activity under {pattern.value} with exposure of ${exposure_usd:.2f} USD"
             + (f" linking to {len(connected_cards)} other card(s)" if connected_cards else "")
         )
 
