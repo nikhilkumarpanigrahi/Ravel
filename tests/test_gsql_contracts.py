@@ -44,6 +44,18 @@ class SharedDeviceConnection:
         return []
 
 
+class CaseMemoryConnection:
+    def __init__(self):
+        self.vertex = None
+        self.edges = []
+
+    def upsertVertex(self, vertex_type, vertex_id, attributes):
+        self.vertex = (vertex_type, vertex_id, attributes)
+
+    def upsertEdge(self, from_type, from_id, edge_type, to_type, to_id):
+        self.edges.append((from_type, from_id, edge_type, to_type, to_id))
+
+
 def test_schema_is_created_from_global_scope():
     assert SCHEMA_GSQL.lstrip().startswith("USE GLOBAL")
     assert "USE GRAPH @@graphname@@" not in SCHEMA_GSQL
@@ -134,3 +146,44 @@ def test_shared_devices_native_fallback_finds_other_customer():
             "last_seen": "2016-12-01 10:00:00",
         }
     ]
+
+
+def test_native_case_write_persists_live_schema_attributes_and_relationships():
+    adapter = object.__new__(TigerGraphAdapter)
+    adapter.conn = CaseMemoryConnection()
+    adapter._installed_cache = set()
+
+    case_id = adapter.write_case(
+        {
+            "graph_case_id": "CASE-TEST",
+            "customer_id": "C1",
+            "card_id": "C1-K1",
+            "connected_card_ids": ["C2-K1"],
+            "affected_txn_ids": ["T1", "T2"],
+            "verdict": "fraud",
+            "pattern": "account_takeover",
+            "actions_taken": ["CREATE_CASE", "FILE_REPORT"],
+            "report_filed": True,
+        }
+    )
+
+    assert case_id == "CASE-TEST"
+    assert adapter.conn.vertex[0:2] == ("FraudCase", "CASE-TEST")
+    attributes = adapter.conn.vertex[2]
+    assert "case_id" not in attributes
+    assert attributes["n_txns"] == 2
+    assert attributes["report_filed"] is True
+    assert (
+        "FraudCase",
+        "CASE-TEST",
+        "case_of_customer",
+        "Customer",
+        "C1",
+    ) in adapter.conn.edges
+    assert (
+        "FraudCase",
+        "CASE-TEST",
+        "case_first_fraud_transaction",
+        "Transaction",
+        "T1",
+    ) in adapter.conn.edges

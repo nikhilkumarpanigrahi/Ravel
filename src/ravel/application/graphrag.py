@@ -79,7 +79,10 @@ class GraphRAGService:
                 entity_ids=[txn_id],
                 evidence_type=EvidenceType.TRANSACTION,
                 strength=0.7,
-                graph_path=f"Transaction({txn_id}) ──[CARD_OF]──> Customer({customer_id}) ──[OWNS]──> Card({card_id})",
+                graph_path=(
+                    f"Transaction({txn_id}) --transaction_of_customer-- Customer({customer_id}); "
+                    f"Transaction({txn_id}) --transaction_of_card-- Card({card_id})"
+                ),
             )
         )
 
@@ -97,7 +100,7 @@ class GraphRAGService:
                 entity_ids=[customer_id, card_id],
                 evidence_type=EvidenceType.RELATIONSHIP,
                 strength=0.5,
-                graph_path=f"Customer({customer_id}) ──[OWNS]──> Card({card_id}) ──[BILLED_IN]──> Region({cust.get('home_region', 'unknown')})",
+                graph_path=f"Customer({customer_id}).home_region={cust.get('home_region', 'unknown')}",
             )
         )
 
@@ -121,7 +124,11 @@ class GraphRAGService:
                     entity_ids=shared_cards,
                     evidence_type=EvidenceType.DEVICE,
                     strength=0.85,
-                    graph_path=f"Customer({customer_id}) ──[USED_DEVICE]──> Device({primary_dev}) ──[CROSS_CARD_LINK]──> Card({shared_cards[0]})",
+                    graph_path=(
+                        f"Customer({customer_id}) --transaction_of_customer-- Transaction "
+                        f"--transaction_uses_device-- Device({primary_dev}) "
+                        f"--transaction_uses_device-- Transaction --transaction_of_card-- Card({shared_cards[0]})"
+                    ),
                 )
             )
 
@@ -142,7 +149,7 @@ class GraphRAGService:
                     entity_ids=[c.get("case_id", "") for c in history_cases[:3] if c.get("case_id")],
                     evidence_type=EvidenceType.HISTORICAL_CASE,
                     strength=0.6,
-                    graph_path=f"Alert({case_id}) ──[INVOLVES_TXN]──> Transaction({txn_id}) ──[SIMILAR_PATTERN]──> ClosedCase({top_closed})",
+                    graph_path=f"FraudCase({top_closed}) --case_of_customer--> Customer({customer_id})",
                 )
             )
 

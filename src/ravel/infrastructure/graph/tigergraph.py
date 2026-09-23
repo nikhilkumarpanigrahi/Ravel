@@ -541,8 +541,20 @@ class TigerGraphAdapter(GraphAdapter):
                     for r in rows
                 ]
 
-        # Native REST++ query fallback
-        cases = self.conn.getVertices("FraudCase", limit=limit * 2) or []
+        # Native REST++ query fallback. When a customer is supplied, follow the
+        # persisted case_of_customer relationship rather than returning arbitrary
+        # recent cases and calling them relevant.
+        if customer_id:
+            customer_edges = self.conn.getEdges("Customer", customer_id) or []
+            case_ids = [
+                str(edge.get("to_id", ""))
+                for edge in customer_edges
+                if edge.get("e_type") == "case_of_customer"
+                and edge.get("to_type") == "FraudCase"
+            ][: limit * 2]
+            cases = self.conn.getVerticesById("FraudCase", case_ids) if case_ids else []
+        else:
+            cases = self.conn.getVertices("FraudCase", limit=limit * 2) or []
         out_cases: list[dict[str, Any]] = []
         for c in cases:
             attrs = c.get("attributes", {})
@@ -606,15 +618,40 @@ class TigerGraphAdapter(GraphAdapter):
                 "FraudCase",
                 gid,
                 attributes={
-                    "case_id": case.get("case_id", gid),
                     "opened_at": now_str,
                     "closed_at": now_str,
                     "outcome": case.get("verdict", "investigated"),
                     "pattern": case.get("pattern", "none"),
+                    "txn_ids": json.dumps(case.get("affected_txn_ids", [])),
+                    "n_txns": len(case.get("affected_txn_ids", [])),
                     "exposure_usd": float(case.get("exposure_usd", 0.0)),
+                    "connected_card_ids": json.dumps(case.get("connected_card_ids", [])),
+                    "actions_taken": json.dumps(case.get("actions_taken", [])),
+                    "report_filed": bool(case.get("report_filed", False)),
                     "summary": (case.get("summary") or "")[:1000],
                 },
             )
+            customer_id = str(case.get("customer_id", ""))
+            if customer_id:
+                self.conn.upsertEdge(
+                    "FraudCase", gid, "case_of_customer", "Customer", customer_id
+                )
+            card_ids = {
+                str(card_id)
+                for card_id in [case.get("card_id"), *case.get("connected_card_ids", [])]
+                if card_id
+            }
+            for card_id in card_ids:
+                self.conn.upsertEdge("FraudCase", gid, "case_of_card", "Card", card_id)
+            txn_ids = [str(txn_id) for txn_id in case.get("affected_txn_ids", []) if txn_id]
+            if txn_ids:
+                self.conn.upsertEdge(
+                    "FraudCase",
+                    gid,
+                    "case_first_fraud_transaction",
+                    "Transaction",
+                    txn_ids[0],
+                )
         except Exception as exc:  # noqa: BLE001
             print(f"[tigergraph] write_case notice: {exc}")
         return gid

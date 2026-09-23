@@ -569,6 +569,8 @@ class AgentWorkflow:
             "affected_txn_ids": affected_txn_ids,
             "connected_card_ids": rag_ctx.connected_cards,
             "connected_device_profiles": rag_ctx.device_profiles,
+            "actions_taken": [action.action.value for action in final_actions],
+            "report_filed": sar.file,
             "summary": summary_text,
         }
         tool_calls += 1
