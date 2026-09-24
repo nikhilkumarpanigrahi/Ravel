@@ -1,14 +1,16 @@
 # RAVEL — Autonomous Forensic Fraud Workstation
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7.svg?logo=render&logoColor=white)](https://ravel-u8sl.onrender.com/)
+[![Video Walkthrough](https://img.shields.io/badge/Video%20Demo-Google%20Drive-4285F4.svg?logo=googledrive&logoColor=white)](https://drive.google.com/file/d/1RPplFn7suYCryYVRs8_xCaBcBLqq7cZU/view?usp=sharing)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-black.svg)](https://www.python.org/downloads/)
 [![TigerGraph](https://img.shields.io/badge/TigerGraph-Cloud%20Ready-black.svg)](https://www.tigergraph.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-black.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 [![Tests Passing](https://img.shields.io/badge/Tests-66%20Passed-black.svg)](tests/)
 
-> 🌐 **Live Cloud Workstation:** [https://ravel-u8sl.onrender.com/](https://ravel-u8sl.onrender.com/)  
-> Connected to real-time **TigerGraph Cloud (`release_4.2.5`)** and automated FinCEN SAR regulatory pipeline.
+> 🌐 **Live Cloud Workstation (24/7):** [https://ravel-u8sl.onrender.com/](https://ravel-u8sl.onrender.com/)  
+> 🎥 **Video Demo Walkthrough:** [Watch Video Walkthrough](https://drive.google.com/file/d/1RPplFn7suYCryYVRs8_xCaBcBLqq7cZU/view?usp=sharing)  
+> ⚡ Connected to real-time **TigerGraph Cloud (`release_4.2.5`)** and automated FinCEN SAR regulatory pipeline.
 
 **RAVEL** is an enterprise-grade autonomous forensic payment-fraud investigation platform engineered for financial compliance teams, fraud operations leads, and risk committees.
 
