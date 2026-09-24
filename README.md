@@ -102,20 +102,26 @@ RAVEL was evaluated across the complete 20-case IEEE fraud benchmark (`HHGOA_IEE
 
 | Metric | Result | Methodology / Standard |
 | :--- | :---: | :--- |
-| **Policy Conformity Rate** | **100.0%** | Full alignment with bank rules R1 through R8 |
+| **Policy Conformity Rate** | **100.0%** | Full alignment with bank compliance rules R1 through R8 |
 | **Pattern Consistency Rate** | **100.0%** | Defensible alignment between evidence and pattern verdict |
-| **Evidence Reference Coverage** | **100.0%** | Every claim cited to source queries and graph paths |
-| **Total Exposure Protected** | **$4,888.89** | Aggregated across all 20 evaluated benchmark cases |
-| **Average Investigation Latency** | **1.11s** | End-to-end active learning and graph traversal per case |
+| **Evidence Reference Coverage** | **100.0%** | Every single claim cited to graph paths and query IDs |
+| **Total Exposure Protected** | **$4,727.17** | Aggregated across all 20 evaluated benchmark cases |
+| **Compiled Graph Traversal Latency** | **0.238s** | Native C++ GSQL multi-hop query on TigerGraph Cloud |
+| **Scorecard Replay Evaluation** | **< 0.05s** | High-throughput in-memory policy and metric rollup |
 | **Average Graph Tool Queries** | **14.0** | Autonomous tool calls executed per investigation |
-| **FinCEN SARs Filed** | **7 Cases** | Mandated regulatory filings generated with narratives |
+| **FinCEN SARs Filed** | **6 Cases** | Mandated regulatory filings generated with complete BSA narratives |
 
 ### Verdicts Distribution
-- **Uncertain (Active Verification Dispatched)**: 10 cases (50%)
-- **Confirmed Fraud**: 9 cases (45%)
+- **Uncertain (Active Verification Dispatched)**: 11 cases (55%)
+- **Confirmed Fraud**: 8 cases (40%)
 - **Verified Legitimate**: 1 case (5%)
 
 *Note: In accordance with challenge guidelines, hidden ground-truth answer keys were not provided. Benchmark scores measure strict internal consistency, regulatory compliance, and policy conformity.*
+
+### Signature Case Study: Case `HHG-020` (35-Card Collusion Ring)
+A standard tabular ML model flagged transaction `3509359` ($125.08) with a modest risk score of 0.52 — easily overlooked in high-volume queues. RAVEL executed a 4-hop GSQL graph traversal:
+$$\text{Customer}(C12265) \xrightarrow{\text{transaction\_of\_customer}} \text{Transaction} \xrightarrow{\text{uses\_device}} \text{Device} \xrightarrow{\text{uses\_device}} \text{Transaction} \xrightarrow{\text{of\_card}} \mathbf{35\text{ Unique Cards}}$$
+By connecting this transaction to **35 other victim cards** operating through the same shared device profile, RAVEL uncovered an active credential-stuffing bot syndicate in **0.238s**, preventing widespread downstream exposure across the institution.
 
 ---
 
@@ -141,7 +147,7 @@ The workstation UI is engineered for forensic analysts:
 
 ### 1. Installation
 ```bash
-git clone https://github.com/your-org/Ravel.git
+git clone https://github.com/nikhilkumarpanigrahi/Ravel.git
 cd Ravel
 uv sync --extra dev
 ```
@@ -275,7 +281,7 @@ Ravel/
 ## Regulatory Defensibility & Safety
 
 1. **Defensible Reasoning**: Every verdict is backed by an explicit evidence ledger citing transaction IDs, graph traversal paths, and Bayesian likelihood shifts.
-2. **Dual-Key Human Governance**: High-impact financial operations (`BLOCK_CARD`, `FILE_REPORT`) cannot execute autonomously without cryptographically auditable human authorization.
+2. **Dual-Key Human Governance**: High-impact financial operations (`BLOCK_CARD`, `FILE_REPORT`) cannot execute autonomously without immutable, role-governed human authorization in the audit ledger.
 3. **Transparent Heuristics**: Value of Information friction costs and Bayesian likelihood ratios are mathematically transparent heuristics, not uninspectable black-box models.
 4. **Simulation Mode**: Card blocking and SAR submissions are executed in simulated mode (`SIM EXECUTED`), ensuring safety during benchmark runs and testing.
 
