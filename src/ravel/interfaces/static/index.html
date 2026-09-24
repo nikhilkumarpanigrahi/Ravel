@@ -1071,9 +1071,24 @@ async function runReplay(){
     const tracBar=$('trace-bar');
     tracBar.innerHTML=`<span><strong>Investigating ${id}…</strong> Querying graph neighborhood & evaluating rules</span><span style="color:var(--amber);">● Running</span>`;
 
-    const resp = await fetch(`/api/cases/${id}/replay`, {method:'POST'});
-    const payload = await resp.json();
-    if (!resp.ok) throw new Error(payload.detail || 'Replay failed');
+    const start = await fetch(`/api/cases/${id}/replay?async_mode=true`, {method:'POST'});
+    const task = await start.json();
+    if (!start.ok || !task.task_id) throw new Error(task.detail || 'Replay could not be queued');
+
+    let taskState = task;
+    while (taskState.status === 'PENDING' || taskState.status === 'RUNNING') {
+      const elapsed = Number(taskState.elapsed_seconds || 0).toFixed(0);
+      tracBar.innerHTML = `<span><strong>Server task ${taskState.task_id}</strong> is processing live graph evidence</span><span style="color:var(--amber);">● ${taskState.status.toLowerCase()} · ${elapsed}s</span>`;
+      txt.textContent = `Investigation running on the server · ${elapsed}s elapsed`;
+      await pause(700);
+      const poll = await fetch(`/api/tasks/${task.task_id}`);
+      taskState = await poll.json();
+      if (!poll.ok) throw new Error(taskState.detail || 'Replay status check failed');
+    }
+    if (taskState.status !== 'COMPLETED' || !taskState.result) {
+      throw new Error(taskState.error || 'Replay task did not complete');
+    }
+    const payload = taskState.result;
 
     const [aRes, acRes, tlRes] = await Promise.all([
       fetch(`/api/cases/${id}/approvals`),

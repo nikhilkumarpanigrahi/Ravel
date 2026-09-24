@@ -339,9 +339,22 @@ class TigerGraphAdapter(GraphAdapter):
         ]
         if not txn_ids:
             return []
-        v_list = self.conn.getVerticesById("Transaction", txn_ids[: limit * 3]) or []
         rows = []
-        for v in v_list:
+        # Cloud REST++ can stall on large multi-ID vertex requests. Read a
+        # bounded recent sample one vertex at a time so the replay endpoint
+        # remains responsive while retaining data from the live graph.
+        for txn_id in txn_ids[: min(limit, 12)]:
+            try:
+                v_list = self.conn.getVerticesById(
+                    "Transaction", txn_id, timeout=self.query_timeout
+                ) or []
+            except TypeError:
+                # Keeps lightweight test doubles and older pyTigerGraph clients
+                # compatible with the bounded production path.
+                v_list = self.conn.getVerticesById("Transaction", txn_id) or []
+            if not v_list:
+                continue
+            v = v_list[0]
             a = v.get("attributes", {})
             rows.append(
                 {
@@ -456,11 +469,15 @@ class TigerGraphAdapter(GraphAdapter):
         # Bounded native traversal for the supplied HHGOA schema:
         # Customer -> Transaction -> Device -> Transaction -> other Customer/Card.
         customer_edges = self.conn.getEdges("Customer", customer_id) or []
+        # This native REST++ path is used only when the bounded GSQL query is
+        # not installed. Keep it deliberately small: every additional hop is a
+        # remote request, and an unbounded traversal blocks the analyst replay
+        # endpoint for an unpredictable length of time.
         source_txn_ids = [
             str(edge.get("to_id"))
             for edge in customer_edges
             if edge.get("e_type") == "transaction_of_customer"
-        ][:100]
+        ][:6]
         source_vertices = (
             self.conn.getVerticesById(
                 "Transaction",
@@ -483,7 +500,7 @@ class TigerGraphAdapter(GraphAdapter):
             device_id = _edge_target(txn_edges, "transaction_uses_device", "FROM_DEVICE")
             if device_id:
                 device_ids.add(device_id)
-            if len(device_ids) >= 50:
+            if len(device_ids) >= 2:
                 break
 
         shared: list[dict[str, Any]] = []
@@ -492,7 +509,7 @@ class TigerGraphAdapter(GraphAdapter):
             device_vertices = self.conn.getVerticesById("Device", device_id) or []
             device_attrs = device_vertices[0].get("attributes", {}) if device_vertices else {}
             device_edges = self.conn.getEdges("Device", device_id) or []
-            for device_edge in device_edges[: min(max(limit * 4, 20), 200)]:
+            for device_edge in device_edges[:5]:
                 if device_edge.get("e_type") != "transaction_uses_device":
                     continue
                 other_txn_id = str(device_edge.get("to_id", ""))
@@ -518,7 +535,7 @@ class TigerGraphAdapter(GraphAdapter):
                         "last_seen": str(txn_attrs.get("ts", "")),
                     }
                 )
-                if len(shared) >= limit:
+                if len(shared) >= min(limit, 10):
                     cache[cache_key] = shared
                     self._shared_devices_cache = cache
                     return shared
