@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", env_prefix="RAVEL_", extra="ignore")
 
     app_name: str = "RAVEL"
-    env: Literal["development", "test", "benchmark", "demo"] = "development"
+    env: Literal["development", "test", "benchmark", "demo", "production"] = "development"
     log_level: str = "INFO"
 
     # --- Dataset -----------------------------------------------------------------
