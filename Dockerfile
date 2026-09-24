@@ -35,6 +35,8 @@ RUN groupadd -r ravel && useradd -r -g ravel -d /app -s /sbin/nologin raveluser
 COPY --from=builder --chown=raveluser:ravel /app/.venv /app/.venv
 COPY --from=builder --chown=raveluser:ravel /app/src /app/src
 COPY --chown=raveluser:ravel cases /app/cases
+COPY --chown=raveluser:ravel benchmark /app/benchmark
+COPY --chown=raveluser:ravel HHGOA_IEEE/case_pack.csv /app/HHGOA_IEEE/case_pack.csv
 RUN mkdir -p /app/data && chown -R raveluser:ravel /app/data
 
 ENV PATH="/app/.venv/bin:$PATH" \

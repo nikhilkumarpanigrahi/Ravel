@@ -8,5 +8,7 @@ __pycache__
 *.pyo
 *.pyd
 *.log
-.DS_Store
-HHGOA_IEEE/*.csv
+HHGOA_IEEE/transactions.csv
+HHGOA_IEEE/identity.csv
+HHGOA_IEEE/closed_cases_history.csv
+!HHGOA_IEEE/case_pack.csv
