@@ -4,7 +4,13 @@ env/
 venv/
 ENV/
 .env
+.env.local
 .env.*
+!.env.example
+
+# Internal specifications & challenge materials
+*_PRD.md
+*.pdf
 
 # Python cache & build
 __pycache__/

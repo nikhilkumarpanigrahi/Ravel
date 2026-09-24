@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ravel-workstation
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: RAVEL_ENV
+        value: production
+      - key: RAVEL_GRAPH_ADAPTER
+        value: mock
+      - key: RAVEL_WORKFLOW_ORCHESTRATOR
+        value: langgraph
+      - key: RAVEL_AUTH_ENABLED
+        value: "false"
