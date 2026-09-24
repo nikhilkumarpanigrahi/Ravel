@@ -12,26 +12,29 @@
     ],
     "first_suspicious_txn_id": "3558054",
     "connected_card_ids": [
-      "C00294-K2",
-      "C07562-K2",
-      "C11509-K2",
-      "C06663-K2",
-      "C08962-K2",
-      "C11923-K2",
-      "C04597-K1",
-      "C05031-K2",
-      "C09657-K2",
-      "C11919-K2",
-      "C05381-K2",
       "C06744-K2",
-      "C02147-K2",
-      "C10308-K1",
-      "C06224-K2"
+      "C08281-K2",
+      "C00426-K2",
+      "C01436-K1",
+      "C11847-K2",
+      "C11204-K1",
+      "C04033-K1",
+      "C11595-K1",
+      "C10957-K2",
+      "C07562-K2",
+      "C12028-K2",
+      "C05307-K2",
+      "C11227-K2",
+      "C03326-K1",
+      "C04597-K1",
+      "C11923-K2",
+      "C04034-K2",
+      "C02170-K1",
+      "C11919-K2",
+      "C10032-K2",
+      "C02358-K1"
     ],
-    "connected_device_profiles": [
-      " |  | mobile safari generic | ",
-      "Windows |  | chrome 63.0 | "
-    ],
+    "connected_device_profiles": [],
     "exposure_usd": 55.68,
     "evidence": [
       {
@@ -46,52 +49,58 @@
         "contradicts": ""
       },
       {
-        "claim": "Customer C13171 holds card C13171-K2 with 928 total transactions on file, billed in home region ",
+        "claim": "Customer C13171 holds card C13171-K2 with 928 total transactions on file, billed in home region unknown",
         "source": "graph",
         "ref": "query:get_customer(C13171)",
         "entity_ids": [
           "C13171",
           "C13171-K2"
         ],
-        "graph_path": "Customer(C13171).home_region=",
+        "graph_path": "Customer(C13171).home_region=unknown",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Device shared across 15 other card(s): C00294-K2, C07562-K2, C11509-K2",
+        "claim": "Device shared across 21 other card(s): C06744-K2, C08281-K2, C00426-K2",
         "source": "graph",
         "ref": "query:shared_devices(C13171)",
         "entity_ids": [
-          "C00294-K2",
-          "C07562-K2",
-          "C11509-K2",
-          "C06663-K2",
-          "C08962-K2",
-          "C11923-K2",
-          "C04597-K1",
-          "C05031-K2",
-          "C09657-K2",
-          "C11919-K2",
-          "C05381-K2",
           "C06744-K2",
-          "C02147-K2",
-          "C10308-K1",
-          "C06224-K2"
+          "C08281-K2",
+          "C00426-K2",
+          "C01436-K1",
+          "C11847-K2",
+          "C11204-K1",
+          "C04033-K1",
+          "C11595-K1",
+          "C10957-K2",
+          "C07562-K2",
+          "C12028-K2",
+          "C05307-K2",
+          "C11227-K2",
+          "C03326-K1",
+          "C04597-K1",
+          "C11923-K2",
+          "C04034-K2",
+          "C02170-K1",
+          "C11919-K2",
+          "C10032-K2",
+          "C02358-K1"
         ],
-        "graph_path": "Customer(C13171) --transaction_of_customer-- Transaction --transaction_uses_device-- Device( |  | mobile safari generic | ) --transaction_uses_device-- Transaction --transaction_of_card-- Card(C00294-K2)",
+        "graph_path": "Customer(C13171) --transaction_of_customer-- Transaction --transaction_uses_device-- Device(DEVICE_SHARED) --transaction_uses_device-- Transaction --transaction_of_card-- Card(C06744-K2)",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Retrieved 19 similar closed case(s) from case memory: CC-5010, CC-4819, CC-4485",
+        "claim": "Retrieved 20 similar closed case(s) from case memory: RAVEL-HHG-008, CC-4163, CC-2244",
         "source": "graph",
         "ref": "query:historical_cases",
         "entity_ids": [
-          "CC-5010",
-          "CC-4819",
-          "CC-4485"
+          "RAVEL-HHG-008",
+          "CC-4163",
+          "CC-2244"
         ],
-        "graph_path": "FraudCase(CC-5010) --case_of_customer--> Customer(C13171)",
+        "graph_path": "FraudCase(RAVEL-HHG-008) --case_of_customer--> Customer(C13171)",
         "supports": "",
         "contradicts": ""
       },
@@ -120,17 +129,17 @@
         "contradicts": "legitimate"
       },
       {
-        "claim": "TigerGraph shared-device traversal identified syndicate: device shared across 15 distinct cards",
+        "claim": "TigerGraph shared-device traversal identified syndicate: device shared across 21 distinct cards",
         "source": "graph",
         "ref": "tigergraph:shared_devices(C13171)",
         "entity_ids": [
-          "C00294-K2",
-          "C07562-K2",
-          "C11509-K2",
-          "C06663-K2",
-          "C08962-K2"
+          "C06744-K2",
+          "C08281-K2",
+          "C00426-K2",
+          "C01436-K1",
+          "C11847-K2"
         ],
-        "graph_path": "Customer(C13171) --transaction_of_customer-- Transaction --transaction_uses_device-- Device --transaction_uses_device-- Transaction --transaction_of_card-- 15 Card vertices",
+        "graph_path": "Customer(C13171) --transaction_of_customer-- Transaction --transaction_uses_device-- Device --transaction_uses_device-- Transaction --transaction_of_card-- 21 Card vertices",
         "supports": "fraud",
         "contradicts": "legitimate"
       },
@@ -153,8 +162,8 @@
     "summary": "Investigation of HHG-008 (C13171 / C13171-K2): Flagged transaction 3558054 ($55.68) evaluated under card_not_present_fraud. Assumed verification outcome: Customer reaffirmed the original report: 'Customer C13171 message: 'I never made this $55.68 purchase. Please check my card.' Refers to 3558054.'. Identified 1 affected transaction(s) totaling $55.68 USD exposure. Verdict: fraud (fraud probability: 0.94). Recommended 4 action(s) adhering to bank policy.",
     "written_to_graph": true,
     "graph_case_id": "RAVEL-HHG-008",
-    "opened_at": "2026-09-23 18:46:01.708385+00:00",
-    "updated_at": "2026-09-23 18:46:01.708385+00:00"
+    "opened_at": "2026-09-24 06:11:25.968092+00:00",
+    "updated_at": "2026-09-24 06:11:25.968098+00:00"
   },
   "evidence_requests": [
     {
@@ -167,31 +176,31 @@
   "next_best_actions": {
     "initial": [
       {
-        "action": "CREATE_CASE",
-        "route": "auto",
-        "reason": "R7: Disputed charge matches recurring historical merchant pattern",
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "Policy 1: High fraud probability 0.84 on pattern card_not_present_fraud",
         "order": 1,
         "approval_id": "",
-        "requires_approval": false,
-        "state": "NOT_REQUIRED"
+        "requires_approval": true,
+        "state": "PENDING"
       },
       {
-        "action": "VERIFY_WITH_CUSTOMER",
+        "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "R7: Verify whether cardholder recalls recurring billing agreement",
+        "reason": "Section 3a: Internal fraud case record",
         "order": 2,
         "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       },
       {
-        "action": "WARN_CUSTOMER",
-        "route": "auto",
-        "reason": "R7: Send recurring charge advisory notice",
+        "action": "FILE_REPORT",
+        "route": "L2",
+        "reason": "Section 3a & R6: Exposure $55.68 > $1,000 or shared infrastructure",
         "order": 3,
         "approval_id": "",
-        "requires_approval": false,
-        "state": "NOT_REQUIRED"
+        "requires_approval": true,
+        "state": "PENDING"
       }
     ],
     "final": [
@@ -200,7 +209,7 @@
         "route": "L1",
         "reason": "R2: Customer denied activity; card compromised (exposure $55.68)",
         "order": 1,
-        "approval_id": "APP-F7224575",
+        "approval_id": "APP-4D10CF17",
         "requires_approval": true,
         "state": "PENDING"
       },
@@ -218,14 +227,14 @@
         "route": "L2",
         "reason": "R2 and R6: Customer denial plus reportable exposure or shared origin",
         "order": 3,
-        "approval_id": "APP-07BD45D0",
+        "approval_id": "APP-D22D1B70",
         "requires_approval": true,
         "state": "PENDING"
       },
       {
         "action": "MONITOR_CONNECTED_CARDS",
         "route": "auto",
-        "reason": "R6: Monitor 15 connected card(s) linked via shared infrastructure",
+        "reason": "R6: Monitor 21 connected card(s) linked via shared infrastructure",
         "order": 4,
         "approval_id": "",
         "requires_approval": false,
@@ -247,10 +256,7 @@
       ],
       "stale_evidence": 0,
       "weak_evidence": 0,
-      "hypotheses": [
-        "card_not_present_fraud: partial (0.30)",
-        "card_not_present_new_device: partial (0.30)"
-      ]
+      "hypotheses": []
     },
     "final": {
       "risk": 0.94,
@@ -262,10 +268,7 @@
       "missing_evidence": [],
       "stale_evidence": 0,
       "weak_evidence": 0,
-      "hypotheses": [
-        "card_not_present_fraud: partial (0.30)",
-        "card_not_present_new_device: partial (0.30)"
-      ]
+      "hypotheses": []
     },
     "what_reduced_uncertainty": [
       "customer validation response"
@@ -273,24 +276,30 @@
   },
   "sar": {
     "file": true,
-    "reason": "R6: Suspicious activity under card_not_present_fraud with exposure of $55.68 USD linking to 15 other card(s)",
-    "narrative": "Between 2016-12-19 and 2016-12-19, account C13171 on card C13171-K2 was subjected to unauthorized fraudulent activity consistent with card not present fraud. A total of 1 transaction(s) were flagged, representing an aggregate exposure of $55.68 USD. Activity originated from device profile ( |  | mobile safari generic | ). Investigation uncovered common infrastructure links to connected card(s) C00294-K2, C07562-K2, C11509-K2, C06663-K2, C08962-K2, C11923-K2, C04597-K1, C05031-K2, C09657-K2, C11919-K2, C05381-K2, C06744-K2, C02147-K2, C10308-K1, C06224-K2. Customer was contacted and reported: 'Customer reaffirmed the original report: 'Customer C13171 message: 'I never made this $55.68 purchase. Please check my card.' Refers to 3558054.''. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Under the applicable fraud policy, blocking or reissuing the subject card remains subject to the stated approval route; connected entities are recommended for heightened monitoring, and this report documents the suspicious activity.",
+    "reason": "R6: Suspicious activity under card_not_present_fraud with exposure of $55.68 USD linking to 21 other card(s)",
+    "narrative": "Between 2016-12-19 and 2016-12-19, account C13171 on card C13171-K2 was subjected to unauthorized fraudulent activity consistent with card not present fraud. A total of 1 transaction(s) were flagged, representing an aggregate exposure of $55.68 USD. Investigation uncovered common infrastructure links to connected card(s) C06744-K2, C08281-K2, C00426-K2, C01436-K1, C11847-K2, C11204-K1, C04033-K1, C11595-K1, C10957-K2, C07562-K2, C12028-K2, C05307-K2, C11227-K2, C03326-K1, C04597-K1, C11923-K2, C04034-K2, C02170-K1, C11919-K2, C10032-K2, C02358-K1. Customer was contacted and reported: 'Customer reaffirmed the original report: 'Customer C13171 message: 'I never made this $55.68 purchase. Please check my card.' Refers to 3558054.''. The pattern of unauthorized transactions diverges significantly from cardholder historical profile. Under the applicable fraud policy, blocking or reissuing the subject card remains subject to the stated approval route; connected entities are recommended for heightened monitoring, and this report documents the suspicious activity.",
     "subjects": [
-      "C00294-K2",
-      "C02147-K2",
+      "C00426-K2",
+      "C01436-K1",
+      "C02170-K1",
+      "C02358-K1",
+      "C03326-K1",
+      "C04033-K1",
+      "C04034-K2",
       "C04597-K1",
-      "C05031-K2",
-      "C05381-K2",
-      "C06224-K2",
-      "C06663-K2",
+      "C05307-K2",
       "C06744-K2",
       "C07562-K2",
-      "C08962-K2",
-      "C09657-K2",
-      "C10308-K1",
-      "C11509-K2",
+      "C08281-K2",
+      "C10032-K2",
+      "C10957-K2",
+      "C11204-K1",
+      "C11227-K2",
+      "C11595-K1",
+      "C11847-K2",
       "C11919-K2",
       "C11923-K2",
+      "C12028-K2",
       "C13171",
       "C13171-K2"
     ],
@@ -303,7 +312,7 @@
   "stop_reason": "Available graph and verification evidence support the recorded decision; policy actions remain recommendations until any required approval is recorded.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 1.87,
+  "latency_s": 11.38,
   "agent_trace": [
     {
       "step": 1,
@@ -324,7 +333,7 @@
       "selected_tool": "DEVICE_REPUTATION_TELEMETRY",
       "expected_info_gain": 0.0,
       "value_of_information": 0.0,
-      "evidence_claim": "TigerGraph shared-device traversal identified syndicate: device shared across 15 distinct cards",
+      "evidence_claim": "TigerGraph shared-device traversal identified syndicate: device shared across 21 distinct cards",
       "evidence_supports": "fraud",
       "evidence_contradicts": "legitimate",
       "prior_belief": 0.883,
@@ -341,7 +350,7 @@
   "counterfactuals": [
     {
       "action_type": "BLOCK_CARD",
-      "action_id": "APP-F7224575",
+      "action_id": "APP-4D10CF17",
       "target": "R2: Customer denied activity; card compromised (exposure $55.68)",
       "route": "L1",
       "loss_prevented_usd": 52.34,
@@ -353,7 +362,7 @@
     },
     {
       "action_type": "FILE_REPORT",
-      "action_id": "APP-07BD45D0",
+      "action_id": "APP-D22D1B70",
       "target": "R2 and R6: Customer denial plus reportable exposure or shared origin",
       "route": "L2",
       "loss_prevented_usd": 0.0,
@@ -366,7 +375,7 @@
     {
       "action_type": "MONITOR_CONNECTED_CARDS",
       "action_id": "ACT-MONITOR_CONNECTED_CARDS",
-      "target": "R6: Monitor 15 connected card(s) linked via shared infrastructure",
+      "target": "R6: Monitor 21 connected card(s) linked via shared infrastructure",
       "route": "auto",
       "loss_prevented_usd": 13.08,
       "customer_friction_cost_usd": 0.0,

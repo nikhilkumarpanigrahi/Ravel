@@ -349,8 +349,11 @@ def get_benchmark_results():
 
 
 @app.post("/api/benchmark/run")
-def trigger_benchmark(limit: int = 0):
-    report = benchmark_service.run_all(limit=limit)
+def trigger_benchmark(limit: int = 0, replay: bool = True, async_mode: bool = True):
+    if not replay and async_mode:
+        task = task_runner.submit("Full Benchmark Run", benchmark_service.run_all, limit=limit, replay=False)
+        return JSONResponse(status_code=202, content=task.to_dict())
+    report = benchmark_service.run_all(limit=limit, replay=replay)
     return report
 
 

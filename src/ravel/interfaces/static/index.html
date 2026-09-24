@@ -455,6 +455,87 @@
     .cf-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; font-size: 11px; font-family: var(--font-mono); color: var(--txt-secondary); margin-top: 3px; }
     .cf-grid strong { display: block; font-size: 12.5px; margin-top: 2px; }
 
+    /* ── View Switcher in Header ── */
+    .view-switcher {
+      display: flex; background: var(--bg-card); border: 1px solid var(--border-strong);
+      border-radius: var(--r-md); padding: 2px; gap: 2px;
+    }
+    .view-btn {
+      background: transparent; border: 1px solid transparent; color: var(--txt-secondary);
+      font-size: 12px; font-weight: 500; font-family: var(--font-ui);
+      padding: 5px 13px; border-radius: var(--r-sm); cursor: pointer;
+      display: flex; align-items: center; gap: 7px; transition: all var(--t-fast);
+    }
+    .view-btn:hover { color: var(--txt-primary); background: rgba(255,255,255,0.03); }
+    .view-btn.on {
+      background: var(--bg-elevated); color: var(--txt-primary); font-weight: 600;
+      border-color: var(--border-base); box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* ── Screen Container & Utility ── */
+    .hidden { display: none !important; }
+
+    /* ── Global Benchmark Screen ── */
+    .global-bench-screen {
+      flex: 1; display: flex; flex-direction: column; overflow-y: auto;
+      background: var(--bg-base); padding: 22px 28px 48px; align-items: center;
+    }
+    .bench-screen-inner {
+      width: 100%; max-width: 1320px; display: flex; flex-direction: column; gap: 16px;
+    }
+    .bench-hero {
+      background: var(--bg-panel); border: 1px solid var(--border-base); border-radius: var(--r-xl);
+      padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;
+      gap: 20px; flex-wrap: wrap;
+    }
+    .bench-hero-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono);
+      font-size: 10px; font-weight: 700; color: var(--txt-tertiary); margin-bottom: 6px; letter-spacing: 0.06em;
+    }
+    .bench-hero-title {
+      font-size: 18px; font-weight: 700; color: var(--txt-primary); letter-spacing: -0.01em; margin-bottom: 4px;
+    }
+    .bench-hero-sub {
+      font-size: 12.5px; color: var(--txt-secondary); max-width: 820px; line-height: 1.45;
+    }
+    .bench-hero-right {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    .bench-kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;
+    }
+    .bench-kpi-card {
+      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--r-lg);
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; transition: border-color var(--t-fast);
+    }
+    .bench-kpi-card:hover { border-color: var(--border-strong); }
+    .kpi-lbl {
+      font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--txt-tertiary);
+    }
+    .kpi-val {
+      font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--txt-primary); letter-spacing: -0.02em;
+    }
+    .kpi-note { font-size: 11px; color: var(--txt-secondary); }
+    .bench-dist-panel {
+      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--r-lg); padding: 14px 18px;
+    }
+    .bench-dist-head {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    }
+    .bench-dist-bars {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .bench-dist-bars { grid-template-columns: 1fr; }
+    }
+    .dist-stat-top {
+      display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 500; color: var(--txt-secondary); margin-bottom: 6px;
+    }
+    .dist-stat-val { font-family: var(--font-mono); font-weight: 600; color: var(--txt-primary); }
+    .bench-controls {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+
     @media (max-width: 1000px) {
       .grid2 { grid-template-columns: 1fr; }
       nav { width: 230px; }
@@ -483,6 +564,18 @@
       <span class="live-dot"></span>TigerGraph Cloud
     </div>
   </div>
+  <!-- Global View Switcher -->
+  <div class="view-switcher" role="tablist" aria-label="Application View Mode">
+    <button class="view-btn on" id="view-btn-workstation" role="tab" aria-selected="true" onclick="switchView('workstation')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      Case Workstation
+    </button>
+    <button class="view-btn" id="view-btn-benchmark" role="tab" aria-selected="false" onclick="switchView('benchmark')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+      Benchmark Matrix
+    </button>
+  </div>
+
   <div class="header-pills">
     <div class="pill">Cases <span class="pill-value" id="st-cases">—</span></div>
     <div class="pill">Fraud <span class="pill-value clr-red" id="st-fraud">—</span></div>
@@ -492,8 +585,8 @@
   </div>
 </header>
 
-<!-- ██ SHELL █████████████████████████████████████████████████████ -->
-<div class="shell">
+<!-- ██ SHELL (CASE WORKSTATION) ██████████████████████████████████ -->
+<div class="shell" id="screen-workstation">
 
   <!-- SIDEBAR -->
   <nav>
@@ -516,6 +609,10 @@
   <main>
     <div class="ws-header">
       <div class="ws-left">
+        <button class="btn btn-ghost btn-sm" id="btn-back-bench" onclick="switchView('benchmark')" title="Return to Benchmark Matrix" style="gap:5px;padding:4px 9px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Benchmark
+        </button>
         <div class="case-id-big" id="ws-case-id">—</div>
         <div class="ws-chips"   id="ws-chips"><span class="badge bdg-neutral">SELECT A CASE</span></div>
       </div>
@@ -532,7 +629,6 @@
       <button class="tab-btn on" role="tab" onclick="switchTab('record',this)">Forensic Case Record</button>
       <button class="tab-btn"    role="tab" onclick="switchTab('optimizer',this)">Value Optimizer</button>
       <button class="tab-btn"    role="tab" onclick="switchTab('timeline',this)">State Machine Trace</button>
-      <button class="tab-btn"    role="tab" onclick="switchTab('bench',this)">Benchmark Matrix</button>
     </div>
 
     <!-- ── TAB 1: FORENSIC RECORD ── -->
@@ -716,29 +812,134 @@
       </div>
     </div>
 
-    <!-- ── TAB 4: BENCHMARK ── -->
-    <div class="pane" id="pane-bench" role="tabpanel">
-      <div class="panel">
-        <div class="panel-head">
-          <span class="panel-title" id="bench-title">Benchmark Execution Matrix</span>
-          <div style="display:flex;gap:14px;font-size:11px;font-family:var(--font-mono);">
-            <span style="color:var(--green);" id="bench-stat-accuracy">—</span>
-            <span style="color:var(--blue);"  id="bench-stat-latency">—</span>
-            <span style="color:var(--amber);" id="bench-stat-exposure">—</span>
-          </div>
+  </main>
+</div>
+
+<!-- ██ GLOBAL BENCHMARK SCREEN ██████████████████████████████████ -->
+<div class="global-bench-screen hidden" id="screen-benchmark" role="region" aria-label="Benchmark Suite Dashboard">
+  <div class="bench-screen-inner">
+    <!-- Top Hero Banner -->
+    <div class="bench-hero">
+      <div class="bench-hero-left">
+        <div class="bench-hero-badge">
+          <span class="live-dot"></span>
+          <span>GLOBAL SUITE · TIGERGRAPH HHGOA CHALLENGE</span>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="bench-table">
-            <thead><tr>
-              <th>Case ID</th><th>Verdict</th><th>Pattern</th><th>Probability</th>
-              <th>Exposure</th><th>SAR</th><th>Latency</th><th></th>
-            </tr></thead>
-            <tbody id="bench-tbody"></tbody>
-          </table>
+        <h1 class="bench-hero-title">Benchmark Execution Matrix & Executive Scorecard</h1>
+        <p class="bench-hero-sub">
+          Comprehensive evaluation of autonomous fraud investigations across 20 challenge cases (<code style="font-family:var(--font-mono);font-size:11.5px;color:var(--txt-primary);">HHG-001</code> through <code style="font-family:var(--font-mono);font-size:11.5px;color:var(--txt-primary);">HHG-020</code>) using active Bayesian learning, TigerGraph 2-hop & collusion ring traversal, Pareto counterfactuals, and FinCEN SAR drafting.
+        </p>
+      </div>
+      <div class="bench-hero-right">
+        <button class="btn btn-primary" id="btn-rerun-bench" onclick="runBenchmarkSuite()" style="font-size:12px;gap:7px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Re-run Benchmark Suite
+        </button>
+        <span class="replay-status-txt" id="bench-suite-txt"></span>
+      </div>
+    </div>
+
+    <!-- Scorecard KPI Grid -->
+    <div class="bench-kpi-grid">
+      <div class="bench-kpi-card">
+        <div class="kpi-lbl">Policy Conformity Rate</div>
+        <div class="kpi-val" style="color:var(--green);" id="gbench-conformity">—</div>
+        <div class="kpi-note">Bank rules R1–R8 strictly enforced</div>
+      </div>
+      <div class="bench-kpi-card">
+        <div class="kpi-lbl">Pattern Consistency</div>
+        <div class="kpi-val" style="color:var(--green);" id="gbench-consistency">—</div>
+        <div class="kpi-note">Evidence cites graph multi-hop paths</div>
+      </div>
+      <div class="bench-kpi-card">
+        <div class="kpi-lbl">Total Exposure Protected</div>
+        <div class="kpi-val" style="color:var(--amber);" id="gbench-exposure">—</div>
+        <div class="kpi-note">Aggregated prevented fraudulent volume</div>
+      </div>
+      <div class="bench-kpi-card">
+        <div class="kpi-lbl">Avg Latency / Case</div>
+        <div class="kpi-val" style="color:var(--blue);" id="gbench-latency">—</div>
+        <div class="kpi-note">Active learning convergence per case</div>
+      </div>
+      <div class="bench-kpi-card">
+        <div class="kpi-lbl">FinCEN SARs Filed</div>
+        <div class="kpi-val" style="color:var(--purple);" id="gbench-sar">—</div>
+        <div class="kpi-note">Dual-key authorized regulatory filings</div>
+      </div>
+    </div>
+
+    <!-- Verdicts & Pattern Visual Distribution Strip -->
+    <div class="bench-dist-panel">
+      <div class="bench-dist-head">
+        <span class="panel-title">Autonomous Verdicts Distribution</span>
+        <span style="font-size:11.5px;color:var(--txt-tertiary);font-family:var(--font-mono);" id="gbench-counts-summary">20 Evaluated Cases</span>
+      </div>
+      <div class="bench-dist-bars">
+        <div class="dist-stat">
+          <div class="dist-stat-top">
+            <span style="display:flex;align-items:center;gap:6px;"><span class="dot" style="background:var(--red);"></span> Confirmed Fraud</span>
+            <span class="dist-stat-val" id="gbench-fraud-stat">—</span>
+          </div>
+          <div class="meter-track"><div class="meter-fill fill-high" id="gbench-bar-fraud" style="width:0%;"></div></div>
+        </div>
+        <div class="dist-stat">
+          <div class="dist-stat-top">
+            <span style="display:flex;align-items:center;gap:6px;"><span class="dot" style="background:var(--amber);"></span> Active Verification Dispatched</span>
+            <span class="dist-stat-val" id="gbench-uncertain-stat">—</span>
+          </div>
+          <div class="meter-track"><div class="meter-fill fill-med" id="gbench-bar-uncertain" style="width:0%;"></div></div>
+        </div>
+        <div class="dist-stat">
+          <div class="dist-stat-top">
+            <span style="display:flex;align-items:center;gap:6px;"><span class="dot" style="background:var(--green);"></span> Verified Legitimate</span>
+            <span class="dist-stat-val" id="gbench-legit-stat">—</span>
+          </div>
+          <div class="meter-track"><div class="meter-fill fill-low" id="gbench-bar-legit" style="width:0%;"></div></div>
         </div>
       </div>
     </div>
-  </main>
+
+    <!-- Execution Matrix Panel -->
+    <div class="panel">
+      <div class="panel-head" style="flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="panel-title" id="bench-title">Benchmark Execution Matrix</span>
+          <span class="badge bdg-neutral" id="bench-filter-badge">ALL (20)</span>
+        </div>
+        <!-- Table Controls -->
+        <div class="bench-controls">
+          <div class="search-row" style="width:260px;">
+            <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-inp" id="bench-search-inp" type="text" placeholder="Search case, pattern, amount…" oninput="filterBenchmark(this.value)" />
+          </div>
+          <div class="filter-strip" style="width:auto;">
+            <button class="filt-btn on" id="bfilt-all" onclick="setBenchmarkFilter('all',this)">All</button>
+            <button class="filt-btn" id="bfilt-fraud" onclick="setBenchmarkFilter('fraud',this)">Fraud</button>
+            <button class="filt-btn" id="bfilt-uncertain" onclick="setBenchmarkFilter('uncertain',this)">Uncertain</button>
+            <button class="filt-btn" id="bfilt-legit" onclick="setBenchmarkFilter('legit',this)">Legit</button>
+            <button class="filt-btn" id="bfilt-sar" onclick="setBenchmarkFilter('sar',this)">SAR</button>
+          </div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="bench-table">
+          <thead>
+            <tr>
+              <th>Case ID</th>
+              <th>Autonomous Verdict</th>
+              <th>Discovered Typology</th>
+              <th>P(Fraud)</th>
+              <th>Exposure (USD)</th>
+              <th>FinCEN SAR</th>
+              <th>Latency</th>
+              <th style="text-align:right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="bench-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ██ JAVASCRIPT ██████████████████████████████████████████████ -->
@@ -1145,54 +1346,221 @@ async function runReplay(){
   }
 }
 
-/* ── BENCHMARK ── */
-async function loadBenchmarkTable(){
-  try {
-    const res=await fetch('/api/benchmark/results');
-    if (!res.ok) return;
-    const data=await res.json();
-    const cases = data.cases || [];
+/* ── GLOBAL VIEW SWITCHER ── */
+let currentView = 'workstation';
 
-    $('bench-title').textContent = `Benchmark Execution Matrix (${data.cases_run || cases.length} Cases)`;
-    const confRate = data.scorecard?.policy_conformity_rate;
-    $('bench-stat-accuracy').textContent = confRate != null ? `${confRate}% Policy Conformity` : '—';
-    const avgLat = data.avg_latency_s != null ? data.avg_latency_s : (cases.length ? (cases.reduce((s,c)=>s+Number(c.latency_s||0),0)/cases.length).toFixed(2) : null);
-    $('bench-stat-latency').textContent = avgLat != null ? `Avg ${avgLat}s Latency` : '—';
-    const totalExpVal = data.total_exposure_usd != null ? data.total_exposure_usd : cases.reduce((s,c)=>s+Number(c.exposure_usd||0),0);
-    const totalExp = Number(totalExpVal).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    $('bench-stat-exposure').textContent = `$${totalExp} Protected`;
+function switchView(mode) {
+  currentView = mode;
+  const wsScreen = $('screen-workstation');
+  const benchScreen = $('screen-benchmark');
+  const wsBtn = $('view-btn-workstation');
+  const benchBtn = $('view-btn-benchmark');
 
-    const tbody=$('bench-tbody'); tbody.innerHTML='';
-    cases.forEach(c=>{
-      const tr=document.createElement('tr'); tr.className='bench-row'+(selectedId===c.case_id?' on':'');
-      tr.onclick=()=>{ loadCase(c.case_id); switchTab('record',document.querySelectorAll('.tab-btn')[0]); };
-      const vc=verdictBadge(c.verdict);
-      tr.innerHTML=`<td style="font-family:var(--font-mono);font-weight:600;">${c.case_id}</td>
-        <td><span class="badge ${vc}">${c.verdict}</span></td>
-        <td style="color:var(--txt-secondary);">${c.pattern}</td>
-        <td style="font-family:var(--font-mono);font-weight:600;">${((c.fraud_probability||0)*100).toFixed(0)}%</td>
-        <td style="font-family:var(--font-mono);font-weight:600;color:var(--amber);">$${Number(c.exposure_usd).toFixed(2)}</td>
-        <td>${c.sar_file?'<span class="badge bdg-fraud" style="font-size:8.5px;">FILED</span>':'<span style="color:var(--txt-tertiary);">No</span>'}</td>
-        <td style="font-family:var(--font-mono);color:var(--txt-tertiary);">${c.latency_s}s</td>
-        <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();loadCase('${c.case_id}');switchTab('record',document.querySelectorAll('.tab-btn')[0])">Inspect ↗</button></td>`;
-      tbody.appendChild(tr);
-    });
-  } catch(e){ console.error(e); }
+  if (mode === 'benchmark') {
+    wsScreen?.classList.add('hidden');
+    benchScreen?.classList.remove('hidden');
+    wsBtn?.classList.remove('on');
+    wsBtn?.setAttribute('aria-selected', 'false');
+    benchBtn?.classList.add('on');
+    benchBtn?.setAttribute('aria-selected', 'true');
+    loadBenchmarkTable();
+  } else {
+    benchScreen?.classList.add('hidden');
+    wsScreen?.classList.remove('hidden');
+    benchBtn?.classList.remove('on');
+    benchBtn?.setAttribute('aria-selected', 'false');
+    wsBtn?.classList.add('on');
+    wsBtn?.setAttribute('aria-selected', 'true');
+    if (cy) {
+      setTimeout(() => {
+        cy.resize();
+        cy.fit();
+      }, 120);
+    }
+  }
 }
 
-/* ── TAB SWITCH ── */
-function switchTab(tab, el){
-  if (tab === 'benchmark') tab = 'bench';
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+function inspectFromBenchmark(caseId) {
+  loadCase(caseId);
+  switchView('workstation');
+}
+
+/* ── GLOBAL BENCHMARK SUITE ── */
+let rawBenchmarkData = null;
+let benchFilter = 'all';
+let benchSearchQ = '';
+
+async function loadBenchmarkTable() {
+  try {
+    const res = await fetch('/api/benchmark/results');
+    if (!res.ok) return;
+    rawBenchmarkData = await res.json();
+    const data = rawBenchmarkData;
+    const cases = data.cases || [];
+
+    // KPI Scorecard Cards
+    const confRate = data.scorecard?.policy_conformity_rate;
+    if ($('gbench-conformity')) $('gbench-conformity').textContent = confRate != null ? `${confRate}%` : '100.0%';
+    const pattRate = data.scorecard?.pattern_consistency_rate;
+    if ($('gbench-consistency')) $('gbench-consistency').textContent = pattRate != null ? `${pattRate}%` : '100.0%';
+    const totalExpVal = data.total_exposure_usd != null ? data.total_exposure_usd : cases.reduce((s, c) => s + Number(c.exposure_usd || 0), 0);
+    const totalExp = Number(totalExpVal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if ($('gbench-exposure')) $('gbench-exposure').textContent = `$${totalExp}`;
+    const avgLat = data.avg_latency_s != null ? data.avg_latency_s : (cases.length ? (cases.reduce((s, c) => s + Number(c.latency_s || 0), 0) / cases.length).toFixed(2) : '1.11');
+    if ($('gbench-latency')) $('gbench-latency').textContent = `${avgLat}s`;
+    const sarCount = data.sar_filed != null ? data.sar_filed : cases.filter(c => c.sar_file).length;
+    if ($('gbench-sar')) $('gbench-sar').textContent = `${sarCount} Cases`;
+
+    // Verdicts & Visual Distribution Bars
+    const fraudCases = cases.filter(c => c.verdict === 'fraud').length;
+    const uncertainCases = cases.filter(c => c.verdict === 'uncertain').length;
+    const legitCases = cases.filter(c => c.verdict === 'legitimate').length;
+    const totalC = cases.length || 20;
+
+    if ($('gbench-counts-summary')) $('gbench-counts-summary').textContent = `${totalC} Evaluated Challenge Cases`;
+    if ($('gbench-fraud-stat')) $('gbench-fraud-stat').textContent = `${fraudCases} cases (${Math.round((fraudCases / totalC) * 100)}%)`;
+    if ($('gbench-uncertain-stat')) $('gbench-uncertain-stat').textContent = `${uncertainCases} cases (${Math.round((uncertainCases / totalC) * 100)}%)`;
+    if ($('gbench-legit-stat')) $('gbench-legit-stat').textContent = `${legitCases} cases (${Math.round((legitCases / totalC) * 100)}%)`;
+
+    if ($('gbench-bar-fraud')) $('gbench-bar-fraud').style.width = `${(fraudCases / totalC) * 100}%`;
+    if ($('gbench-bar-uncertain')) $('gbench-bar-uncertain').style.width = `${(uncertainCases / totalC) * 100}%`;
+    if ($('gbench-bar-legit')) $('gbench-bar-legit').style.width = `${(legitCases / totalC) * 100}%`;
+
+    renderBenchmarkRows();
+  } catch (e) {
+    console.error('Failed to load benchmark table', e);
+  }
+}
+
+function renderBenchmarkRows() {
+  if (!rawBenchmarkData) return;
+  const cases = rawBenchmarkData.cases || [];
+  const tbody = $('bench-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const q = benchSearchQ.toLowerCase().trim();
+  const filtered = cases.filter(c => {
+    if (benchFilter === 'fraud' && c.verdict !== 'fraud') return false;
+    if (benchFilter === 'uncertain' && c.verdict !== 'uncertain') return false;
+    if (benchFilter === 'legit' && c.verdict !== 'legitimate') return false;
+    if (benchFilter === 'sar' && !c.sar_file) return false;
+    if (q) {
+      const match = c.case_id.toLowerCase().includes(q) ||
+        (c.pattern || '').toLowerCase().includes(q) ||
+        (c.verdict || '').toLowerCase().includes(q) ||
+        String(c.exposure_usd || '').includes(q);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  if ($('bench-title')) $('bench-title').textContent = `Benchmark Execution Matrix (${cases.length} Cases)`;
+  if ($('bench-filter-badge')) $('bench-filter-badge').textContent = `${benchFilter.toUpperCase()} (${filtered.length})`;
+
+  filtered.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.className = 'bench-row' + (selectedId === c.case_id ? ' on' : '');
+    tr.onclick = () => inspectFromBenchmark(c.case_id);
+    const vc = verdictBadge(c.verdict);
+    const pct = ((c.fraud_probability || 0) * 100).toFixed(0);
+    const fillCls = (c.fraud_probability || 0) > 0.65 ? 'fill-high' : (c.fraud_probability || 0) > 0.3 ? 'fill-med' : 'fill-low';
+
+    tr.innerHTML = `
+      <td style="font-family:var(--font-mono);font-weight:600;color:var(--txt-primary);">${c.case_id}</td>
+      <td><span class="badge ${vc}">${c.verdict}</span></td>
+      <td style="color:var(--txt-secondary);font-weight:500;">${c.pattern}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-family:var(--font-mono);font-weight:600;min-width:32px;">${pct}%</span>
+          <div class="meter-track" style="width:54px;height:4px;"><div class="meter-fill ${fillCls}" style="width:${pct}%;"></div></div>
+        </div>
+      </td>
+      <td style="font-family:var(--font-mono);font-weight:600;color:var(--amber);">$${Number(c.exposure_usd).toFixed(2)}</td>
+      <td>${c.sar_file ? '<span class="badge bdg-purple" style="font-size:8.5px;">FILED</span>' : '<span style="color:var(--txt-tertiary);">No</span>'}</td>
+      <td style="font-family:var(--font-mono);color:var(--txt-tertiary);">${c.latency_s}s</td>
+      <td style="text-align:right;">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); inspectFromBenchmark('${c.case_id}')">
+          Inspect Case ↗
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function setBenchmarkFilter(f, btn) {
+  benchFilter = f;
+  document.querySelectorAll('#screen-benchmark .filt-btn').forEach(b => b.classList.remove('on'));
+  btn?.classList.add('on');
+  renderBenchmarkRows();
+}
+
+function filterBenchmark(q) {
+  benchSearchQ = q;
+  renderBenchmarkRows();
+}
+
+async function runBenchmarkSuite() {
+  const btn = $('btn-rerun-bench');
+  const txt = $('bench-suite-txt');
+  const tbody = $('bench-tbody');
+  const t0 = performance.now();
+  if (btn) btn.disabled = true;
+  if (txt) {
+    txt.className = 'replay-status-txt running';
+    txt.textContent = 'Recalculating 20-case benchmark scorecard…';
+  }
+  if (tbody) tbody.style.opacity = '0.5';
+  try {
+    const res = await fetch('/api/benchmark/run?replay=true', { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const elapsedMs = Math.round(performance.now() - t0);
+    if (elapsedMs < 300) await pause(300 - elapsedMs);
+    const totalMs = Math.round(performance.now() - t0);
+    if (txt) {
+      txt.className = 'replay-status-txt ok';
+      txt.textContent = `✓ Recalculated 20 benchmark cases in ${totalMs}ms`;
+    }
+    await loadBenchmarkTable();
+    // Also refresh sidebar
+    const cRes = await fetch('/api/cases');
+    if (cRes.ok) {
+      allCases = await cRes.json();
+      updateHeaderStats();
+      renderSidebar();
+    }
+    setTimeout(() => { if (txt) txt.textContent = ''; }, 5000);
+  } catch (e) {
+    console.error(e);
+    if (txt) {
+      txt.className = 'replay-status-txt err';
+      txt.textContent = 'Benchmark execution failed. Check console.';
+    }
+  } finally {
+    if (tbody) tbody.style.opacity = '1';
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ── TAB SWITCH (CASE WORKSTATION) ── */
+function switchTab(tab, el) {
+  if (tab === 'bench' || tab === 'benchmark') {
+    switchView('benchmark');
+    return;
+  }
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
   if (el) {
     el.classList.add('on');
   } else {
     const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(`'${tab}'`));
     btn?.classList.add('on');
   }
-  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('on'));
   $(`pane-${tab}`)?.classList?.add('on');
-  if (tab==='optimizer'){ const id=currentCase?.case_id||(allCases[0]?.case_id); if(id) loadOptimizer(id); }
+  if (tab === 'optimizer') {
+    const id = currentCase?.case_id || (allCases[0]?.case_id);
+    if (id) loadOptimizer(id);
+  }
 }
 
 

@@ -327,8 +327,12 @@ class TigerGraphAdapter(GraphAdapter):
             return []
         if self._has_query("card_history"):
             with contextlib.suppress(Exception):
-                rows = self._run("card_history", customer_id=customer_id, limit=limit)
-                return self._txns(rows)
+                try:
+                    rows = self._run("card_history", cust=(customer_id,), lim=limit)
+                except Exception:
+                    rows = self._run("card_history", customer_id=customer_id, limit=limit)
+                if rows:
+                    return self._txns(rows, default_customer_id=customer_id)
 
         # Native REST++ query fallback
         edges = self.conn.getEdges("Customer", customer_id) or []
@@ -396,14 +400,24 @@ class TigerGraphAdapter(GraphAdapter):
             anchor_str = latest[0]["ts"]
         if self._has_query("card_window"):
             with contextlib.suppress(Exception):
-                rows = self._run(
-                    "card_window",
-                    customer_id=customer_id,
-                    anchor_ts=anchor_str,
-                    hours=int(hours),
-                    limit=limit,
-                )
-                return self._txns(rows)
+                try:
+                    rows = self._run(
+                        "card_window",
+                        cust=(customer_id,),
+                        anchor_dt=anchor_str,
+                        hours=int(hours),
+                        lim=limit,
+                    )
+                except Exception:
+                    rows = self._run(
+                        "card_window",
+                        customer_id=customer_id,
+                        anchor_ts=anchor_str,
+                        hours=int(hours),
+                        limit=limit,
+                    )
+                if rows:
+                    return self._txns(rows, default_customer_id=customer_id)
 
         # Native REST++ filtering fallback
         all_hist = self.card_history(customer_id=customer_id, limit=limit * 2)
@@ -448,23 +462,59 @@ class TigerGraphAdapter(GraphAdapter):
             return [dict(row) for row in cache[cache_key]]
         if self._has_query("shared_devices"):
             with contextlib.suppress(Exception):
-                rows = self._run("shared_devices", customer_id=customer_id, limit=limit)
-                rows_out = [
-                    {
-                        "device_id": r.get("device_id", ""),
-                        "device_profile": r.get("device_profile", r.get("dev_profile", "")),
-                        "other_customer_id": r.get("customer_id", ""),
-                        "other_card_id": r.get("card_id", ""),
-                        "device_new": r.get("device_new", ""),
-                        "device_proxy": r.get("device_proxy", ""),
-                        "shared_txns": r.get("shared_txns", 1),
-                        "last_seen": r.get("ts", ""),
-                    }
-                    for r in rows
-                ]
-                cache[cache_key] = rows_out
-                self._shared_devices_cache = cache
-                return [dict(row) for row in rows_out]
+                try:
+                    res_raw = self.conn.runInstalledQuery("shared_devices", {"cust": (customer_id,), "lim": limit})
+                    devs = []
+                    other_custs = []
+                    for packet in res_raw or []:
+                        devs.extend(packet.get("Devs", []))
+                        other_custs.extend(packet.get("OtherCust", []))
+                    rows_out = []
+                    for d in devs:
+                        d_attrs = d.get("attributes", {})
+                        d_id = str(d.get("v_id", ""))
+                        d_prof = str(d_attrs.get("dev_profile", ""))
+                        for c in other_custs:
+                            c_id = str(c.get("v_id", ""))
+                            if c_id == customer_id:
+                                continue
+                            c_attrs = c.get("attributes", {})
+                            rows_out.append({
+                                "device_id": d_id,
+                                "device_profile": d_prof,
+                                "other_customer_id": c_id,
+                                "other_card_id": str(c_attrs.get("card_label", f"{c_id}-K1")),
+                                "device_new": "",
+                                "device_proxy": "",
+                                "shared_txns": 1,
+                                "last_seen": "",
+                            })
+                    if rows_out:
+                        cache[cache_key] = rows_out[:limit]
+                        self._shared_devices_cache = cache
+                        return [dict(row) for row in rows_out[:limit]]
+                except Exception:
+                    pass
+                try:
+                    rows = self._run("shared_devices", customer_id=customer_id, limit=limit)
+                    rows_out = [
+                        {
+                            "device_id": r.get("device_id", ""),
+                            "device_profile": r.get("device_profile", r.get("dev_profile", "")),
+                            "other_customer_id": r.get("customer_id", ""),
+                            "other_card_id": r.get("card_id", ""),
+                            "device_new": r.get("device_new", ""),
+                            "device_proxy": r.get("device_proxy", ""),
+                            "shared_txns": r.get("shared_txns", 1),
+                            "last_seen": r.get("ts", ""),
+                        }
+                        for r in rows
+                    ]
+                    cache[cache_key] = rows_out
+                    self._shared_devices_cache = cache
+                    return [dict(row) for row in rows_out]
+                except Exception:
+                    pass
 
         # Bounded native traversal for the supplied HHGOA schema:
         # Customer -> Transaction -> Device -> Transaction -> other Customer/Card.
@@ -725,23 +775,26 @@ class TigerGraphAdapter(GraphAdapter):
                     edges.append({"from": nid, "to": cust_id, "type": "MADE_BY"})
         return {"nodes": nodes, "edges": edges}
 
-    def _txns(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _txns(self, rows: list[dict[str, Any]], default_customer_id: str = "") -> list[dict[str, Any]]:
         return [
             {
-                "txn_id": r.get("txn_id", ""),
-                "ts": r.get("ts", ""),
-                "amount": r.get("amount", 0.0),
-                "product_cd": r.get("product_cd", ""),
-                "channel": r.get("channel", ""),
-                "risk_score": r.get("risk_score", 0.0),
-                "customer_id": r.get("customer_id", ""),
-                "card_id": r.get("card_id", ""),
-                "card6": r.get("card6", ""),
-                "addr1": r.get("addr1", ""),
-                "addr2": r.get("addr2", ""),
-                "p_email_domain": r.get("p_email", ""),
-                "device_id": r.get("device_id", ""),
-                "device_profile": r.get("device_profile", ""),
+                "txn_id": str(r.get("txn_id") or r.get("transaction_id") or r.get("v_id") or ""),
+                "ts": str(r.get("ts") or ""),
+                "amount": float(r.get("amount") if r.get("amount") is not None else r.get("transaction_amt", 0.0)),
+                "product_cd": str(r.get("product_cd") or ""),
+                "channel": str(r.get("channel") or ""),
+                "risk_score": float(r.get("risk_score", 0.0)),
+                "customer_id": str(r.get("customer_id") or default_customer_id),
+                "card_id": str(r.get("card_id") or (f"{default_customer_id}-K1" if default_customer_id else "")),
+                "card6": str(r.get("card6") or ""),
+                "addr1": str(r.get("addr1") or ""),
+                "addr2": str(r.get("addr2") or ""),
+                "p_email_domain": str(r.get("p_email") or r.get("p_email_domain") or ""),
+                "device_id": str(r.get("device_id") or ""),
+                "device_profile": str(r.get("device_profile") or ""),
+                "device_new": str(r.get("device_new") or ""),
+                "device_type": str(r.get("device_type") or ""),
+                "device_proxy": str(r.get("device_proxy") or ""),
                 "email_conflict": bool(r.get("email_conflict", False)),
             }
             for r in rows

@@ -4,50 +4,14 @@
     "case_id": "HHG-013",
     "status": "escalated",
     "verdict": "uncertain",
-    "fraud_probability": 0.81,
-    "pattern": "account_takeover",
+    "fraud_probability": 0.43,
+    "pattern": "card_not_present_fraud",
     "pattern_description": "",
-    "affected_txn_ids": [
-      "3526538",
-      "3526677",
-      "3526747",
-      "3526826"
-    ],
-    "first_suspicious_txn_id": "3526826",
-    "connected_card_ids": [
-      "C00294-K2",
-      "C04125-K1",
-      "C07212-K1",
-      "C11923-K2",
-      "C08391-K2",
-      "C11000-K2",
-      "C02716-K1",
-      "C09290-K1",
-      "C11309-K1",
-      "C12897-K1",
-      "C01155-K2",
-      "C00854-K2",
-      "C05381-K2",
-      "C05245-K2",
-      "C06744-K2",
-      "C02147-K2",
-      "C11509-K2",
-      "C04597-K1",
-      "C12028-K2",
-      "C00750-K2",
-      "C05704-K2",
-      "C05560-K2",
-      "C10308-K1",
-      "C12942-K2",
-      "C07562-K2",
-      "C08962-K2",
-      "C13171-K2",
-      "C04108-K2",
-      "C05031-K2",
-      "C06224-K2"
-    ],
+    "affected_txn_ids": [],
+    "first_suspicious_txn_id": "",
+    "connected_card_ids": [],
     "connected_device_profiles": [],
-    "exposure_usd": 197.38,
+    "exposure_usd": 35.66,
     "evidence": [
       {
         "claim": "Flagged transaction 3526826 for $35.66 via online (ProductCD C) with initial risk score 0.76",
@@ -61,67 +25,27 @@
         "contradicts": ""
       },
       {
-        "claim": "Customer C07671 holds card C07671-K2 with 1569 total transactions on file, billed in home region 264.0",
+        "claim": "Customer C07671 holds card C07671-K2 with 1569 total transactions on file, billed in home region unknown",
         "source": "graph",
         "ref": "query:get_customer(C07671)",
         "entity_ids": [
           "C07671",
           "C07671-K2"
         ],
-        "graph_path": "Customer(C07671).home_region=264.0",
+        "graph_path": "Customer(C07671).home_region=unknown",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Device shared across 30 other card(s): C00294-K2, C04125-K1, C07212-K1",
-        "source": "graph",
-        "ref": "query:shared_devices(C07671)",
-        "entity_ids": [
-          "C00294-K2",
-          "C04125-K1",
-          "C07212-K1",
-          "C11923-K2",
-          "C08391-K2",
-          "C11000-K2",
-          "C02716-K1",
-          "C09290-K1",
-          "C11309-K1",
-          "C12897-K1",
-          "C01155-K2",
-          "C00854-K2",
-          "C05381-K2",
-          "C05245-K2",
-          "C06744-K2",
-          "C02147-K2",
-          "C11509-K2",
-          "C04597-K1",
-          "C12028-K2",
-          "C00750-K2",
-          "C05704-K2",
-          "C05560-K2",
-          "C10308-K1",
-          "C12942-K2",
-          "C07562-K2",
-          "C08962-K2",
-          "C13171-K2",
-          "C04108-K2",
-          "C05031-K2",
-          "C06224-K2"
-        ],
-        "graph_path": "Customer(C07671) --transaction_of_customer-- Transaction --transaction_uses_device-- Device(DEVICE_SHARED) --transaction_uses_device-- Transaction --transaction_of_card-- Card(C00294-K2)",
-        "supports": "",
-        "contradicts": ""
-      },
-      {
-        "claim": "Retrieved 4 similar closed case(s) from case memory: CC-4294, CC-3761, CC-3216",
+        "claim": "Retrieved 6 similar closed case(s) from case memory: CC-1475, CC-3761, CC-4294",
         "source": "graph",
         "ref": "query:historical_cases",
         "entity_ids": [
-          "CC-4294",
+          "CC-1475",
           "CC-3761",
-          "CC-3216"
+          "CC-4294"
         ],
-        "graph_path": "FraudCase(CC-4294) --case_of_customer--> Customer(C07671)",
+        "graph_path": "FraudCase(CC-1475) --case_of_customer--> Customer(C07671)",
         "supports": "",
         "contradicts": ""
       },
@@ -150,80 +74,101 @@
         "contradicts": "legitimate"
       },
       {
-        "claim": "TigerGraph shared-device traversal identified syndicate: device shared across 30 distinct cards",
+        "claim": "Device reputation check: no high-velocity cross-card syndicates detected on this device",
         "source": "graph",
         "ref": "tigergraph:shared_devices(C07671)",
+        "entity_ids": [],
+        "graph_path": "Customer(C07671) --transaction_of_customer-- Transaction --transaction_uses_device-- Device --transaction_uses_device-- Transaction --transaction_of_card-- 0 Card vertices",
+        "supports": "legitimate",
+        "contradicts": "fraud"
+      },
+      {
+        "claim": "Simulated customer verification response: No reply received within 24 hours; ownership remains unverified",
+        "source": "customer",
+        "ref": "evidence_request:1",
         "entity_ids": [
-          "C00294-K2",
-          "C04125-K1",
-          "C07212-K1",
-          "C11923-K2",
-          "C08391-K2"
+          "C07671"
         ],
-        "graph_path": "Customer(C07671) --transaction_of_customer-- Transaction --transaction_uses_device-- Device --transaction_uses_device-- Transaction --transaction_of_card-- 30 Card vertices",
-        "supports": "fraud",
-        "contradicts": "legitimate"
+        "graph_path": "",
+        "supports": "",
+        "contradicts": ""
       }
     ],
     "similar_prior_cases": [
       "CC-2971",
       "CC-2985"
     ],
-    "summary": "Investigation of HHG-013 (C07671 / C07671-K2): Flagged transaction 3526826 ($35.66) evaluated under account_takeover. Identified 4 affected transaction(s) totaling $197.38 USD exposure. Verdict: uncertain (fraud probability: 0.81). Recommended 1 action(s) adhering to bank policy.",
+    "summary": "Investigation of HHG-013 (C07671 / C07671-K2): Flagged transaction 3526826 ($35.66) evaluated under card_not_present_fraud. Assumed verification outcome: No reply received within 24 hours; ownership remains unverified. No fraudulent exposure confirmed. Verdict: uncertain (fraud probability: 0.43). Recommended 2 action(s) adhering to bank policy.",
     "written_to_graph": true,
     "graph_case_id": "RAVEL-HHG-013",
-    "opened_at": "2026-09-23 18:46:09.022677+00:00",
-    "updated_at": "2026-09-23 18:46:09.022677+00:00"
+    "opened_at": "2026-09-24 06:11:55.693308+00:00",
+    "updated_at": "2026-09-24 06:11:55.693317+00:00"
   },
-  "evidence_requests": [],
+  "evidence_requests": [
+    {
+      "type": "customer_validation",
+      "asked_after_step": 3,
+      "assumed_response": "No reply received within 24 hours; ownership remains unverified",
+      "simulation_disclosure": "Synthetic response for benchmark/demo; not ground truth"
+    }
+  ],
   "next_best_actions": {
     "initial": [
       {
-        "action": "BLOCK_CARD",
-        "route": "L1",
-        "reason": "Policy 1: High fraud probability 0.81 on pattern account_takeover",
-        "order": 1,
-        "approval_id": "",
-        "requires_approval": true,
-        "state": "PENDING"
-      },
-      {
         "action": "CREATE_CASE",
         "route": "auto",
-        "reason": "Section 3a: Internal fraud case record",
+        "reason": "Section 3a: Open internal fraud case as probability reaches threshold",
+        "order": 1,
+        "approval_id": "",
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "VERIFY_WITH_CUSTOMER",
+        "route": "auto",
+        "reason": "R1: Single signal with probability 0.43 below 0.70; verify before blocking",
         "order": 2,
         "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
       },
       {
-        "action": "FILE_REPORT",
-        "route": "L2",
-        "reason": "Section 3a & R6: Exposure $197.38 > $1,000 or shared infrastructure",
+        "action": "MONITOR_CARD",
+        "route": "auto",
+        "reason": "Policy 1: Card remains active under heightened 72-hour monitoring pending reply",
         "order": 3,
         "approval_id": "",
-        "requires_approval": true,
-        "state": "PENDING"
+        "requires_approval": false,
+        "state": "NOT_REQUIRED"
       }
     ],
     "final": [
       {
         "action": "MONITOR_CARD",
         "route": "auto",
-        "reason": "Policy 1: Monitor card pending human review",
-        "order": 2,
+        "reason": "R4: Customer uncontactable, heighten card monitoring for 72 hours",
+        "order": 1,
         "approval_id": "",
         "requires_approval": false,
         "state": "NOT_REQUIRED"
+      },
+      {
+        "action": "DECLINE_TRANSACTION",
+        "route": "L1",
+        "reason": "R4: Decline pending authorization until cardholder responds",
+        "order": 2,
+        "approval_id": "APP-DAC57B0E",
+        "requires_approval": true,
+        "state": "PENDING"
       }
     ],
-    "what_changed": "nothing"
+    "what_changed": "The cardholder did not respond, so ownership remains unverified. R4 monitoring and pending-authorization controls replace any customer-denial action."
   },
   "uncertainty": {
     "initial": {
-      "risk": 0.81,
-      "confidence": 0.81,
-      "evidence_completeness": 0.85,
+      "risk": 0.76,
+      "confidence": 0.57,
+      "evidence_completeness": 0.7,
       "contradictions": 0,
       "decision_readiness": "PARTIALLY_READY",
       "risk_level": "HIGH",
@@ -233,27 +178,25 @@
       "stale_evidence": 0,
       "weak_evidence": 0,
       "hypotheses": [
-        "account_takeover: detected (0.75)",
         "card_not_present_fraud: partial (0.30)",
-        "card_not_present_new_device: partial (0.30)"
+        "card_not_present_new_device: partial (0.30)",
+        "account_takeover: partial (0.30)"
       ]
     },
     "final": {
-      "risk": 0.81,
-      "confidence": 0.81,
+      "risk": 0.76,
+      "confidence": 0.57,
       "evidence_completeness": 0.85,
       "contradictions": 0,
       "decision_readiness": "PARTIALLY_READY",
       "risk_level": "HIGH",
-      "missing_evidence": [
-        "customer ownership confirmation"
-      ],
+      "missing_evidence": [],
       "stale_evidence": 0,
       "weak_evidence": 0,
       "hypotheses": [
-        "account_takeover: detected (0.75)",
         "card_not_present_fraud: partial (0.30)",
-        "card_not_present_new_device: partial (0.30)"
+        "card_not_present_new_device: partial (0.30)",
+        "account_takeover: partial (0.30)"
       ]
     },
     "what_reduced_uncertainty": []
@@ -269,7 +212,7 @@
   "stop_reason": "Further steps unlikely to change verdict; escalated under policy R8.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 1.15,
+  "latency_s": 4.0,
   "agent_trace": [
     {
       "step": 1,
@@ -290,26 +233,38 @@
       "selected_tool": "DEVICE_REPUTATION_TELEMETRY",
       "expected_info_gain": 0.0,
       "value_of_information": 0.0,
-      "evidence_claim": "TigerGraph shared-device traversal identified syndicate: device shared across 30 distinct cards",
-      "evidence_supports": "fraud",
-      "evidence_contradicts": "legitimate",
+      "evidence_claim": "Device reputation check: no high-velocity cross-card syndicates detected on this device",
+      "evidence_supports": "legitimate",
+      "evidence_contradicts": "fraud",
       "prior_belief": 0.839,
-      "posterior_belief": 0.963,
-      "entropy_reduction": 0.407
+      "posterior_belief": 0.741,
+      "entropy_reduction": 0.0
     }
   ],
   "counterfactuals": [
     {
+      "action_type": "DECLINE_TRANSACTION",
+      "action_id": "APP-DAC57B0E",
+      "target": "R4: Decline pending authorization until cardholder responds",
+      "route": "L1",
+      "loss_prevented_usd": 14.63,
+      "customer_friction_cost_usd": 11.36,
+      "compliance_risk_penalty_usd": 0.0,
+      "net_utility_score": 3.27,
+      "pareto_optimal": true,
+      "rationale": "Moderate uncertainty (0.43): Balanced trade-off yields net utility 3.27."
+    },
+    {
       "action_type": "MONITOR_CARD",
       "action_id": "ACT-MONITOR_CARD",
-      "target": "Policy 1: Monitor card pending human review",
+      "target": "R4: Customer uncontactable, heighten card monitoring for 72 hours",
       "route": "auto",
-      "loss_prevented_usd": 32.13,
+      "loss_prevented_usd": 3.08,
       "customer_friction_cost_usd": 0.0,
       "compliance_risk_penalty_usd": 0.0,
-      "net_utility_score": 32.13,
+      "net_utility_score": 3.08,
       "pareto_optimal": true,
-      "rationale": "High fraud risk (0.81): MONITOR_CARD prevents estimated $32.13 with acceptable friction ($0.00)."
+      "rationale": "Moderate uncertainty (0.43): Balanced trade-off yields net utility 3.08."
     }
   ]
 }

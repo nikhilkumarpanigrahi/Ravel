@@ -25,26 +25,27 @@
         "contradicts": ""
       },
       {
-        "claim": "Customer C05876 holds card C05876-K2 with 991 total transactions on file, billed in home region 204.0",
+        "claim": "Customer C05876 holds card C05876-K2 with 991 total transactions on file, billed in home region unknown",
         "source": "graph",
         "ref": "query:get_customer(C05876)",
         "entity_ids": [
           "C05876",
           "C05876-K2"
         ],
-        "graph_path": "Customer(C05876).home_region=204.0",
+        "graph_path": "Customer(C05876).home_region=unknown",
         "supports": "",
         "contradicts": ""
       },
       {
-        "claim": "Retrieved 2 similar closed case(s) from case memory: CC-2370, CC-0003",
+        "claim": "Retrieved 4 similar closed case(s) from case memory: CASE-2016-6B9ED5AB, RAVEL-HHG-012, CC-2370",
         "source": "graph",
         "ref": "query:historical_cases",
         "entity_ids": [
-          "CC-2370",
-          "CC-0003"
+          "CASE-2016-6B9ED5AB",
+          "RAVEL-HHG-012",
+          "CC-2370"
         ],
-        "graph_path": "FraudCase(CC-2370) --case_of_customer--> Customer(C05876)",
+        "graph_path": "FraudCase(CASE-2016-6B9ED5AB) --case_of_customer--> Customer(C05876)",
         "supports": "",
         "contradicts": ""
       },
@@ -91,8 +92,8 @@
     "summary": "Investigation of HHG-012 (C05876 / C05876-K2): Flagged transaction 3553342 ($30.91) evaluated under none. Assumed verification outcome: No reply received within 24 hours; ownership remains unverified. No fraudulent exposure confirmed. Verdict: uncertain (fraud probability: 0.24). Recommended 2 action(s) adhering to bank policy.",
     "written_to_graph": true,
     "graph_case_id": "RAVEL-HHG-012",
-    "opened_at": "2026-09-23 18:46:07.630302+00:00",
-    "updated_at": "2026-09-23 18:46:07.630302+00:00"
+    "opened_at": "2026-09-24 06:11:51.665330+00:00",
+    "updated_at": "2026-09-24 06:11:51.665339+00:00"
   },
   "evidence_requests": [
     {
@@ -138,7 +139,7 @@
         "route": "L1",
         "reason": "R4: Decline pending authorization until cardholder responds",
         "order": 2,
-        "approval_id": "APP-CB68B545",
+        "approval_id": "APP-17738CEA",
         "requires_approval": true,
         "state": "PENDING"
       }
@@ -185,7 +186,7 @@
   "stop_reason": "Further steps unlikely to change verdict; escalated under policy R8.",
   "tool_calls": 14,
   "tokens": 0,
-  "latency_s": 0.56,
+  "latency_s": 2.22,
   "agent_trace": [
     {
       "step": 1,
@@ -216,7 +217,7 @@
     },
     {
       "action_type": "DECLINE_TRANSACTION",
-      "action_id": "APP-CB68B545",
+      "action_id": "APP-17738CEA",
       "target": "R4: Decline pending authorization until cardholder responds",
       "route": "L1",
       "loss_prevented_usd": 0.0,
