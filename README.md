@@ -293,6 +293,15 @@ Ravel/
 
 ---
 
+## Contributors
+
+| Contributor | Role & Specialization | GitHub |
+| :--- | :--- | :--- |
+| **Nikhil Kumar Panigrahi** | Core Active Learning Engine, GSQL Compilation, Bayesian Updating, 3D Pareto Optimizer, Policy Governance | [@nikhilkumarpanigrahi](https://github.com/nikhilkumarpanigrahi) |
+| **Sai Manohari Godavarty** | Forensic Workstation UI, Interactive Cytoscape Canvas, Cloud Latency Optimization, State Machine | [@saimanoharigodavarty](https://github.com/saimanoharigodavarty) |
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
